@@ -1,4 +1,4 @@
-package com.chattree.chattree;
+package com.chattree.chattree.login;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -6,7 +6,10 @@ import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.ActionBar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
 
@@ -20,24 +23,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+import com.chattree.chattree.R;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
-/**
- * A login screen that offers login via email/password.
- */
 public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
     /**
@@ -63,13 +60,49 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View                 mProgressView;
     private View                 mLoginFormView;
 
-    
+
+    FixedTabsPagerAdapter mFixedTabsPagerAdapter;
+    /**
+     * The {@link ViewPager} that will display the three primary sections of the app, one at a time.
+     */
+    ViewPager             mViewPager;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Set up the login form.
+
+        mFixedTabsPagerAdapter = new FixedTabsPagerAdapter(getSupportFragmentManager());
+        mViewPager = (ViewPager) findViewById(R.id.viewpager);
+        mViewPager.setAdapter(mFixedTabsPagerAdapter);
+
+        /*// Specify that tabs should be displayed in the action bar.
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);*/
+
+
+
+        /*// Add 3 tabs, specifying the tab's text and TabListener
+        for (int i = 0; i < 3; i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText("Tab " + (i + 1))
+                            .setTabListener(tabListener));
+        }*/
+
+/*        mViewPager.setOnPageChangeListener(
+                new ViewPager.SimpleOnPageChangeListener() {
+                    @Override
+                    public void onPageSelected(int position) {
+                        // When swiping between pages, select the
+                        // corresponding tab.
+                        getSupportActionBar().setSelectedNavigationItem(position);
+                    }
+                });*/
+
+        /*// Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
 
@@ -94,7 +127,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         });
 
         mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
+        mProgressView = findViewById(R.id.login_progress);*/
     }
 
     private void populateAutoComplete() {
@@ -281,6 +314,63 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         int ADDRESS    = 0;
         int IS_PRIMARY = 1;
     }
+
+
+    class FixedTabsPagerAdapter extends FragmentPagerAdapter {
+
+        FixedTabsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+//            // Create fragment object
+//            Fragment fragment = new DemoFragment();
+//
+//            // Attach some data to the fragment
+//            // that we'll use to populate our fragment layouts
+//            Bundle args = new Bundle();
+//            args.putInt("page_position", position + 1);
+//
+//            // Set the arguments on the fragment
+//            // that will be fetched in the
+//            // DemoFragment@onCreateView
+//            fragment.setArguments(args);
+
+            switch (position) {
+                case 0:
+                    return new LoginFragment();
+                case 1:
+                    return new SignupFragment();
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return getString(R.string.login_page_title).toUpperCase(Locale.CANADA_FRENCH);
+                case 1:
+                    return getString(R.string.signup_page_title).toUpperCase(Locale.CANADA_FRENCH);
+                default:
+                    return null;
+            }
+        }
+    }
+
+
+
+    // -------------------------------------------------------------------------
+    // --------------------------------- TASKS ---------------------------------
+    // -------------------------------------------------------------------------
+
 
     /**
      * Represents an asynchronous login/registration task used to authenticate

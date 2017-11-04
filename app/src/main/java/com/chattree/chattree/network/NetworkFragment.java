@@ -1,4 +1,4 @@
-package network;
+package com.chattree.chattree.network;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -9,13 +9,14 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import com.chattree.chattree.login.LoginActivity;
+import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
 
 /**
- * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.
+ * Implementation of headless Fragment that runs an AsyncTask to fetch data from the com.chattree.chattree.network.
  */
 public class NetworkFragment extends Fragment {
     public static final String HTTP_METHOD_GET    = "GET";
@@ -27,6 +28,7 @@ public class NetworkFragment extends Fragment {
 
     private static final String URL_KEY         = "UrlKey";
     private static final String HTTP_METHOD_KEY = "HttpMethodKey";
+    private static final String BODY_JSON_KEY   = "BodyJsonKey";
 
     private static final String BASE_URL = "https://e3246943.ngrok.io/";
 
@@ -84,10 +86,10 @@ public class NetworkFragment extends Fragment {
     /**
      * Start non-blocking execution of RequestTask.
      */
-    public void startRequest() {
+    public void startRequest(String jsonBody) {
         cancelRequest();
         mRequestTask = new RequestTask();
-        HttpRequest req = new HttpRequest(mUrlString, mHttpMethod);
+        HttpRequest req = new HttpRequest(mUrlString, mHttpMethod, jsonBody);
         mRequestTask.execute(req);
     }
 
@@ -103,10 +105,13 @@ public class NetworkFragment extends Fragment {
     class HttpRequest {
         String url;
         String httpMethod;
+        String body;
 
-        HttpRequest(String url, String httpMethod) {
+
+        HttpRequest(String url, String httpMethod, String jsonBody) {
             this.url = url;
             this.httpMethod = httpMethod;
+            this.body = jsonBody;
         }
     }
 
@@ -135,7 +140,7 @@ public class NetworkFragment extends Fragment {
         }
 
         /**
-         * Cancel background network operation if we do not have network connectivity.
+         * Cancel background com.chattree.chattree.network operation if we do not have com.chattree.chattree.network connectivity.
          */
         @Override
         protected void onPreExecute() {
@@ -161,7 +166,7 @@ public class NetworkFragment extends Fragment {
                 HttpRequest req = reqs[0];
                 try {
                     URL    url          = new URL(BASE_URL + req.url);
-                    String resultString = requestUrl(url, req.httpMethod);
+                    String resultString = requestUrl(url, req.httpMethod, req.body);
                     if (resultString != null) {
                         result = new Result(resultString);
                     } else {
@@ -198,24 +203,32 @@ public class NetworkFragment extends Fragment {
 
         /**
          * Given a URL, sets up a connection and gets the HTTP response from the server.
-         * If the network request is successful, it returns the response in String form. Otherwise,
+         * If the com.chattree.chattree.network request is successful, it returns the response in String form. Otherwise,
          * it will throw an IOException.
          */
-        private String requestUrl(URL url, String httpMethod) throws IOException {
+        private String requestUrl(URL url, String httpMethod, String body) throws IOException {
             InputStream        stream     = null;
             HttpsURLConnection connection = null;
             String             result     = null;
             try {
                 connection = (HttpsURLConnection) url.openConnection();
+
                 // Timeout for reading InputStream arbitrarily set to 3000ms.
                 connection.setReadTimeout(3000);
                 // Timeout for connection.connect() arbitrarily set to 3000ms.
                 connection.setConnectTimeout(3000);
                 // Set HTTP method.
                 connection.setRequestMethod(httpMethod);
+                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                connection.setDoOutput(true);
                 // Already true by default but setting just in case; needs to be true since this request
                 // is carrying an input (response) body.
                 connection.setDoInput(true);
+
+                OutputStream os = connection.getOutputStream();
+                os.write(body.getBytes("UTF-8"));
+                os.close();
+
                 // Open communications link (network traffic occurs here).
                 connection.connect();
                 publishProgress(NetConnectCallback.Progress.CONNECT_SUCCESS);

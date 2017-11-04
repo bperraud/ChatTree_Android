@@ -10,6 +10,7 @@
     <string name="action_log_in">go !</string>
     <string name="action_sign_in_short">OK</string>
     <string name="error_invalid_identifiant">Identifiant invalide</string>
+    <string name="error_incorrect_identifiant">Aucun compte trouvé</string>
     <string name="error_invalid_password">Ce mot de passe est trop court</string>
     <string name="error_incorrect_password">Mot de passe incorrect</string>
     <string name="error_field_required">Champ obligatoire</string>

@@ -8,7 +8,6 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -32,15 +31,18 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import com.chattree.chattree.R;
-import network.NetConnectCallback;
-import network.NetworkFragment;
+import com.chattree.chattree.network.NetConnectCallback;
+import com.chattree.chattree.network.NetworkFragment;
+import com.chattree.chattree.tools.JSONMessageParser;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
-import static network.NetworkFragment.HTTP_METHOD_POST;
+import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_POST;
 
 public class LoginFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, NetConnectCallback<String> {
 
@@ -53,7 +55,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     };
 
     /**
-     * Keep a reference to the NetworkFragment, which owns the AsyncTask object that is used to execute network ops.
+     * Keep a reference to the NetworkFragment, which owns the AsyncTask object that is used to execute com.chattree.chattree.network ops.
      */
     private NetworkFragment mNetworkFragment = null;
 
@@ -215,7 +217,17 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             if (!mRequesting && mNetworkFragment != null) {
                 // Execute the async request
                 mRequesting = true;
-                mNetworkFragment.startRequest();
+
+                try {
+                    JSONObject body = new JSONObject();
+                    body.put("email", identifiant);
+                    body.put("password", password);
+
+                    mNetworkFragment.startRequest(body.toString());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -225,7 +237,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     private boolean isPasswordValid(String password) {
-        return password.length() > 4;
+        return password.length() > 2;
     }
 
 
@@ -270,6 +282,21 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         int IS_PRIMARY = 1;
     }
 
+
+
+    private void handleLoginFail(JSONMessageParser jsonParser) throws JSONException {
+        String errorType = jsonParser.getData().getString("type");
+
+        if (errorType.equals("email")) {
+            mIdentifiantView.setError(getString(R.string.error_incorrect_identifiant));
+            mIdentifiantView.requestFocus();
+        } else if (errorType.equals("password")) {
+            mPasswordView.setError(getString(R.string.error_incorrect_password));
+            mPasswordView.requestFocus();
+        }
+    }
+
+
     // --------------------------------------------------------------------------------------
     // ---------------- LoaderManager.LoaderCallbacks<Cursor> Implementation ----------------
     // --------------------------------------------------------------------------------------
@@ -312,21 +339,40 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     // ---------------------------- NetConnectCallback Implementation ----------------------------
     // -------------------------------------------------------------------------------------------
 
+    /**
+     * Update your UI here based on result of the request.
+     *
+     * @param result The JSON response
+     */
     @Override
     public void updateFromRequest(String result) {
-        // Update your UI here based on result of the request.
-
-        // No network
+        // Network isn't available
         if (result == null) {
+            finishRequesting();
+            showProgress(false);
             Toast.makeText(getContext(), getString(R.string.error_network_for_login_toast), Toast.LENGTH_SHORT).show();
-            finishRequesting();
-            showProgress(false);
         } else {
-//            Toast.makeText(getContext(), "RESULT : " + result, Toast.LENGTH_SHORT).show();
-            Log.d("LOGIN", "RESULT : " + result);
-
             finishRequesting();
             showProgress(false);
+
+            try {
+                JSONMessageParser jsonParser = new JSONMessageParser(result);
+
+                // Fail
+                if (!jsonParser.getSuccess()) {
+                    handleLoginFail(jsonParser);
+                }
+
+                // Success
+                else {
+//                    getActivity().finish();
+//                    Log.d("LOGIN", "OVER");
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
         }
 
     }
@@ -365,69 +411,6 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         mRequesting = false;
         if (mNetworkFragment != null) {
             mNetworkFragment.cancelRequest();
-        }
-    }
-
-
-    // -------------------------------------------------------------------------
-    // --------------------------------- TASKS ---------------------------------
-    // -------------------------------------------------------------------------
-
-
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mIdentifiant;
-        private final String mPassword;
-
-        UserLoginTask(String email, String password) {
-            mIdentifiant = email;
-            mPassword = password;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-
-            try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mIdentifiant)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }
-
-            // TODO: register the new account here.
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-//            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                getActivity().finish();
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-//            mAuthTask = null;
-            showProgress(false);
         }
     }
 

@@ -1,4 +1,4 @@
-package network;
+package com.chattree.chattree.network;
 
 import android.net.NetworkInfo;
 
@@ -18,14 +18,14 @@ public interface NetConnectCallback<T> {
     void updateFromRequest(T result);
 
     /**
-     * Get the device's active network status in the form of a NetworkInfo object.
+     * Get the device's active com.chattree.chattree.network status in the form of a NetworkInfo object.
      */
     NetworkInfo getActiveNetworkInfo();
 
     /**
      * Indicate to callback handler any progress update.
      *
-     * @param progressCode    must be one of the constants defined in DownloadCallback.Progress.
+     * @param progressCode    must be one of the constants defined in NetConnectCallback.Progress.
      * @param percentComplete must be 0-100.
      */
     void onProgressUpdate(int progressCode, int percentComplete);

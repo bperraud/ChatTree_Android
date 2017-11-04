@@ -18,21 +18,31 @@ import java.net.URL;
  * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.
  */
 public class NetworkFragment extends Fragment {
+    public static final String HTTP_METHOD_GET    = "GET";
+    public static final String HTTP_METHOD_POST   = "POST";
+    public static final String HTTP_METHOD_PUT    = "PUT";
+    public static final String HTTP_METHOD_DELETE = "DELETE";
+
     private static final String TAG = "NetworkFragment";
 
-    private static final String URL_KEY = "UrlKey";
+    private static final String URL_KEY         = "UrlKey";
+    private static final String HTTP_METHOD_KEY = "HttpMethodKey";
+
+    private static final String BASE_URL = "https://e3246943.ngrok.io/";
 
     private NetConnectCallback<String> mCallback;
     private RequestTask                mRequestTask;
     private String                     mUrlString;
+    private String                     mHttpMethod;
 
     /**
      * Static initializer for NetworkFragment that sets the URL of the host it will be downloading from.
      */
-    public static NetworkFragment getInstance(FragmentManager fragmentManager, String url) {
+    public static NetworkFragment getInstance(FragmentManager fragmentManager, String url, String httpMethod) {
         NetworkFragment networkFragment = new NetworkFragment();
         Bundle          args            = new Bundle();
         args.putString(URL_KEY, url);
+        args.putString(HTTP_METHOD_KEY, httpMethod);
         networkFragment.setArguments(args);
         fragmentManager.beginTransaction().add(networkFragment, TAG).commit();
         return networkFragment;
@@ -42,12 +52,18 @@ public class NetworkFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mUrlString = getArguments().getString(URL_KEY);
+        mHttpMethod = getArguments().getString(HTTP_METHOD_KEY);
     }
 
+    /**
+     * Host Activity will handle callbacks from task.
+     *
+     * @param context The activity or fragment context
+     */
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        // Host Activity will handle callbacks from task.
+        //noinspection unchecked
         mCallback = (NetConnectCallback<String>) ((LoginActivity) context).mloginFragment;
     }
 
@@ -71,7 +87,8 @@ public class NetworkFragment extends Fragment {
     public void startRequest() {
         cancelRequest();
         mRequestTask = new RequestTask();
-        mRequestTask.execute(mUrlString);
+        HttpRequest req = new HttpRequest(mUrlString, mHttpMethod);
+        mRequestTask.execute(req);
     }
 
     /**
@@ -83,10 +100,20 @@ public class NetworkFragment extends Fragment {
         }
     }
 
+    class HttpRequest {
+        String url;
+        String httpMethod;
+
+        HttpRequest(String url, String httpMethod) {
+            this.url = url;
+            this.httpMethod = httpMethod;
+        }
+    }
+
     /**
      * Implementation of AsyncTask designed to fetch data from the network.
      */
-    private class RequestTask extends AsyncTask<String, Integer, RequestTask.Result> {
+    private class RequestTask extends AsyncTask<HttpRequest, Integer, RequestTask.Result> {
 
         /**
          * Wrapper class that serves as a union of a result value and an exception. When the
@@ -128,13 +155,13 @@ public class NetworkFragment extends Fragment {
          * Defines work to perform on the background thread.
          */
         @Override
-        protected RequestTask.Result doInBackground(String... urls) {
+        protected RequestTask.Result doInBackground(HttpRequest... reqs) {
             Result result = null;
-            if (!isCancelled() && urls != null && urls.length > 0) {
-                String urlString = urls[0];
+            if (!isCancelled() && reqs != null && reqs.length > 0) {
+                HttpRequest req = reqs[0];
                 try {
-                    URL    url          = new URL(urlString);
-                    String resultString = downloadUrl(url);
+                    URL    url          = new URL(BASE_URL + req.url);
+                    String resultString = requestUrl(url, req.httpMethod);
                     if (resultString != null) {
                         result = new Result(resultString);
                     } else {
@@ -170,11 +197,11 @@ public class NetworkFragment extends Fragment {
         }
 
         /**
-         * Given a URL, sets up a connection and gets the HTTP response body from the server.
-         * If the network request is successful, it returns the response body in String form. Otherwise,
+         * Given a URL, sets up a connection and gets the HTTP response from the server.
+         * If the network request is successful, it returns the response in String form. Otherwise,
          * it will throw an IOException.
          */
-        private String downloadUrl(URL url) throws IOException {
+        private String requestUrl(URL url, String httpMethod) throws IOException {
             InputStream        stream     = null;
             HttpsURLConnection connection = null;
             String             result     = null;
@@ -184,8 +211,8 @@ public class NetworkFragment extends Fragment {
                 connection.setReadTimeout(3000);
                 // Timeout for connection.connect() arbitrarily set to 3000ms.
                 connection.setConnectTimeout(3000);
-                // For this use case, set HTTP method to GET.
-                connection.setRequestMethod("GET");
+                // Set HTTP method.
+                connection.setRequestMethod(httpMethod);
                 // Already true by default but setting just in case; needs to be true since this request
                 // is carrying an input (response) body.
                 connection.setDoInput(true);

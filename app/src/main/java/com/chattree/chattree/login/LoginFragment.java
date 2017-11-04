@@ -40,6 +40,7 @@ import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
+import static network.NetworkFragment.HTTP_METHOD_POST;
 
 public class LoginFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, NetConnectCallback<String> {
 
@@ -61,6 +62,8 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
      * requests with consecutive button clicks.
      */
     private boolean mRequesting = false;
+
+    private static final String login_url_path = "login";
 
     /**
      * Id to identity READ_CONTACTS permission request.
@@ -110,7 +113,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         });
 
         // Create the headless fragment which encapsulates the AsyncTask for the login op
-        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), "https://www.google.com");
+        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), login_url_path, HTTP_METHOD_POST);
 
         return rootView;
     }
@@ -318,9 +321,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             Toast.makeText(getContext(), getString(R.string.error_network_for_login_toast), Toast.LENGTH_SHORT).show();
             finishRequesting();
             showProgress(false);
-        }
-
-        else {
+        } else {
 //            Toast.makeText(getContext(), "RESULT : " + result, Toast.LENGTH_SHORT).show();
             Log.d("LOGIN", "RESULT : " + result);
 
@@ -366,14 +367,6 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             mNetworkFragment.cancelRequest();
         }
     }
-
-
-
-
-
-
-
-
 
 
     // -------------------------------------------------------------------------

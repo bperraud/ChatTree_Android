@@ -5,6 +5,9 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -21,6 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +32,8 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import com.chattree.chattree.R;
+import network.NetConnectCallback;
+import network.NetworkFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +41,7 @@ import java.util.List;
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
 
-public class LoginFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class LoginFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, NetConnectCallback<String> {
 
     /**
      * A dummy authentication store containing known user names and passwords.
@@ -46,9 +52,15 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     };
 
     /**
-     * Keep track of the login task to ensure we can cancel it if requested.
+     * Keep a reference to the NetworkFragment, which owns the AsyncTask object that is used to execute network ops.
      */
-    private UserLoginTask mAuthTask = null;
+    private NetworkFragment mNetworkFragment = null;
+
+    /**
+     * Boolean telling us whether a download is in progress, so we don't trigger overlapping
+     * requests with consecutive button clicks.
+     */
+    private boolean mRequesting = false;
 
     /**
      * Id to identity READ_CONTACTS permission request.
@@ -96,6 +108,9 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
                 attemptLogin();
             }
         });
+
+        // Create the headless fragment which encapsulates the AsyncTask for the login op
+        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), "https://www.google.com");
 
         return rootView;
     }
@@ -149,9 +164,14 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
+        if (mRequesting) return;
+
+        // Force to hide the keyboard
+//        InputMethodManager inputManager =
+//                (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+//        inputManager.hideSoftInputFromWindow(
+//                getActivity().getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS
+//        );
 
         // Reset errors.
         mIdentifiantView.setError(null);
@@ -188,8 +208,12 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         } else {
             // Show a progress spinner, and kick off a background task to perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(identifiant, password);
-            mAuthTask.execute((Void) null);
+
+            if (!mRequesting && mNetworkFragment != null) {
+                // Execute the async request
+                mRequesting = true;
+                mNetworkFragment.startRequest();
+            }
         }
     }
 
@@ -280,6 +304,78 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
 
     }
 
+
+    // -------------------------------------------------------------------------------------------
+    // ---------------------------- NetConnectCallback Implementation ----------------------------
+    // -------------------------------------------------------------------------------------------
+
+    @Override
+    public void updateFromRequest(String result) {
+        // Update your UI here based on result of the request.
+
+        // No network
+        if (result == null) {
+            Toast.makeText(getContext(), getString(R.string.error_network_for_login_toast), Toast.LENGTH_SHORT).show();
+            finishRequesting();
+            showProgress(false);
+        }
+
+        else {
+//            Toast.makeText(getContext(), "RESULT : " + result, Toast.LENGTH_SHORT).show();
+            Log.d("LOGIN", "RESULT : " + result);
+
+            finishRequesting();
+            showProgress(false);
+        }
+
+    }
+
+    @Override
+    public NetworkInfo getActiveNetworkInfo() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        return connectivityManager.getActiveNetworkInfo();
+    }
+
+    @Override
+    public void onProgressUpdate(int progressCode, int percentComplete) {
+        switch (progressCode) {
+            // You can add UI behavior for progress updates here.
+            case Progress.ERROR:
+                Log.d("LOGIN", "ERROR, " + progressCode + ", " + percentComplete);
+                break;
+            case Progress.CONNECT_SUCCESS:
+                Log.d("LOGIN", "CONNECT_SUCCESS, " + progressCode + ", " + percentComplete);
+                break;
+            case Progress.GET_INPUT_STREAM_SUCCESS:
+                Log.d("LOGIN", "GET_INPUT_STREAM_SUCCESS, " + progressCode + ", " + percentComplete);
+                break;
+            case Progress.PROCESS_INPUT_STREAM_IN_PROGRESS:
+                Log.d("LOGIN", "PROCESS_INPUT_STREAM_IN_PROGRESS, " + progressCode + ", " + percentComplete);
+                break;
+            case Progress.PROCESS_INPUT_STREAM_SUCCESS:
+                Log.d("LOGIN", "PROCESS_INPUT_STREAM_SUCCESS, " + progressCode + ", " + percentComplete);
+                break;
+        }
+    }
+
+    @Override
+    public void finishRequesting() {
+        mRequesting = false;
+        if (mNetworkFragment != null) {
+            mNetworkFragment.cancelRequest();
+        }
+    }
+
+
+
+
+
+
+
+
+
+
     // -------------------------------------------------------------------------
     // --------------------------------- TASKS ---------------------------------
     // -------------------------------------------------------------------------
@@ -291,11 +387,11 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mEmail;
+        private final String mIdentifiant;
         private final String mPassword;
 
         UserLoginTask(String email, String password) {
-            mEmail = email;
+            mIdentifiant = email;
             mPassword = password;
         }
 
@@ -312,7 +408,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
 
             for (String credential : DUMMY_CREDENTIALS) {
                 String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
+                if (pieces[0].equals(mIdentifiant)) {
                     // Account exists, return true if the password matches.
                     return pieces[1].equals(mPassword);
                 }
@@ -324,7 +420,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
 
         @Override
         protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
+//            mAuthTask = null;
             showProgress(false);
 
             if (success) {
@@ -337,7 +433,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
 
         @Override
         protected void onCancelled() {
-            mAuthTask = null;
+//            mAuthTask = null;
             showProgress(false);
         }
     }

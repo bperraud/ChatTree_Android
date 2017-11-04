@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Chat Tree</string>
 
+    <!-- Toasts -->
+    <string name="error_network_for_login_toast">Erreur : veuillez activer le réseau pour vous connecter</string>
+
     <!-- Strings related to login -->
     <string name="prompt_email">Email ou nom d\'utilisateur</string>
     <string name="prompt_password">Mot de passe</string>

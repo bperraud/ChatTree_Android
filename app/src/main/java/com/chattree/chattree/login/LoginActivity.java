@@ -14,12 +14,15 @@ import java.util.Locale;
 public class LoginActivity extends AppCompatActivity {
 
 
-    FixedTabsPagerAdapter mFixedTabsPagerAdapter;
+    private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
 
     /**
      * The {@link ViewPager} that will display the three primary sections of the app, one at a time.
      */
-    ViewPager mViewPager;
+    private ViewPager mViewPager;
+
+    public Fragment mloginFragment;
+    public Fragment mSignupFragment;
 
 
     @Override
@@ -63,9 +66,11 @@ public class LoginActivity extends AppCompatActivity {
 
             switch (position) {
                 case 0:
-                    return new LoginFragment();
+                    mloginFragment = new LoginFragment();
+                    return mloginFragment;
                 case 1:
-                    return new SignupFragment();
+                    mSignupFragment = new SignupFragment();
+                    return mSignupFragment;
                 default:
                     return null;
             }

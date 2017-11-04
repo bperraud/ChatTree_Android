@@ -3,7 +3,7 @@
 
 <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/connexion"
+        android:id="@+id/login_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" android:gravity="center_vertical">
@@ -26,7 +26,7 @@
                     android:id="@+id/identifiant"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/prompt_email"
+                    android:hint="@string/prompt_identifiant"
                     android:imeOptions="actionNext"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
@@ -59,7 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/action_log_in"
+                android:text="@string/action_login"
                 style="@style/Widget.AppCompat.Button.Colored"
                 android:drawableEnd="@drawable/ic_check_white_24dp"
                 android:drawablePadding="0dp" android:layout_gravity="center_horizontal"/>

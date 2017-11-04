@@ -55,12 +55,12 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     private NetworkFragment mNetworkFragment = null;
 
     /**
-     * Boolean telling us whether a download is in progress, so we don't trigger overlapping
+     * Boolean telling us whether a request is in progress, so we don't trigger overlapping
      * requests with consecutive button clicks.
      */
     private boolean mRequesting = false;
 
-    private static final String login_url_path = "login";
+    private static final String LOGIN_URL_PATH = "login";
 
     /**
      * Id to identity READ_CONTACTS permission request.
@@ -110,7 +110,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         });
 
         // Create the headless fragment which encapsulates the AsyncTask for the login op
-        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), login_url_path, HTTP_METHOD_POST);
+        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), LOGIN_URL_PATH, HTTP_METHOD_POST);
 
         return rootView;
     }
@@ -159,19 +159,12 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     /**
-     * Attempts to sign in or register the account specified by the login form.
+     * Attempts to sign in the account specified by the login form.
      * If there are form errors (invalid email, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
         if (mRequesting) return;
-
-        // Force to hide the keyboard
-//        InputMethodManager inputManager =
-//                (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-//        inputManager.hideSoftInputFromWindow(
-//                getActivity().getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS
-//        );
 
         // Reset errors.
         mIdentifiantView.setError(null);
@@ -184,7 +177,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         boolean cancel    = false;
         View    focusView = null;
 
-        // Check for a valid password, if the user entered one.
+        // Check for a valid password.
         if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
@@ -203,7 +196,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         }
 
         if (cancel) {
-            // There was an error; don't attempt login and focus the first form field with an error.
+            // There was an error; don't attempt to login and focus the first form field with an error.
             focusView.requestFocus();
         } else {
             // Show a progress spinner, and kick off a background task to perform the user login attempt.
@@ -232,7 +225,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     private boolean isPasswordValid(String password) {
-        return password.length() > 2;
+        return password.length() > 3;
     }
 
 

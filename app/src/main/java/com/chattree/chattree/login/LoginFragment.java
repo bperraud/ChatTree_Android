@@ -56,7 +56,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     private static final int REQUEST_READ_CONTACTS = 0;
 
     // UI references.
-    private AutoCompleteTextView mEmailView;
+    private AutoCompleteTextView mIdentifiantView;
     private EditText             mPasswordView;
     private View                 mProgressView;
     private View                 mLoginFormView;
@@ -67,13 +67,14 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         View rootView = inflater.inflate(R.layout.fragment_login, container, false);
 
         // Get the arguments that was supplied when the fragment was instantiated in the CustomPagerAdapter
-        Bundle args = getArguments();
+//        Bundle args = getArguments();
 //        ((TextView) rootView.findViewById(R.id.textView)).setText("Page " + args.getInt("page_position"));
 
-        mLoginFormView = rootView.findViewById(R.id.login_form);
-
         // Set up the login form.
-        mEmailView = rootView.findViewById(R.id.email);
+        mLoginFormView = rootView.findViewById(R.id.login_form);
+        mProgressView = rootView.findViewById(R.id.login_progress);
+
+        mIdentifiantView = rootView.findViewById(R.id.identifiant);
         populateAutoComplete();
 
         mPasswordView = rootView.findViewById(R.id.password);
@@ -81,22 +82,20 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-//                    attemptLogin();
+                    attemptLogin();
                     return true;
                 }
                 return false;
             }
         });
 
-        Button mLoginButton = (Button) rootView.findViewById(R.id.login_button);
+        Button mLoginButton = rootView.findViewById(R.id.login_button);
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 attemptLogin();
             }
         });
-
-        mProgressView = rootView.findViewById(R.id.login_progress);
 
         return rootView;
     }
@@ -130,7 +129,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             return true;
         }
         if (shouldShowRequestPermissionRationale(READ_CONTACTS)) {
-            Snackbar.make(mEmailView, R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
+            Snackbar.make(mIdentifiantView, R.string.permission_rationale, Snackbar.LENGTH_INDEFINITE)
                     .setAction(android.R.string.ok, new View.OnClickListener() {
                         @Override
                         @TargetApi(Build.VERSION_CODES.M)
@@ -155,12 +154,12 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         }
 
         // Reset errors.
-        mEmailView.setError(null);
+        mIdentifiantView.setError(null);
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email    = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        String identifiant = mIdentifiantView.getText().toString();
+        String password    = mPasswordView.getText().toString();
 
         boolean cancel    = false;
         View    focusView = null;
@@ -172,37 +171,33 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             cancel = true;
         }
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(email)) {
-            mEmailView.setError(getString(R.string.error_field_required));
-            focusView = mEmailView;
+        // Check for a valid identifiant.
+        if (TextUtils.isEmpty(identifiant)) {
+            mIdentifiantView.setError(getString(R.string.error_field_required));
+            focusView = mIdentifiantView;
             cancel = true;
-        } else if (!isEmailValid(email)) {
-            mEmailView.setError(getString(R.string.error_invalid_email));
-            focusView = mEmailView;
+        } else if (!isIdentifiantValid(identifiant)) {
+            mIdentifiantView.setError(getString(R.string.error_invalid_identifiant));
+            focusView = mIdentifiantView;
             cancel = true;
         }
 
         if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
+            // There was an error; don't attempt login and focus the first form field with an error.
             focusView.requestFocus();
         } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
+            // Show a progress spinner, and kick off a background task to perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new UserLoginTask(identifiant, password);
             mAuthTask.execute((Void) null);
         }
     }
 
-    private boolean isEmailValid(String email) {
-        //TODO: Replace this with your own logic
-        return email.contains("@");
+    private boolean isIdentifiantValid(String identifiant) {
+        return identifiant.length() > 2;
     }
 
     private boolean isPasswordValid(String password) {
-        //TODO: Replace this with your own logic
         return password.length() > 4;
     }
 
@@ -213,7 +208,6 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     private void showProgress(final boolean show) {
         int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         mLoginFormView.animate().setDuration(shortAnimTime).alpha(
                 show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
             @Override
@@ -222,7 +216,6 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
             }
         });
 
-        mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
         mProgressView.animate().setDuration(shortAnimTime).alpha(
                 show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
             @Override
@@ -236,7 +229,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
         ArrayAdapter<String> adapter =
                 new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, emailAddressCollection);
-        mEmailView.setAdapter(adapter);
+        mIdentifiantView.setAdapter(adapter);
     }
 
 
@@ -263,8 +256,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
 
                                 // Select only email addresses.
                                 ContactsContract.Contacts.Data.MIMETYPE +
-                                " = ?", new String[]{ ContactsContract.CommonDataKinds.Email
-                .CONTENT_ITEM_TYPE },
+                                " = ?", new String[]{ ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE },
 
                                 // Show primary email addresses first. Note that there won't be
                                 // a primary email address if the user hasn't specified one.

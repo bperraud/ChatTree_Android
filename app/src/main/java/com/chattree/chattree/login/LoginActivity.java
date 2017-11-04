@@ -12,7 +12,7 @@ import com.chattree.chattree.R;
 import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {
-
+    public static final String EXTRA_LOGIN_DATA = "com.chattree.chattree.LOGIN_DATA";
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
 

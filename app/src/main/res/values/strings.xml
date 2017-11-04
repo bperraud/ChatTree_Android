@@ -14,7 +14,9 @@
     <string name="error_invalid_password">Ce mot de passe est trop court</string>
     <string name="error_incorrect_password">Mot de passe incorrect</string>
     <string name="error_field_required">Champ obligatoire</string>
-    <string name="permission_rationale">"La permission d'accéder aux contacts est nécessaire pour activer l'auto-complétion d'emails"</string>
+    <string name="permission_rationale">"La permission d'accéder aux contacts est nécessaire pour activer
+        l'auto-complétion d'emails"
+    </string>
     <string name="logo">logo</string>
     <string name="login_page_title">connexion</string>
     <string name="signup_page_title">inscription</string>

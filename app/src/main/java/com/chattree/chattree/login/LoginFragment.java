@@ -6,6 +6,7 @@ import android.annotation.TargetApi;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v4.app.LoaderManager;
@@ -31,6 +32,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import com.chattree.chattree.R;
+import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
 import com.chattree.chattree.tools.JSONMessageParser;
@@ -42,20 +44,13 @@ import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
 import static android.support.v4.content.ContextCompat.checkSelfPermission;
+import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
 import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_POST;
 
 public class LoginFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>, NetConnectCallback<String> {
 
     /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
-    };
-
-    /**
-     * Keep a reference to the NetworkFragment, which owns the AsyncTask object that is used to execute com.chattree.chattree.network ops.
+     * Keep a reference to the NetworkFragment, which owns the AsyncTask object that is used to execute network ops.
      */
     private NetworkFragment mNetworkFragment = null;
 
@@ -363,10 +358,11 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
                     handleLoginFail(jsonParser);
                 }
 
-                // Success
+                // Success -> start the home activity
                 else {
-//                    getActivity().finish();
-//                    Log.d("LOGIN", "OVER");
+                    Intent intent = new Intent(getContext(), HomeActivity.class);
+                    intent.putExtra(EXTRA_LOGIN_DATA, jsonParser.getJSONString());
+                    startActivity(intent);
                 }
 
             } catch (JSONException e) {

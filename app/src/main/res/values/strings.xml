@@ -4,6 +4,7 @@
     <!-- Toasts -->
     <string name="error_network_for_login_toast">Erreur : veuillez activer le réseau pour vous connecter</string>
     <string name="error_network_for_signup_toast">Erreur : veuillez activer le réseau pour vous inscrire</string>
+    <string name="login_successful_toast">Bienvenue sur votre espace ChatTree ! :)</string>
 
     <!-- Strings related to login -->
     <string name="prompt_identifiant">Email ou nom d\'utilisateur</string>

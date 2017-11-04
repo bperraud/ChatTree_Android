@@ -36,6 +36,7 @@ import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
 import com.chattree.chattree.tools.JSONMessageParser;
+import com.chattree.chattree.tools.Toaster;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -358,7 +359,7 @@ public class SignupFragment extends Fragment implements LoaderManager.LoaderCall
         if (result == null) {
             finishRequesting();
             showProgress(false);
-            Toast.makeText(getContext(), getString(R.string.error_network_for_signup_toast), Toast.LENGTH_SHORT).show();
+            Toaster.showCustomToast(getActivity(), getString(R.string.error_network_for_signup_toast), Toast.LENGTH_SHORT);
         } else {
             finishRequesting();
             showProgress(false);

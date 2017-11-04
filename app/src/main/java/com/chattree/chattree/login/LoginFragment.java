@@ -36,6 +36,7 @@ import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
 import com.chattree.chattree.tools.JSONMessageParser;
+import com.chattree.chattree.tools.Toaster;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -338,7 +339,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
         if (result == null) {
             finishRequesting();
             showProgress(false);
-            Toast.makeText(getContext(), getString(R.string.error_network_for_login_toast), Toast.LENGTH_SHORT).show();
+            Toaster.showCustomToast(getActivity(), getString(R.string.error_network_for_login_toast), Toast.LENGTH_SHORT);
         } else {
             finishRequesting();
             showProgress(false);
@@ -355,6 +356,7 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
                 else {
                     Intent intent = new Intent(getContext(), HomeActivity.class);
                     intent.putExtra(EXTRA_LOGIN_DATA, jsonParser.getJSONString());
+                    Toaster.showCustomToast(getActivity(), getString(R.string.login_successful_toast), null);
                     startActivity(intent);
                 }
 

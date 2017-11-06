@@ -9,14 +9,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import com.chattree.chattree.login.LoginActivity;
-import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
 
 /**
- * Implementation of headless Fragment that runs an AsyncTask to fetch data from the com.chattree.chattree.network.
+ * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.
  */
 public class NetworkFragment extends Fragment {
     public static final String HTTP_METHOD_GET    = "GET";
@@ -28,9 +27,8 @@ public class NetworkFragment extends Fragment {
 
     private static final String URL_KEY         = "UrlKey";
     private static final String HTTP_METHOD_KEY = "HttpMethodKey";
-    private static final String BODY_JSON_KEY   = "BodyJsonKey";
 
-    private static final String BASE_URL = "https://e3246943.ngrok.io/";
+    private static final String BASE_URL = "https://bd872441.ngrok.io/";
 
     private NetConnectCallback<String> mCallback;
     private RequestTask                mRequestTask;
@@ -65,8 +63,19 @@ public class NetworkFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
+        Fragment caller = null;
+
+        switch (getArguments().getString(URL_KEY)) {
+            case "login":
+                caller = ((LoginActivity) context).getLoginFragment();
+                break;
+            case "signup":
+                caller = ((LoginActivity) context).getSignupFragment();
+                break;
+        }
         //noinspection unchecked
-        mCallback = (NetConnectCallback<String>) ((LoginActivity) context).mloginFragment;
+        mCallback = (NetConnectCallback<String>) caller;
     }
 
     @Override

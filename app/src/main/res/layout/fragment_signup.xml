@@ -75,7 +75,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:text="@string/action_login"
+                android:text="@string/action_signup"
                 style="@style/Widget.AppCompat.Button.Colored"
                 android:drawableEnd="@drawable/ic_check_white_24dp"
                 android:drawablePadding="0dp" android:layout_gravity="center_horizontal"/>

@@ -1,6 +1,5 @@
 package com.chattree.chattree.login;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -21,8 +20,8 @@ public class LoginActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
-    public Fragment mloginFragment;
-    public Fragment mSignupFragment;
+    private Fragment loginFragment;
+    private Fragment signupFragment;
 
 
     @Override
@@ -37,6 +36,13 @@ public class LoginActivity extends AppCompatActivity {
         mViewPager.setAdapter(mFixedTabsPagerAdapter);
     }
 
+    public Fragment getLoginFragment() {
+        return loginFragment;
+    }
+
+    public Fragment getSignupFragment() {
+        return signupFragment;
+    }
 
     class FixedTabsPagerAdapter extends FragmentPagerAdapter {
 
@@ -66,11 +72,11 @@ public class LoginActivity extends AppCompatActivity {
 
             switch (position) {
                 case 0:
-                    mloginFragment = new LoginFragment();
-                    return mloginFragment;
+                    loginFragment = new LoginFragment();
+                    return loginFragment;
                 case 1:
-                    mSignupFragment = new SignupFragment();
-                    return mSignupFragment;
+                    signupFragment = new SignupFragment();
+                    return signupFragment;
                 default:
                     return null;
             }

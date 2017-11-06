@@ -4,7 +4,12 @@
     <!-- Toasts -->
     <string name="error_network_for_login_toast">Erreur : veuillez activer le réseau pour vous connecter</string>
     <string name="error_network_for_signup_toast">Erreur : veuillez activer le réseau pour vous inscrire</string>
+    <string name="error_network_server_down_toast">Erreur : le serveur est actuellement indisponible</string>
     <string name="login_successful_toast">Bienvenue sur votre espace ChatTree ! :)</string>
+
+    <string name="logo">logo</string>
+    <string name="login_page_title">connexion</string>
+    <string name="signup_page_title">inscription</string>
 
     <!-- Strings related to login -->
     <string name="prompt_identifiant">Email ou nom d\'utilisateur</string>
@@ -19,13 +24,12 @@
     <string name="permission_rationale">"La permission d'accéder aux contacts est nécessaire pour activer
         l'auto-complétion d'emails"
     </string>
-    <string name="logo">logo</string>
-    <string name="login_page_title">connexion</string>
-    <string name="signup_page_title">inscription</string>
-    <string name="prompt_password_confirm">Mot de passe (4 caractères minimum)</string>
 
     <!-- Strings related to signup -->
     <string name="signup_prompt_email">Email</string>
+    <string name="signup_prompt_password">Mot de passe (4 caractères minimum)</string>
+    <string name="action_signup">go !</string>
+    <string name="prompt_password_confirm">Confirmation</string>
     <string name="signup_error_invalid_email">Veuillez renseigner un email valide svp</string>
     <string name="signup_error_invalid_password">Veuillez renseigner un mot de passe svp (4 caractères minimum)</string>
     <string name="signup_error_missing_password_confirm">Veuillez confirmer votre mot de passe svp</string>

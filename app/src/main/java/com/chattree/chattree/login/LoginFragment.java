@@ -361,6 +361,12 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
                 }
 
             } catch (JSONException e) {
+                if (result.equals("HTTP error code: 404")) {
+                    finishRequesting();
+                    showProgress(false);
+                    Toaster.showCustomToast(getActivity(), getString(R.string.error_network_server_down_toast), Toast.LENGTH_SHORT);
+                }
+                Log.e("JSONException", result);
                 e.printStackTrace();
             }
 

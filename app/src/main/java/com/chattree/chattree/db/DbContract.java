@@ -1,4 +1,4 @@
-package db;
+package com.chattree.chattree.db;
 
 import android.provider.BaseColumns;
 
@@ -40,7 +40,7 @@ public final class DbContract {
 
     /* Inner class that defines the table contents */
     public static class tConversation implements BaseColumns {
-        public static final String TABLE_NAME = "t_thread";
+        public static final String TABLE_NAME = "t_conversation";
         public static final String COLUMN_NAME_FK_ROOT_THREAD = "fk_root_thread";
         public static final String COLUMN_NAME_TITLE = "title";
         public static final String COLUMN_NAME_PICTURE = "picture";
@@ -65,18 +65,16 @@ public final class DbContract {
                     tMessage._ID + " INTEGER PRIMARY KEY," +
                     tMessage.COLUMN_NAME_FK_AUTHOR + " INTEGER REFERENCES "+tUser.TABLE_NAME+" NOT NULL," +
                     tMessage.COLUMN_NAME_CREATION_DATE + " TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP," +
-                    tMessage.COLUMN_NAME_CONTENT + " TEXT NOT NULL," +
-                    tMessage.COLUMN_NAME_FK_THREAD_PARENT + " INTEGER NOT NULL); " +
+                    tMessage.COLUMN_NAME_CONTENT + " TEXT NOT NULL);" +
             "CREATE TABLE " + tThread.TABLE_NAME + " (" +
                     tThread._ID + " INTEGER PRIMARY KEY," +
                     tThread.COLUMN_NAME_CREATION_DATE + " TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP," +
                     tThread.COLUMN_NAME_TITLE + " VARCHAR(200)," +
                     tThread.COLUMN_NAME_FK_AUTHOR + " INTEGER REFERENCES "+tUser.TABLE_NAME+"," +
-                    tThread.COLUMN_NAME_FK_CONVERSATION + " INTEGER NOT NULL," +
                     tThread.COLUMN_NAME_FK_THREAD_PARENT + " INTEGER REFERENCES "+tThread.TABLE_NAME+"," +
                     tThread.COLUMN_NAME_FK_MESSAGE_PARENT + " INTEGER REFERENCES "+tMessage.TABLE_NAME+"); " +
             "ALTER TABLE " + tMessage.TABLE_NAME +
-                    " ADD FOREIGN KEY (" + tMessage.COLUMN_NAME_FK_THREAD_PARENT + ")" +
+                    " ADD COLUMN " + tMessage.COLUMN_NAME_FK_THREAD_PARENT + " INTEGER " +
                     " REFERENCES " + tThread.TABLE_NAME + "; " +
             "CREATE TABLE " + tConversation.TABLE_NAME + " (" +
                     tConversation._ID + " INTEGER PRIMARY KEY," +
@@ -84,12 +82,12 @@ public final class DbContract {
                     tConversation.COLUMN_NAME_TITLE + " VARCHAR(200)," +
                     tConversation.COLUMN_NAME_PICTURE + " VARCHAR(200)); " +
             "ALTER TABLE " + tThread.TABLE_NAME +
-                    " ADD FOREIGN KEY (" + tThread.COLUMN_NAME_FK_CONVERSATION + ")" +
+                    " ADD COLUMN " + tThread.COLUMN_NAME_FK_CONVERSATION +
                     " REFERENCES " + tConversation.TABLE_NAME + "; " +
             "CREATE TABLE " + tConversationUser.TABLE_NAME + " (" +
                     tConversationUser._ID + " INTEGER PRIMARY KEY," +
                     tConversationUser.COLUMN_NAME_FK_CONVERSATION + " INTEGER NOT NULL REFERENCES "+tConversation.TABLE_NAME+"," +
-                    tConversationUser.COLUMN_NAME_FK_MEMBER + " INTEGER NOT NULL REFERENCES "+tUser.TABLE_NAME+"); ";
+                    tConversationUser.COLUMN_NAME_FK_MEMBER + " INTEGER NOT NULL REFERENCES "+tUser.TABLE_NAME+");";
 
 
     public static final String SQL_DELETE_ENTRIES =

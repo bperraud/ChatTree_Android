@@ -1,4 +1,4 @@
-package db;
+package com.chattree.chattree.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -66,7 +66,7 @@ public class DbTest {
             while(cursor.moveToNext()) {
                 long itemId = cursor.getLong(cursor.getColumnIndexOrThrow(DbContract.tUser._ID));
                 String email = cursor.getString(cursor.getColumnIndexOrThrow(DbContract.tUser.COLUMN_NAME_EMAIL));
-                System.out.println("Retrieved from local db : " + itemId + " " + email);
+                System.out.println("Retrieved from local com.chattree.chattree.db : " + itemId + " " + email);
             }
             cursor.close();
         }

@@ -3,9 +3,7 @@ package com.chattree.chattree;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.ContentValues;
 import android.content.pm.PackageManager;
-import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -30,9 +28,8 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import db.DbContract;
-import db.DbHelper;
-import db.DbTest;
+import com.chattree.chattree.db.DbHelper;
+import com.chattree.chattree.db.DbTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +64,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private View                 mProgressView;
     private View                 mLoginFormView;
 
-    DbHelper mDbHelper = new DbHelper(LoginActivity.this);
+    private DbHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,11 +97,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
-        DbTest.InsertTask insertTask = new DbTest().new InsertTask();
-        insertTask.execute(mDbHelper);
+        mDbHelper = new DbHelper(LoginActivity.this);
+        Cursor c = mDbHelper.getConversations();
 
-        DbTest.RetrieveTask retrieveTask = new DbTest().new RetrieveTask();
-        retrieveTask.execute(mDbHelper);
     }
 
     private void populateAutoComplete() {

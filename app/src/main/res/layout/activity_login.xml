@@ -10,28 +10,22 @@
               android:paddingTop="@dimen/activity_vertical_margin"
               tools:context="com.chattree.chattree.login.LoginActivity">
 
-    <!-- Login progress -->
-
     <ImageView
             android:layout_width="match_parent"
             android:layout_height="wrap_content" app:srcCompat="@drawable/logo" android:id="@+id/imageView"
             android:cropToPadding="false" android:adjustViewBounds="true" android:layout_marginBottom="24dp"
             android:contentDescription="@string/logo"/>
 
+    <com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout
+            android:id="@+id/sliding_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"/>
+
     <android.support.v4.view.ViewPager
             android:id="@+id/viewpager"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
-
-        <android.support.v4.view.PagerTabStrip
-                android:id="@+id/pager_tab_strip"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/colorPrimary"
-                android:textColor="?android:attr/textColorPrimaryInverse"
-                android:paddingTop="12dp"
-                android:paddingBottom="12dp" android:layout_gravity="top" android:layout_marginBottom="8dp"/>
-
     </android.support.v4.view.ViewPager>
 </LinearLayout>

@@ -37,5 +37,7 @@
     <string name="action_search">Rechercher</string>
     <string name="profile">Profil</string>
     <string name="notifications">Notifications</string>
+    <string name="conversations_title">conversations</string>
+    <string name="contacts_title">contacts</string>
 
 </resources>

@@ -1,5 +1,9 @@
 package com.chattree.chattree.home;
 
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
@@ -10,8 +14,15 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import com.chattree.chattree.R;
+import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
+
+import java.util.Locale;
 
 public class HomeActivity extends AppCompatActivity {
+
+    private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
+    private SlidingTabLayout      mSlidingTabLayout;
+    private ViewPager mViewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +44,17 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        mFixedTabsPagerAdapter = new FixedTabsPagerAdapter(getSupportFragmentManager());
+        mViewPager = (ViewPager) findViewById(R.id.viewpager);
+        mViewPager.setAdapter(mFixedTabsPagerAdapter);
+
+        // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
+        // it's PagerAdapter set.
+        mSlidingTabLayout = (SlidingTabLayout) findViewById(R.id.sliding_tabs);
+        mSlidingTabLayout.setDistributeEvenly(true);
+        mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
+        mSlidingTabLayout.setViewPager(mViewPager);
+
 //        Intent intent        = getIntent();
 //        String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);
 //
@@ -45,7 +67,7 @@ public class HomeActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.home_toolbar_menu, menu);
 
-        MenuItem searchItem = menu.findItem(R.id.action_search);
+        MenuItem   searchItem = menu.findItem(R.id.action_search);
         SearchView searchView = (SearchView) searchItem.getActionView();
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -88,6 +110,46 @@ public class HomeActivity extends AppCompatActivity {
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
 
+        }
+    }
+
+    class FixedTabsPagerAdapter extends FragmentPagerAdapter {
+
+        FixedTabsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+//                    loginFragment = new LoginFragment();
+//                    return loginFragment;
+                    return new ConversationsListFragment();
+                case 1:
+//                    signupFragment = new SignupFragment();
+//                    return signupFragment;
+                    return new ConversationsListFragment();
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return getString(R.string.conversations_title).toUpperCase(Locale.CANADA_FRENCH);
+                case 1:
+                    return getString(R.string.contacts_title).toUpperCase(Locale.CANADA_FRENCH);
+                default:
+                    return null;
+            }
         }
     }
 

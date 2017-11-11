@@ -3,5 +3,6 @@
     <color name="colorPrimary">#60ca91</color>
     <color name="colorPrimaryDark">#2d6044</color>
     <color name="colorAccent">#60ca91</color>
+    <color name="colorComplement">#ec9c5c</color>
     <color name="customToastBg">#272727</color>
 </resources>

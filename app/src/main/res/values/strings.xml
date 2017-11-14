@@ -34,5 +34,11 @@
     <string name="signup_error_invalid_password">Veuillez renseigner un mot de passe svp (4 caractères minimum)</string>
     <string name="signup_error_missing_password_confirm">Veuillez confirmer votre mot de passe svp</string>
     <string name="signup_error_invalid_password_confirm">Les mots de passe sont différents</string>
+    <string name="profile_picture">Image de profil</string>
+    <string name="maxime75">Maxime75</string>
+    <string name="connected_status">En ligne</string>
+    <string name="sherbrooke">Sherbrooke</string>
+    <string name="maxime_silva">Maxime Silva</string>
+    <string name="maximesilva75_gmail_com">maximesilva75@gmail.com</string>
 
 </resources>

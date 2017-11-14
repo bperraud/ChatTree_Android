@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto" android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent" android:padding="8dp" android:gravity="center_vertical"
+              android:paddingTop="16dp" android:paddingBottom="16dp">
+
+    <ImageView android:id="@+id/avatar"
+               android:layout_width="48dp"
+               android:layout_height="48dp"
+               android:src="@drawable/ic_people_black_24dp"
+               android:contentDescription="@string/contactpicture"
+               android:scaleType="centerCrop" android:layout_marginRight="8dp"/>
+    <LinearLayout android:layout_toRightOf="@id/avatar"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="vertical">
+        <TextView
+                android:text="Bob l'indien"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/nameTextView"
+                style="@style/Base.TextAppearance.AppCompat.Headline" android:textSize="18sp"/>
+
+        <TextView
+                android:text="Bla bla bla"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/overviewTextView"
+                android:layout_below="@id/nameTextView"/>
+    </LinearLayout>
+
+</LinearLayout>

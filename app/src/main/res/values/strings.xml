@@ -42,5 +42,6 @@
     <string name="home">accueil</string>
     <string name="group_conversations">Conversations de groupe</string>
     <string name="settings">Paramètres</string>
+    <string name="contactpicture">Image du contact</string>
 
 </resources>

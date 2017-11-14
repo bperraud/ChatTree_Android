@@ -31,7 +31,7 @@ public class HomeActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 //        toolbar.setLogo(R.drawable.logo);
-        toolbar.setLogo(R.drawable.ic_more_vert_white_24dp);
+        toolbar.setLogo(R.drawable.favicon_black);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayShowTitleEnabled(false);

@@ -5,4 +5,5 @@
     <color name="colorAccent">#60ca91</color>
     <color name="colorComplement">#ec9c5c</color>
     <color name="customToastBg">#272727</color>
+    <color name="extremeLightGrey">#e6e6e6</color>
 </resources>

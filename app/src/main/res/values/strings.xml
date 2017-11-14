@@ -45,5 +45,11 @@
     <string name="contactPicture">Image du contact</string>
     <string name="bob_l_indien">Bob l\'indien</string>
     <string name="bla_bla_bla">Bla bla bla</string>
+    <string name="profile_picture">Image de profil</string>
+    <string name="maxime75">Maxime75</string>
+    <string name="connected_status">En ligne</string>
+    <string name="sherbrooke">Sherbrooke</string>
+    <string name="maxime_silva">Maxime Silva</string>
+    <string name="maximesilva75_gmail_com">maximesilva75@gmail.com</string>
 
 </resources>

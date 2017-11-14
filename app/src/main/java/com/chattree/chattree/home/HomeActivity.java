@@ -160,7 +160,7 @@ public class HomeActivity extends AppCompatActivity {
                 case 1:
 //                    signupFragment = new SignupFragment();
 //                    return signupFragment;
-                    return new ConversationsListFragment();
+                    return new ContactsListFragment();
                 default:
                     return null;
             }

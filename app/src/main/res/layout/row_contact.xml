@@ -8,7 +8,7 @@
     <ImageView android:id="@+id/avatar"
                android:layout_width="48dp"
                android:layout_height="48dp"
-               android:src="@drawable/ic_people_black_24dp"
+               android:src="@drawable/ic_account_circle_black_24dp"
                android:contentDescription="@string/contactPicture"
                android:scaleType="centerCrop" android:layout_marginEnd="8dp"/>
     <LinearLayout android:layout_width="match_parent"

@@ -42,6 +42,8 @@
     <string name="home">accueil</string>
     <string name="group_conversations">Conversations de groupe</string>
     <string name="settings">Paramètres</string>
-    <string name="contactpicture">Image du contact</string>
+    <string name="contactPicture">Image du contact</string>
+    <string name="bob_l_indien">Bob l\'indien</string>
+    <string name="bla_bla_bla">Bla bla bla</string>
 
 </resources>

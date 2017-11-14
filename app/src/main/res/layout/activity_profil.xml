@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.chattree.chattree.profil.ProfilActivity">
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="368dp"
+        android:layout_height="495dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:orientation="vertical"
+        tools:layout_editor_absoluteY="8dp"
+        tools:layout_editor_absoluteX="8dp">
+
+        <ImageView
+            android:id="@+id/image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/profil"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="25dp"
+            />
+
+
+        <TextView
+            android:id="@+id/login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:text="Maxime75"
+            android:textSize="30dp"
+            android:textColor="@color/colorPrimary"
+            android:layout_below="@id/image"
+            />
+
+        <TextView
+            android:id="@+id/statut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:text="En Ligne"
+            android:textSize="15dp"
+            android:layout_below="@id/login"
+            android:textColor="@color/colorPrimaryDark"/>
+
+        <LinearLayout
+            android:id="@+id/locationlayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/statut"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:id="@+id/location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" Sherbrooke"
+                android:textSize="15dp"
+                android:layout_gravity="center_vertical"
+                android:textColor="@color/colorPrimaryDark"
+
+                />
+            <ImageView
+                android:id="@+id/iconlocation"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginLeft="3dp"
+                android:src="@drawable/iconeblack"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="center_vertical"
+                />
+
+
+        </LinearLayout>
+        <TextView
+            android:id="@+id/prenom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="70dp"
+            android:text="Maxime Silva"
+            android:textSize="16dp"
+            android:layout_below="@id/locationlayout"/>
+
+
+        <LinearLayout
+            android:id="@+id/maillayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/prenom"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp">
+
+
+            <ImageView
+                android:id="@+id/iconmail"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/mailicon"
+                android:layout_marginRight="5dp"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="center_vertical"
+                />
+            <TextView
+                android:id="@+id/mail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="maximesilva75@gmail.com"
+                android:textSize="16dp"
+                android:layout_gravity="center_vertical"
+
+                />
+
+
+        </LinearLayout>
+
+
+
+    </RelativeLayout>
+</android.support.constraint.ConstraintLayout>

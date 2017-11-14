@@ -1,5 +1,6 @@
 package com.chattree.chattree.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -10,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 import com.chattree.chattree.R;
+import com.chattree.chattree.profile.ProfileActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class ContactsListFragment extends Fragment {
         // Inflate the layout resource that'll be returned
         View rootView = inflater.inflate(R.layout.fragment_contacts_list, container, false);
 
-        // List of conversations
+        // List of contacts
         contactsList = new ArrayList<>();
         contactsList.add("CONTACT 1");
         contactsList.add("CONTACT 2");
@@ -44,8 +46,8 @@ public class ContactsListFragment extends Fragment {
 
         conversationsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View view, int position, long id) {
-                // TODO: access the detail of the contact
-                Toast.makeText(getContext(), "GO TO CONTACT " + ++position, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), ProfileActivity.class);
+                startActivity(intent);
             }
         });
 

@@ -1,5 +1,6 @@
 package com.chattree.chattree.home;
 
+import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 import com.chattree.chattree.R;
+import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 import java.util.Locale;
@@ -31,7 +33,6 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-//        toolbar.setLogo(R.drawable.logo);
         toolbar.setLogo(R.drawable.favicon_black);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null)
@@ -41,7 +42,8 @@ public class HomeActivity extends AppCompatActivity {
         profileImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("IMAGEBUTTON", "goto profile");
+                Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+                startActivity(intent);
             }
         });
 

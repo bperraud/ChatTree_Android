@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
@@ -22,7 +23,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
-    private ViewPager mViewPager;
+    private ViewPager             mViewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,9 +45,33 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+
+        Toolbar toolbarBottom = (Toolbar) findViewById(R.id.toolbar_bottom);
+        toolbarBottom.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_home:
+                        Toast.makeText(getApplicationContext(), "GO HOME", Toast.LENGTH_SHORT).show();
+                        return true;
+                    case R.id.action_group_conversations:
+                        Toast.makeText(getApplicationContext(), "GO TO GROUP CONVERSATIONS", Toast.LENGTH_SHORT).show();
+                        return true;
+                    case R.id.action_settings:
+                        Toast.makeText(getApplicationContext(), "SETTINGS", Toast.LENGTH_SHORT).show();
+                        return true;
+                }
+                return true;
+            }
+        });
+        // Inflate a menu to be displayed in the toolbar
+        toolbarBottom.inflateMenu(R.menu.home_toolbar_bottom_menu);
+
+
         mFixedTabsPagerAdapter = new FixedTabsPagerAdapter(getSupportFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.viewpager);
         mViewPager.setAdapter(mFixedTabsPagerAdapter);
+
 
         // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
         // it's PagerAdapter set.
@@ -54,6 +79,7 @@ public class HomeActivity extends AppCompatActivity {
         mSlidingTabLayout.setDistributeEvenly(true);
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
+
 
 //        Intent intent        = getIntent();
 //        String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);

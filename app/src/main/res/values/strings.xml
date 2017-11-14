@@ -39,5 +39,8 @@
     <string name="notifications">Notifications</string>
     <string name="conversations_title">conversations</string>
     <string name="contacts_title">contacts</string>
+    <string name="home">accueil</string>
+    <string name="group_conversations">Conversations de groupe</string>
+    <string name="settings">Paramètres</string>
 
 </resources>

@@ -35,4 +35,21 @@
             android:layout_height="0dp"
             android:layout_weight="1">
     </android.support.v4.view.ViewPager>
+
+    <android.support.design.widget.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize">
+        <View android:layout_width="match_parent"
+              android:layout_height="1dp"
+              android:background="@android:color/background_dark"
+              android:id="@+id/view"/>
+        <com.chattree.chattree.tools.split_toolbar.SplitToolbar
+                android:id="@+id/toolbar_bottom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="?attr/actionBarSize"
+                android:background="@android:color/background_light">
+        </com.chattree.chattree.tools.split_toolbar.SplitToolbar>
+    </android.support.design.widget.AppBarLayout>
+
 </LinearLayout>

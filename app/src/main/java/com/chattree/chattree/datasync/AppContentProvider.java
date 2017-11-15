@@ -8,24 +8,9 @@ import android.net.Uri;
 import com.chattree.chattree.db.DbHelper;
 
 /*
- * Define an implementation of ContentProvider that stubs out
- * all methods
+ * We don't really need a content provider for now, but keep it because mandatory for the SyncAdapter.
  */
 public class AppContentProvider extends ContentProvider {
-
-    private static final String AUTHORITY = "com.chattree.chattree.provider";
-    private static final int CONVERSATIONS = 1;
-    private static final int MENU_ID = 2;
-    private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    static {
-        sURIMatcher.addURI(AUTHORITY, "conversations", CONVERSATIONS);
-        sURIMatcher.addURI(AUTHORITY, "menu/#", MENU_ID);
-    }
-
-    public static final Uri CONVERSATIONS_URI = Uri.parse("content://" + AUTHORITY + "/" + "conversations");
-    //public static final Uri MENU_URI = Uri.parse("content://" + AUTHORITY + "/" + "menu");
-
-    private DbHelper mDbHelper;
 
     /*
      * Always return true, indicating that the
@@ -33,7 +18,6 @@ public class AppContentProvider extends ContentProvider {
      */
     @Override
     public boolean onCreate() {
-        mDbHelper = new DbHelper(this.getContext());
         return true;
     }
     /*
@@ -41,14 +25,7 @@ public class AppContentProvider extends ContentProvider {
      */
     @Override
     public String getType(Uri uri) {
-        switch (sURIMatcher.match(uri)) {
-            case CONVERSATIONS:
-                return "vnd.Android.cursor.dir/vnd.com.chattree.chattree.provider.conversations";
-            case MENU_ID:
-                return "vnd.Android.cursor.dir/vnd.com.chattree.chattree.provider.menu";
-            default:
-                throw new RuntimeException("getType No URI Match: " + uri);
-        }
+        return null;
     }
     /*
      * query() always returns no results
@@ -57,12 +34,7 @@ public class AppContentProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
 
-        switch (sURIMatcher.match(uri)) {
-            case CONVERSATIONS:
-                return mDbHelper.getConversations();
-            default:
-                throw new UnsupportedOperationException("Not yet implemented");
-        }
+        return null;
 
     }
     /*

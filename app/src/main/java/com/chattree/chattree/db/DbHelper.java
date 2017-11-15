@@ -1,5 +1,6 @@
 package com.chattree.chattree.db;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -54,6 +55,18 @@ public class DbHelper extends SQLiteOpenHelper{
         );
         c.moveToFirst();
         return c;
+    }
+
+    public void insertConversation(String title){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues val = new ContentValues();
+        val.put(DbContract.tConversation.COLUMN_NAME_TITLE, title);
+        long convId = db.insertOrThrow(DbContract.tConversation.TABLE_NAME,  null, val);
+
+        val = new ContentValues();
+        val.put(DbContract.tThread.COLUMN_NAME_FK_CONVERSATION, convId);
+        long threadId = db.insertOrThrow(DbContract.tThread.TABLE_NAME, null, val);
+
     }
 
 }

@@ -1,5 +1,6 @@
 package com.chattree.chattree.db;
 
+import android.arch.persistence.room.Room;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,7 +8,27 @@ import android.os.AsyncTask;
 
 public class DbTest {
 
-    public class InsertTask extends AsyncTask<DbHelper,Void,Void> {
+
+    public class RoomTestTask extends AsyncTask<AppDatabase,Void,Void> {
+
+        @Override
+        protected Void doInBackground(AppDatabase... dbs) {
+
+            AppDatabase mDb = dbs[0];
+            UserDao mUserDao = mDb.userDao();
+            User user = new User();
+            user.setId(3);
+            user.setFirstname("george");
+            user.setLastname("orwell");
+            mUserDao.insertAll(user);
+            User byName = mUserDao.findByName("george", "orwell");
+            System.out.println(user.getId() + " " + user.getFirstname() + " " + user.getLastname());
+            System.out.println(byName.getId() + " " + byName.getFirstname() + " " + byName.getLastname());
+            return null;
+        }
+    }
+
+    /*public class InsertTask extends AsyncTask<DbHelper,Void,Void> {
 
         @Override
         protected Void doInBackground(DbHelper... mDbHelpers) {
@@ -70,5 +91,5 @@ public class DbTest {
             }
             cursor.close();
         }
-    }
+    }*/
 }

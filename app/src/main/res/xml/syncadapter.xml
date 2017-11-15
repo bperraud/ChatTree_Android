@@ -2,7 +2,7 @@
 <sync-adapter
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:contentAuthority="com.chattree.chattree.provider"
-        android:accountType="example.com"
+        android:accountType="chattree.com"
         android:userVisible="false"
         android:supportsUploading="true"
         android:allowParallelSyncs="false"

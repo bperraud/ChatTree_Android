@@ -1,5 +1,6 @@
 package com.chattree.chattree.home;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -11,6 +12,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.chattree.chattree.R;
+import com.chattree.chattree.home.conversation.ConversationActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +47,8 @@ public class ConversationsListFragment extends Fragment {
 
         conversationsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View view, int position, long id) {
-                // TODO: access the detail of the conversation
-                Toast.makeText(getContext(), "GO TO CONV " + ++position, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), ConversationActivity.class);
+                startActivity(intent);
             }
         });
 

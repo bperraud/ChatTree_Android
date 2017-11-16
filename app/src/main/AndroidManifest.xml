@@ -41,6 +41,14 @@
 
         <!-- PROFILE ACTIVITY -->
         <activity android:name=".profile.ProfileActivity"/>
+
+        <!-- CONVERSATION ACTIVITY -->
+        <activity
+                android:name=".home.conversation.ConversationActivity"
+                android:configChanges="orientation|keyboardHidden"
+                android:screenOrientation="portrait"
+                android:parentActivityName=".home.HomeActivity">
+        </activity>
     </application>
 
 </manifest>

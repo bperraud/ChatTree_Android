@@ -4,7 +4,7 @@
               android:layout_height="match_parent"
               android:gravity="center_horizontal"
               android:orientation="vertical"
-              tools:context="com.chattree.chattree.home.HomeActivity">
+              tools:context="com.chattree.chattree.home.conversation.ConversationActivity">
 
     <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
@@ -14,13 +14,19 @@
             android:theme="?attr/actionBarTheme"
             android:minHeight="?attr/actionBarSize"
     >
-        <ImageButton
-                android:id="@+id/profileImageBtn"
+        <TextView
+                android:id="@+id/profileTextView"
                 android:layout_width="wrap_content"
-                android:contentDescription="@string/profile"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_account_circle_white_24dp" android:background="@android:color/transparent"/>
+                android:text="@string/maxime_silva"
+                android:textSize="20sp"
+                android:layout_marginTop="10dp"
+                android:drawableStart="@drawable/ic_account_circle_white_24dp"
+                android:drawablePadding="4dp"
+                android:gravity="center_vertical"
+                android:textColor="@android:color/primary_text_dark"
+        />
+
     </android.support.v7.widget.Toolbar>
 
     <com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout
@@ -35,21 +41,5 @@
             android:layout_height="0dp"
             android:layout_weight="1">
     </android.support.v4.view.ViewPager>
-
-    <android.support.design.widget.AppBarLayout
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize">
-        <View android:layout_width="match_parent"
-              android:layout_height="1dp"
-              android:background="@android:color/background_dark"
-              android:id="@+id/view"/>
-        <com.chattree.chattree.tools.split_toolbar.SplitToolbar
-                android:id="@+id/toolbar_bottom"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="?attr/actionBarSize"
-                android:background="@android:color/background_light">
-        </com.chattree.chattree.tools.split_toolbar.SplitToolbar>
-    </android.support.design.widget.AppBarLayout>
 
 </LinearLayout>

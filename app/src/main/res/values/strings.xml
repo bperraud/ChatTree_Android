@@ -51,5 +51,7 @@
     <string name="sherbrooke">Sherbrooke</string>
     <string name="maxime_silva">Maxime Silva</string>
     <string name="maximesilva75_gmail_com">maximesilva75@gmail.com</string>
+    <string name="root_thread_title">discussion</string>
+    <string name="threads_title">thèmes</string>
 
 </resources>

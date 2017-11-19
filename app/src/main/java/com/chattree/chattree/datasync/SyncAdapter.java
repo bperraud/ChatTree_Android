@@ -3,7 +3,9 @@ package com.chattree.chattree.datasync;
 import android.accounts.Account;
 import android.content.*;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
+import android.util.Base64;
 import android.util.Log;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
@@ -59,27 +61,24 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
      * up your own background processing.
      */
     @Override
-    public void onPerformSync(
-            Account account,
-            Bundle extras,
-            String authority,
-            ContentProviderClient provider,
-            SyncResult syncResult) {
+    public void onPerformSync(Account account,Bundle extras,String authority,ContentProviderClient provider,SyncResult syncResult) {
         Log.i("SyncAdapter", "SYNCING DATA...");
-    /*
-     * Put the data transfer code here.
-     */
+        /*
+         * Put the data transfer code here.
+         */
+        fullSync();
 
-    NetworkFragment n = new NetworkFragment();
+    }
 
+    private void fullSync(){
         URL url = null;
         try {
-            url = new URL(NetworkFragment.BASE_URL+"get-conversations");
+            url = new URL(NetworkFragment.BASE_URL+"api/get-conversations");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
         try {
-            String result = requestUrl(url, "GET", "body");
+            String result = requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
             Log.i("SyncAdapter", "RESULT : " + result);
         } catch (IOException e) {
             e.printStackTrace();
@@ -100,14 +99,25 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             // Set HTTP method.
             connection.setRequestMethod(httpMethod);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            connection.setDoOutput(true);
+            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+            String token = pref.getString("token", null);
+            connection.setRequestProperty("x-access-token", token);
+            //String basicAuth = "Bearer " + new String(Base64.encode(token.getBytes(), android.util.Base64.NO_WRAP));
+            connection.setRequestProperty("Authorization", "Bearer");
+
+            if(body == null)
+                connection.setDoOutput(false);
+            else
+                connection.setDoOutput(true);
             // Already true by default but setting just in case; needs to be true since this request
             // is carrying an input (response) body.
             connection.setDoInput(true);
 
-            OutputStream os = connection.getOutputStream();
-            os.write(body.getBytes("UTF-8"));
-            os.close();
+            if(body != null) {
+                OutputStream os = connection.getOutputStream();
+                os.write(body.getBytes("UTF-8"));
+                os.close();
+            }
 
             // Open communications link (network traffic occurs here).
             connection.connect();

@@ -1,11 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="horizontal"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@color/extremeLightGrey" android:padding="8dp">
-    <TextView android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:id="@+id/node_value" android:text="TEXT"
-              android:textAppearance="@android:style/TextAppearance.Material.Large"/>
-</LinearLayout>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:layout_width="match_parent"
+                android:minHeight="60dp"
+                android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackground">
+
+
+    <com.github.johnkil.print.PrintView
+            android:layout_alignParentLeft="true"
+            android:id="@+id/arrow_icon"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_keyboard_arrow_right"
+            app:iconColor="@android:color/primary_text_light"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="20dp"/>
+
+    <com.github.johnkil.print.PrintView
+            android:layout_alignWithParentIfMissing="true"
+            android:id="@+id/icon"
+            android:layout_toRightOf="@id/arrow_icon"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:iconText="@string/ic_email"
+            app:iconColor="@color/colorPrimary"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="24dp"/>
+
+    <TextView
+            android:id="@+id/node_value"
+            android:layout_centerVertical="true"
+            android:textSize="16sp"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@+id/icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    <com.github.johnkil.print.PrintView
+            android:id="@+id/tag_icon"
+            android:layout_toLeftOf="@+id/tag_labels"
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+            app:iconText="@string/ic_label"
+            app:iconColor="@color/colorComplement"
+            app:iconFont="fonts/material-icon-font.ttf"
+            app:iconSize="20dp"/>
+
+    <TextView
+            android:id="@+id/tag_labels"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:textSize="14sp"
+            android:layout_marginLeft="6dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="italic"/>
+</RelativeLayout>

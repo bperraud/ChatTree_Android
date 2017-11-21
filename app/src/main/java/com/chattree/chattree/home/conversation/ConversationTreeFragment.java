@@ -15,6 +15,7 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 
 public class ConversationTreeFragment extends Fragment {
     private AndroidTreeView tView;
+    private static final String NAME = "Very long name for folder";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -26,7 +27,10 @@ public class ConversationTreeFragment extends Fragment {
 
         TreeNode thread1    = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1"));
         TreeNode subThread1 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.1"));
-        TreeNode subThread2 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.2"));
+        TreeNode subThread2 = new TreeNode(new IconTreeItem(
+                R.string.ic_messenger,
+                "Fil 1.2 - avec un nom ou une profondeur tellement long(ue) que ça en devient ridicule"
+        ));
         TreeNode subThread3 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.3"));
         TreeNode subThread4 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.4"));
 
@@ -38,6 +42,7 @@ public class ConversationTreeFragment extends Fragment {
 
         tView = new AndroidTreeView(getActivity(), root);
         tView.setDefaultAnimation(true);
+        tView.setUse2dScroll(true);
         tView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
         tView.setDefaultViewHolder(NodeViewHolder.class);
         tView.setDefaultNodeClickListener(new TreeNode.TreeNodeClickListener() {
@@ -74,5 +79,13 @@ public class ConversationTreeFragment extends Fragment {
 
         return rootView;
     }
+
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("tState", tView.getSaveState());
+    }
+
 
 }

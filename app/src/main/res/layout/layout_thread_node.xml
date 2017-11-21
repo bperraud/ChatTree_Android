@@ -37,29 +37,34 @@
             android:layout_centerVertical="true"
             android:textSize="16sp"
             android:layout_marginLeft="10dp"
+            android:layout_marginRight="32dp"
             android:layout_toRightOf="@+id/icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-    <com.github.johnkil.print.PrintView
-            android:id="@+id/tag_icon"
-            android:layout_toLeftOf="@+id/tag_labels"
-            android:layout_width="20dp"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"
-            app:iconText="@string/ic_label"
-            app:iconColor="@color/colorComplement"
-            app:iconFont="fonts/material-icon-font.ttf"
-            app:iconSize="20dp"/>
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:layout_toRightOf="@+id/node_value"
+                  android:layout_centerVertical="true"
+                  android:layout_centerHorizontal="true"
+                  android:background="@drawable/rounded_rectangle">
 
-    <TextView
-            android:id="@+id/tag_labels"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:textSize="14sp"
-            android:layout_marginLeft="6dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textStyle="italic"/>
+        <com.github.johnkil.print.PrintView
+                android:id="@+id/tag_icon"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                app:iconText="@string/ic_label"
+                app:iconColor="@color/colorComplement"
+                app:iconFont="fonts/material-icon-font.ttf"
+                app:iconSize="20dp"/>
+
+        <TextView
+                android:id="@+id/tag_labels"
+                android:textSize="14sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="italic"/>
+    </LinearLayout>
+
 </RelativeLayout>

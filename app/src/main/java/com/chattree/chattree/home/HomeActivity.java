@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
+import com.chattree.chattree.websocket.UpdaterService;
 
 import java.util.Locale;
 
@@ -88,6 +89,10 @@ public class HomeActivity extends AppCompatActivity {
 //
 //        textView = (TextView) findViewById(R.id.textView);
 //        textView.setText(loginDataJson);
+
+        // Start the updater service
+        Intent intent = new Intent(this, UpdaterService.class);
+        startService(intent);
     }
 
     @Override

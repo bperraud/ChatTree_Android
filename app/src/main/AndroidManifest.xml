@@ -50,6 +50,9 @@
                 android:screenOrientation="portrait"
                 android:parentActivityName=".home.HomeActivity">
         </activity>
+
+        <!-- WEBSOCKET SERVICE -->
+        <service android:name=".websocket.UpdaterService" />
     </application>
 
 </manifest>

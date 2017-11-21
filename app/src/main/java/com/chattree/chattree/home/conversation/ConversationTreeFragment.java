@@ -1,11 +1,13 @@
 package com.chattree.chattree.home.conversation;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.home.conversation.NodeViewHolder.IconTreeItem;
 import com.unnamed.b.atv.model.TreeNode;
@@ -38,6 +40,19 @@ public class ConversationTreeFragment extends Fragment {
         tView.setDefaultAnimation(true);
         tView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
         tView.setDefaultViewHolder(NodeViewHolder.class);
+        tView.setDefaultNodeClickListener(new TreeNode.TreeNodeClickListener() {
+            @Override
+            public void onClick(TreeNode node, Object value) {
+                Toast.makeText(getContext(), "normal click", Toast.LENGTH_SHORT).show();
+            }
+        });
+        tView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
+            @Override
+            public boolean onLongClick(TreeNode node, Object value) {
+                Toast.makeText(getContext(), "long click", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
 
         containerView.addView(tView.getView());
 
@@ -47,6 +62,15 @@ public class ConversationTreeFragment extends Fragment {
                 tView.restoreState(state);
             }
         }
+
+        // New contact FAB
+        FloatingActionButton newThreadFAB = rootView.findViewById(R.id.new_thread_fab);
+        newThreadFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "NEW THREAD", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return rootView;
     }

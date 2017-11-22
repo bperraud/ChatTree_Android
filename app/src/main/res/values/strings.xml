@@ -52,4 +52,7 @@
     <string name="maxime_silva">Maxime Silva</string>
     <string name="maximesilva75_gmail_com">maximesilva75@gmail.com</string>
 
+    <!-- Strings related to location -->
+    <string name="Update_location">Mettre à jour votre position</string>
+
 </resources>

@@ -12,6 +12,7 @@ import com.chattree.chattree.network.NetworkFragment;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -103,7 +104,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             String token = pref.getString("token", null);
             connection.setRequestProperty("x-access-token", token);
             //String basicAuth = "Bearer " + new String(Base64.encode(token.getBytes(), android.util.Base64.NO_WRAP));
-            connection.setRequestProperty("Authorization", "Bearer");
+            //connection.setRequestProperty("Authorization", basicAuth);
 
             if(body == null)
                 connection.setDoOutput(false);

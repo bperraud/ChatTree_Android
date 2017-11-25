@@ -36,13 +36,19 @@ public class NodeViewHolder extends TreeNode.BaseNodeViewHolder<NodeViewHolder.I
             arrowView.setVisibility(View.INVISIBLE);
         }
 
-//        view.findViewById(R.id.btn_addFolder).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                TreeNode newFolder = new TreeNode(new IconTreeItem(R.string.ic_folder, "New Folder"));
-//                getTreeView().addNode(node, newFolder);
-//            }
-//        });
+
+        view.findViewById(R.id.arrow_icon).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!node.isExpanded()) {
+                    (node.getViewHolder().getTreeView()).expandNode(node);
+                    node.setExpanded(true);
+                } else {
+                    (node.getViewHolder().getTreeView()).collapseNode(node);
+                    node.setExpanded(false);
+                }
+            }
+        });
 //
 //        view.findViewById(R.id.btn_delete).setOnClickListener(new View.OnClickListener() {
 //            @Override

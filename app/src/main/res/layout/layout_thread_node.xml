@@ -8,16 +8,17 @@
 
 
     <com.github.johnkil.print.PrintView
-            android:layout_alignParentLeft="true"
             android:id="@+id/arrow_icon"
+            android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginRight="8dp"
             app:iconText="@string/ic_keyboard_arrow_right"
-            app:iconColor="@android:color/primary_text_light"
+            app:iconColor="@android:color/secondary_text_light"
             app:iconFont="fonts/material-icon-font.ttf"
-            app:iconSize="20dp"/>
+            app:iconSize="32dp"/>
 
     <com.github.johnkil.print.PrintView
             android:layout_alignWithParentIfMissing="true"

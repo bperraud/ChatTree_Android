@@ -6,3 +6,6 @@
 /build
 /captures
 .externalNativeBuild
+/app/build.gradle
+/build.gradle
+/gradle/wrapper/gradle-wrapper.properties

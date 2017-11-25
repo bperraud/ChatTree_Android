@@ -488,4 +488,10 @@
     <string name="root_thread_title">discussion</string>
     <string name="threads_title">thèmes</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <!-- Strings related to location -->
+    <string name="Update_location">Mettre à jour votre position</string>
+
 </resources>

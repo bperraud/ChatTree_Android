@@ -1,18 +1,29 @@
 package com.chattree.chattree.login;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.arch.persistence.room.Room;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import com.chattree.chattree.R;
+import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.DbTest;
+import com.chattree.chattree.db.User;
+import com.chattree.chattree.db.UserDao;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {
     public static final String EXTRA_LOGIN_DATA = "com.chattree.chattree.LOGIN_DATA";
+
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout mSlidingTabLayout;
@@ -32,7 +43,6 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-
         mFixedTabsPagerAdapter = new FixedTabsPagerAdapter(getSupportFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.viewpager);
         mViewPager.setAdapter(mFixedTabsPagerAdapter);
@@ -43,6 +53,10 @@ public class LoginActivity extends AppCompatActivity {
         mSlidingTabLayout.setDistributeEvenly(true);
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(android.R.color.white));
         mSlidingTabLayout.setViewPager(mViewPager);
+
+        /*AppDatabase mDb = AppDatabase.getInstance(this.getApplicationContext());
+        DbTest.RoomTestTask task = new DbTest().new RoomTestTask();
+        task.execute(mDb);*/
     }
 
     public Fragment getLoginFragment() {

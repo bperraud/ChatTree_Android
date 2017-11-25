@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,10 +46,11 @@ public class ConversationTreeFragment extends Fragment {
         tView.setUse2dScroll(true);
         tView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
         tView.setDefaultViewHolder(NodeViewHolder.class);
+        tView.setUseAutoToggle(false);
         tView.setDefaultNodeClickListener(new TreeNode.TreeNodeClickListener() {
             @Override
             public void onClick(TreeNode node, Object value) {
-                Toast.makeText(getContext(), "normal click", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "START NEW ACTIVITY TO SHOW THE THREAD DETAIL!! (DESIR)", Toast.LENGTH_SHORT).show();
             }
         });
         tView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
@@ -58,6 +60,7 @@ public class ConversationTreeFragment extends Fragment {
                 return true;
             }
         });
+
 
         containerView.addView(tView.getView());
 

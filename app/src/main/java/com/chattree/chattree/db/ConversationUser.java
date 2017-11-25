@@ -25,6 +25,12 @@ public class ConversationUser {
     @ColumnInfo(name = "fk_member")
     private int fk_member;
 
+    public ConversationUser(int id, int fk_conversation, int fk_member) {
+        this.id = id;
+        this.fk_conversation = fk_conversation;
+        this.fk_member = fk_member;
+    }
+
     public int getId() {
         return id;
     }

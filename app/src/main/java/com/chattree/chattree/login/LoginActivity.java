@@ -14,11 +14,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.AppDatabase;
-import com.chattree.chattree.db.DbTest;
 import com.chattree.chattree.db.User;
 import com.chattree.chattree.db.UserDao;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
+import java.net.CookieHandler;
+import java.net.CookieManager;
 import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {
@@ -26,7 +27,7 @@ public class LoginActivity extends AppCompatActivity {
 
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
-    private SlidingTabLayout mSlidingTabLayout;
+    private SlidingTabLayout      mSlidingTabLayout;
 
     /**
      * The {@link ViewPager} that will display the three primary sections of the app, one at a time.
@@ -49,14 +50,10 @@ public class LoginActivity extends AppCompatActivity {
 
         // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
         // it's PagerAdapter set.
-        mSlidingTabLayout = (SlidingTabLayout) findViewById(R.id.sliding_tabs);
+        mSlidingTabLayout = findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setDistributeEvenly(true);
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(android.R.color.white));
         mSlidingTabLayout.setViewPager(mViewPager);
-
-        /*AppDatabase mDb = AppDatabase.getInstance(this.getApplicationContext());
-        DbTest.RoomTestTask task = new DbTest().new RoomTestTask();
-        task.execute(mDb);*/
     }
 
     public Fragment getLoginFragment() {

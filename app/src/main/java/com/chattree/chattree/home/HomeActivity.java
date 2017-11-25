@@ -2,14 +2,14 @@ package com.chattree.chattree.home;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
+import android.content.*;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -22,41 +22,64 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 import com.chattree.chattree.R;
+import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.ConversationDao;
+import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
+import com.chattree.chattree.network.NetConnectCallback;
+import com.chattree.chattree.network.NetworkFragment;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
-public class HomeActivity extends AppCompatActivity {
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_STATUS;
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_STATUS_DONE;
+import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
+import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
+
+public class HomeActivity extends AppCompatActivity implements NetConnectCallback {
 
     // Content provider authority
-    public static final String AUTHORITY = "com.chattree.chattree.provider";
+    public static final String AUTHORITY    = "com.chattree.chattree.provider";
     // Account
-    public static final String ACCOUNT = "default_account";
+    public static final String ACCOUNT      = "default_account";
     // An account type, in the form of a domain name
     public static final String ACCOUNT_TYPE = "chattree.com";
 
+
+    private static final String TAG = "HOME ACTIVITY";
+
+    public static final String SYNC_CALLBACK_INTENT_ACTION = "com.chattree.chattree.SYNC";
+
     Account mAccount;
+
+    private SyncReceiver dataLoadedReceiver;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
     private ViewPager             mViewPager;
+
+    private ConversationsListFragment conversationsListFragment;
+    private ContactsListFragment contactsListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setLogo(R.drawable.favicon_black);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        ImageButton profileImageBtn = (ImageButton) findViewById(R.id.profileImageBtn);
+        ImageButton profileImageBtn = findViewById(R.id.profileImageBtn);
         profileImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -65,14 +88,18 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+        // Create the headless fragment which encapsulates the AsyncTask for the login op
+        final NetworkFragment mNetworkFragment = NetworkFragment.getInstance(getSupportFragmentManager(), "api/get-conversations", HTTP_METHOD_GET);
 
-        Toolbar toolbarBottom = (Toolbar) findViewById(R.id.toolbar_bottom);
+
+        Toolbar toolbarBottom = findViewById(R.id.toolbar_bottom);
         toolbarBottom.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_home:
                         Toast.makeText(getApplicationContext(), "GO HOME", Toast.LENGTH_SHORT).show();
+                        mNetworkFragment.startRequest(null);
                         return true;
                     case R.id.action_group_conversations:
                         Toast.makeText(getApplicationContext(), "GO TO GROUP CONVERSATIONS", Toast.LENGTH_SHORT).show();
@@ -89,32 +116,29 @@ public class HomeActivity extends AppCompatActivity {
 
 
         mFixedTabsPagerAdapter = new FixedTabsPagerAdapter(getSupportFragmentManager());
-        mViewPager = (ViewPager) findViewById(R.id.viewpager);
+        mViewPager = findViewById(R.id.viewpager);
         mViewPager.setAdapter(mFixedTabsPagerAdapter);
 
 
         // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
         // it's PagerAdapter set.
-        mSlidingTabLayout = (SlidingTabLayout) findViewById(R.id.sliding_tabs);
+        mSlidingTabLayout = findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setDistributeEvenly(true);
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
 
 
-//        Intent intent        = getIntent();
-//        String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);
-//
-//        textView = (TextView) findViewById(R.id.textView);
-//        textView.setText(loginDataJson);
+        Intent intent        = getIntent();
+        String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);
 
         //save the user data
         try {
-            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences        pref = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor edit = pref.edit();
-            JSONObject data = new JSONObject(loginDataJson).getJSONObject("data");
-            JSONObject user = data.getJSONObject("user");
+            JSONObject               data = new JSONObject(loginDataJson).getJSONObject("data");
+            JSONObject               user = data.getJSONObject("user");
             edit.putString("token", data.getString("token"));
-            edit.putInt("user_id",user.getInt("id"));
+            edit.putInt("user_id", user.getInt("id"));
             edit.putString("user_login", user.getString("login"));
             edit.putString("user_email", user.getString("email"));
             edit.putString("user_firstname", user.getString("firstname"));
@@ -122,17 +146,19 @@ public class HomeActivity extends AppCompatActivity {
             edit.commit();
 
             JSONArray convArray = user.getJSONArray("conversations");
-            int[] convIds = new int[convArray.length()];
-            for(int i = 0; i<convArray.length(); i++){
+            int[]     convIds   = new int[convArray.length()];
+            for (int i = 0; i < convArray.length(); i++) {
                 convIds[i] = convArray.getInt(i);
             }
+
+            Log.d(TAG, "onCreate: " + Arrays.toString(convIds));
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
         // Create the dummy account
         mAccount = CreateSyncAccount(this);
-        //enable syncing
+        // Enable syncing
         ContentResolver.setSyncAutomatically(mAccount, AUTHORITY, true);
 
         // Pass the settings flags by inserting them in a bundle
@@ -142,12 +168,48 @@ public class HomeActivity extends AppCompatActivity {
         settingsBundle.putBoolean(
                 ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
 
+
+        /*
+         * Register a broadcast receiver to listen when the data are ready to be read from the local DB
+         */
+        dataLoadedReceiver = new SyncReceiver();
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SYNC_CALLBACK_INTENT_ACTION));
+
         /*
          * Signal the framework to run your sync adapter. Assume that
          * app initialization has already created the account.
          */
         ContentResolver.requestSync(mAccount, AUTHORITY, settingsBundle);
+    }
 
+    public class SyncReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if (intent.getStringExtra(EXTRA_SYNC_STATUS).equals(EXTRA_SYNC_STATUS_DONE)) {
+
+                new AsyncTask<Void, Void, List<CustomConversationUser>>() {
+                    @Override
+                    protected List<CustomConversationUser> doInBackground(Void... params) {
+                        ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
+                        return conversationDao.getCustomConversationUsers();
+                    }
+
+                    @Override
+                    protected void onPostExecute(List<CustomConversationUser> customConversationUsers) {
+                        conversationsListFragment.refreshListOfConv(customConversationUsers);
+                    }
+                }.execute();
+
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(dataLoadedReceiver);
+        super.onDestroy();
     }
 
     /**
@@ -237,6 +299,28 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void updateFromRequest(Object result) {
+        Log.d(TAG, "updateFromRequest: " + result);
+    }
+
+    @Override
+    public NetworkInfo getActiveNetworkInfo() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        return connectivityManager.getActiveNetworkInfo();
+    }
+
+    @Override
+    public void onProgressUpdate(int progressCode, int percentComplete) {
+
+    }
+
+    @Override
+    public void finishRequesting() {
+
+    }
+
     class FixedTabsPagerAdapter extends FragmentPagerAdapter {
 
         FixedTabsPagerAdapter(FragmentManager fm) {
@@ -252,13 +336,11 @@ public class HomeActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-//                    loginFragment = new LoginFragment();
-//                    return loginFragment;
-                    return new ConversationsListFragment();
+                    conversationsListFragment = new ConversationsListFragment();
+                    return conversationsListFragment;
                 case 1:
-//                    signupFragment = new SignupFragment();
-//                    return signupFragment;
-                    return new ContactsListFragment();
+                    contactsListFragment = new ContactsListFragment();
+                    return contactsListFragment;
                 default:
                     return null;
             }

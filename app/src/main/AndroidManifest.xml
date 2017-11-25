@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- location permission -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <!-- Sync permissions -->
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
@@ -34,6 +34,10 @@
                 android:label="@string/app_name"
                 android:noHistory="true"
                 android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
 
         <!-- HOME ACTIVITY -->
@@ -41,10 +45,6 @@
                 android:name=".home.HomeActivity"
                 android:configChanges="orientation|keyboardHidden"
                 android:screenOrientation="portrait">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
         </activity>
 
         <!-- PROFILE ACTIVITY -->
@@ -65,7 +65,7 @@
             </intent-filter>
             <meta-data
                     android:name="android.accounts.AccountAuthenticator"
-                    android:resource="@xml/authenticator" />
+                    android:resource="@xml/authenticator"/>
         </service>
 
         <provider
@@ -76,13 +76,12 @@
 
         <service
                 android:name="com.chattree.chattree.datasync.SyncService"
-                android:exported="true"
-                android:process=":sync">
+                android:exported="true">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter"/>
             </intent-filter>
             <meta-data android:name="android.content.SyncAdapter"
-                       android:resource="@xml/syncadapter" />
+                       android:resource="@xml/syncadapter"/>
         </service>
 
     </application>

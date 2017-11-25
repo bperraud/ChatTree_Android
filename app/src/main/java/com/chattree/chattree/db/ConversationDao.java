@@ -22,9 +22,9 @@ public interface ConversationDao {
             "FROM t_conversation " +
             "INNER JOIN t_conversation_user ON t_conversation.id = t_conversation_user.fk_conversation " +
             "INNER JOIN t_user ON t_user.id = t_conversation_user.fk_member")
-    List<ConversationUser> getConversations();
+    List<CustomConversationUser> getCustomConversationUsers();
 
-    static class ConversationUser {
+    class CustomConversationUser {
         public int c_id;
         public String c_title;
         public String c_picture;
@@ -38,6 +38,9 @@ public interface ConversationDao {
 
     @Insert
     void insertAll(Conversation... conversations);
+
+    @Insert
+    void insertConversationUsers(ConversationUser... conversationUsers);
 
     @Delete
     void delete(Conversation conversation);

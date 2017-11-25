@@ -25,6 +25,15 @@ public class User {
     @ColumnInfo(name = "profile_picture")
     private String profile_picture;
 
+    public User(int id, String login, String email, String firstname, String lastname, String profile_picture) {
+        this.id = id;
+        this.login = login;
+        this.email = email;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.profile_picture = profile_picture;
+    }
+
     public int getId() {
         return id;
     }

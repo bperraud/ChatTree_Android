@@ -4,23 +4,30 @@ import android.accounts.Account;
 import android.content.*;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.FragmentManager;
-import android.util.Base64;
 import android.util.Log;
-import com.chattree.chattree.network.NetConnectCallback;
+import com.chattree.chattree.db.*;
 import com.chattree.chattree.network.NetworkFragment;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
+import java.util.HashSet;
+import java.util.Set;
+
+import static com.chattree.chattree.home.HomeActivity.SYNC_CALLBACK_INTENT_ACTION;
 
 /**
  * Handle the transfer of data between a server and an
  * app, using the Android sync adapter framework.
  */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
+
+    public static final String EXTRA_SYNC_STATUS       = "SyncStatus";
+    public static final String EXTRA_SYNC_STATUS_START = "START";
+    public static final String EXTRA_SYNC_STATUS_DONE  = "DONE";
 
     // Global variables
     // Define a variable to contain a content resolver instance
@@ -62,8 +69,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
      * up your own background processing.
      */
     @Override
-    public void onPerformSync(Account account,Bundle extras,String authority,ContentProviderClient provider,SyncResult syncResult) {
+    public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.i("SyncAdapter", "SYNCING DATA...");
+
         /*
          * Put the data transfer code here.
          */
@@ -71,23 +79,34 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
     }
 
-    private void fullSync(){
+    private void fullSync() {
+
+        Intent intent = new Intent();
+        intent.setAction(SYNC_CALLBACK_INTENT_ACTION);
+        intent.putExtra(EXTRA_SYNC_STATUS, EXTRA_SYNC_STATUS_START);
+        getContext().sendBroadcast(intent);
+
         URL url = null;
         try {
-            url = new URL(NetworkFragment.BASE_URL+"api/get-conversations");
+            url = new URL(NetworkFragment.BASE_URL + "api/get-conversations");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
         try {
             String result = requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
             Log.i("SyncAdapter", "RESULT : " + result);
+
+            insertDataIntoLocalDB(result);
+
+            intent.putExtra(EXTRA_SYNC_STATUS, EXTRA_SYNC_STATUS_DONE);
+            getContext().sendBroadcast(intent);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private String requestUrl(URL url, String httpMethod, String body) throws IOException {
-        InputStream stream     = null;
+        InputStream        stream     = null;
         HttpsURLConnection connection = null;
         String             result     = null;
         try {
@@ -100,13 +119,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             // Set HTTP method.
             connection.setRequestMethod(httpMethod);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this.getContext());
-            String token = pref.getString("token", null);
+            SharedPreferences pref  = PreferenceManager.getDefaultSharedPreferences(this.getContext());
+            String            token = pref.getString("token", null);
             connection.setRequestProperty("x-access-token", token);
-            //String basicAuth = "Bearer " + new String(Base64.encode(token.getBytes(), android.util.Base64.NO_WRAP));
-            //connection.setRequestProperty("Authorization", basicAuth);
 
-            if(body == null)
+            if (body == null)
                 connection.setDoOutput(false);
             else
                 connection.setDoOutput(true);
@@ -114,7 +131,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             // is carrying an input (response) body.
             connection.setDoInput(true);
 
-            if(body != null) {
+            if (body != null) {
                 OutputStream os = connection.getOutputStream();
                 os.write(body.getBytes("UTF-8"));
                 os.close();
@@ -130,7 +147,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             stream = connection.getInputStream();
             if (stream != null) {
                 // Converts Stream to String with max length.
-                result = readStream(stream, 2000);
+                result = readStream(stream, 50000);
             }
         } finally {
             // Close Stream and disconnect HTTPS connection.
@@ -148,7 +165,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
      * Converts the contents of an InputStream to a String.
      */
     String readStream(InputStream stream, int maxReadSize) throws IOException {
-        Reader reader    = new InputStreamReader(stream, "UTF-8");
+        Reader        reader    = new InputStreamReader(stream, "UTF-8");
         char[]        rawBuffer = new char[maxReadSize];
         int           readSize;
         StringBuilder buffer    = new StringBuilder();
@@ -160,5 +177,66 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             maxReadSize -= readSize;
         }
         return buffer.toString();
+    }
+
+    private void insertDataIntoLocalDB(String jsonData) {
+
+        try {
+            JSONObject   json                  = new JSONObject(jsonData);
+            JSONArray    convJsonArray         = json.getJSONObject("data").getJSONArray("conversations");
+            Set<Integer> userIdSet             = new HashSet<>();
+            Integer      conversationUserIndex = 0;
+
+            ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
+            UserDao         userDao         = AppDatabase.getInstance(getContext()).userDao();
+
+            for (int i = 0, size = convJsonArray.length(); i < size; ++i) {
+                JSONObject convJsonObj = convJsonArray.getJSONObject(i);
+                Log.d("SYNC ADAPTER", "insertDataIntoLocalDB: a convJsonObj: " + convJsonObj.toString());
+                int convId = convJsonObj.getInt("id");
+
+                Conversation conv = new Conversation(
+                        convId,
+                        convJsonObj.isNull("fk_root_thread") ? null : convJsonObj.getInt("fk_root_thread"),
+                        convJsonObj.isNull("title") ? null : convJsonObj.getString("title"),
+                        convJsonObj.isNull("picture") ? null : convJsonObj.getString("picture")
+                );
+
+                conversationDao.insertAll(conv);
+
+                JSONArray membersJsonArray = convJsonObj.getJSONArray("members");
+
+                for (int j = 0, membersSize = membersJsonArray.length(); j < membersSize; ++j) {
+                    JSONObject memberJsonObj = membersJsonArray.getJSONObject(j);
+                    int        memberId      = memberJsonObj.getInt("id");
+
+                    // Skip the insertion of the element to prevent duplicata
+                    if (userIdSet.add(memberId)) {
+                        User member = new User(
+                                memberId,
+                                memberJsonObj.isNull("login") ? null : memberJsonObj.getString("login"),
+                                memberJsonObj.isNull("email") ? null : memberJsonObj.getString("email"),
+                                memberJsonObj.isNull("firstname") ? null : memberJsonObj.getString("firstname"),
+                                memberJsonObj.isNull("lastname") ? null : memberJsonObj.getString("lastname"),
+                                memberJsonObj.isNull("profile_picture") ? null : memberJsonObj.getString("profile_picture")
+                        );
+
+                        userDao.insertAll(member);
+                    }
+
+                    ConversationUser conversationUser = new ConversationUser(
+                            conversationUserIndex++,
+                            convId,
+                            memberId
+                    );
+                    conversationDao.insertConversationUsers(conversationUser);
+                }
+            }
+
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }

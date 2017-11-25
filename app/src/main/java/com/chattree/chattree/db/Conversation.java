@@ -15,13 +15,20 @@ public class Conversation {
     private int id;
 
     @ColumnInfo(name = "fk_root_thread")
-    private int fk_root_thread;
+    private Integer fk_root_thread;
 
     @ColumnInfo(name = "title")
     private String title;
 
     @ColumnInfo(name = "picture")
     private String picture;
+
+    public Conversation(int id, Integer fk_root_thread, String title, String picture) {
+        this.id = id;
+        this.fk_root_thread = fk_root_thread;
+        this.title = title;
+        this.picture = picture;
+    }
 
     public int getId() {
         return id;
@@ -31,11 +38,11 @@ public class Conversation {
         this.id = id;
     }
 
-    public int getFk_root_thread() {
+    public Integer getFk_root_thread() {
         return fk_root_thread;
     }
 
-    public void setFk_root_thread(int fk_root_thread) {
+    public void setFk_root_thread(Integer fk_root_thread) {
         this.fk_root_thread = fk_root_thread;
     }
 

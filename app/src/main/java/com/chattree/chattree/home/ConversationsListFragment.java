@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.chattree.chattree.R;
+import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.home.conversation.ConversationActivity;
 
 import java.util.ArrayList;
@@ -64,5 +66,33 @@ public class ConversationsListFragment extends Fragment {
         return rootView;
     }
 
+    void refreshListOfConv(List<ConversationDao.CustomConversationUser> customConversationUsers) {
+        Log.d("TEST", "refreshListOfConv: !!!");
 
+
+        int lastConvId = 0;
+
+        for (ConversationDao.CustomConversationUser conversationUser : customConversationUsers) {
+            Log.d("TEST", "doInBackground: " + conversationUser.c_id);
+            Log.d("TEST", "doInBackground: " + conversationUser.u_id);
+
+            conversationsList.add(String.valueOf(conversationUser.c_id));
+
+            // New conversation found
+            if (conversationUser.c_id != lastConvId) {
+//                conversation = new Conversation(row);
+//                member       = new User(row);
+//                conversation.members.push(member);
+                lastConvId = conversationUser.c_id;
+//                conversations.push(conversation);
+            }
+            // Conversation member found
+            else {
+//                member = new User(row);
+//                conversation.members.push(member);
+            }
+
+            adapter.notifyDataSetChanged();
+        }
+    }
 }

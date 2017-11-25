@@ -16,29 +16,29 @@ import android.widget.Toast;
 
 public class GPS implements LocationListener {
 
-    Context context;
+    private Context context;
 
-    public GPS(Context c){
-        context =c;
+    GPS(Context c) {
+        context = c;
     }
 
-    public Location getLocation(){
+    Location getLocation() {
         // Check is permission is granted
-        if(ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            Toast.makeText(context,"Permission not granted",Toast.LENGTH_SHORT).show();
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(context, "Permission not granted", Toast.LENGTH_SHORT).show();
             return null;
         }
-        LocationManager lm = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-        boolean isGPSEnable = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        if(isGPSEnable){
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,6000,10,this);
-            Location l = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            return l;
-        }else{
-            Toast.makeText(context,"Please enable GPS",Toast.LENGTH_LONG).show();
+        LocationManager lm          = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        boolean         isGPSEnable = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (isGPSEnable) {
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 6000, 10, this);
+            return lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        } else {
+            Toast.makeText(context, "Please enable GPS", Toast.LENGTH_LONG).show();
         }
         return null;
     }
+
     @Override
     public void onLocationChanged(Location location) {
 

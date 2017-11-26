@@ -30,6 +30,8 @@ public class ConversationsListFragment extends Fragment {
 
     private ProgressBar mProgressBar;
 
+    public static final String EXTRA_CONVERSATION_TITLE = "com.chattree.chattree.CONVERSATION_TITLE";
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout resource that'll be returned
@@ -48,6 +50,7 @@ public class ConversationsListFragment extends Fragment {
         conversationsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View view, int position, long id) {
                 Intent intent = new Intent(getContext(), ConversationActivity.class);
+                intent.putExtra(EXTRA_CONVERSATION_TITLE, ((TextView) view.findViewById(R.id.nameTextView)).getText());
                 startActivity(intent);
             }
         });

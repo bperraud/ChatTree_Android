@@ -14,16 +14,25 @@
             android:theme="?attr/actionBarTheme"
             android:minHeight="?attr/actionBarSize"
     >
-        <TextView
-                android:id="@+id/profileTextView"
+        <ImageButton
+                android:id="@+id/profileImageBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/maxime_silva"
+                android:src="@drawable/profile"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:contentDescription="@string/profile"
+                android:background="@android:color/transparent"
+                android:layout_marginRight="12dp"
+        />
+
+        <TextView
+                android:id="@+id/conversationTitleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:textSize="20sp"
                 android:layout_marginTop="10dp"
-                android:drawableStart="@drawable/ic_account_circle_white_24dp"
-                android:drawablePadding="4dp"
-                android:gravity="center_vertical"
                 android:textColor="@android:color/primary_text_dark"
         />
 

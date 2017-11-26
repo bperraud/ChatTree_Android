@@ -37,7 +37,7 @@ public class ConversationListAdapter extends ArrayAdapter<ConversationItem> {
             convName.setText(conv.getTitle());
             convMembersLabel.setText(conv.getMemberLabelsFormated());
         } else {
-            convName.setText(conv.getMemberLabelsFormated());
+            convName.setText("Conversation avec " + conv.getMemberLabelsFormated());
             convMembersLabel.setText("");
         }
 

@@ -192,8 +192,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             for (int i = 0, size = convJsonArray.length(); i < size; ++i) {
                 JSONObject convJsonObj = convJsonArray.getJSONObject(i);
-                Log.d("SYNC ADAPTER", "insertDataIntoLocalDB: a convJsonObj: " + convJsonObj.toString());
-                int convId = convJsonObj.getInt("id");
+                int        convId      = convJsonObj.getInt("id");
 
                 Conversation conv = new Conversation(
                         convId,
@@ -232,7 +231,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                     conversationDao.insertConversationUsers(conversationUser);
                 }
             }
-
 
 
         } catch (JSONException e) {

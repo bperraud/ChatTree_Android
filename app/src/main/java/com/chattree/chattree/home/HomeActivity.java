@@ -34,9 +34,7 @@ import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_STATUS;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_STATUS_DONE;
@@ -66,7 +64,7 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
     private ViewPager             mViewPager;
 
     private ConversationsListFragment conversationsListFragment;
-    private ContactsListFragment contactsListFragment;
+    private ContactsListFragment      contactsListFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,7 +129,7 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         Intent intent        = getIntent();
         String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);
 
-        //save the user data
+        // Save the user data
         try {
             SharedPreferences        pref = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor edit = pref.edit();
@@ -143,15 +141,14 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
             edit.putString("user_email", user.getString("email"));
             edit.putString("user_firstname", user.getString("firstname"));
             edit.putString("user_lastname", user.getString("lastname"));
-            edit.commit();
-
-            JSONArray convArray = user.getJSONArray("conversations");
-            int[]     convIds   = new int[convArray.length()];
+            JSONArray   convArray = user.getJSONArray("conversations");
+            Set<String> convIds   = new HashSet<>();
             for (int i = 0; i < convArray.length(); i++) {
-                convIds[i] = convArray.getInt(i);
+                convIds.add(String.valueOf(convArray.getInt(i)));
             }
+            edit.putStringSet("conversations_ids", convIds);
+            edit.apply();
 
-            Log.d(TAG, "onCreate: " + Arrays.toString(convIds));
         } catch (JSONException e) {
             e.printStackTrace();
         }

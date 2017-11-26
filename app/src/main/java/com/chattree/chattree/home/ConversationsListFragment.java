@@ -1,46 +1,44 @@
 package com.chattree.chattree.home;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.ConversationDao;
+import com.chattree.chattree.db.User;
 import com.chattree.chattree.home.conversation.ConversationActivity;
+import com.chattree.chattree.home.conversation.ConversationItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ConversationsListFragment extends Fragment {
 
-    private List<String>            conversationsList;
+    private List<ConversationItem>  conversationsList;
     private ConversationListAdapter adapter;
 
+    private ProgressBar mProgressBar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout resource that'll be returned
         View rootView = inflater.inflate(R.layout.fragment_conversations_list, container, false);
 
+        mProgressBar = rootView.findViewById(R.id.list_convs_progress);
+
         // List of conversations
         conversationsList = new ArrayList<>();
-        conversationsList.add("CONV 1");
-        conversationsList.add("CONV 2");
-        conversationsList.add("CONV 3");
-        conversationsList.add("CONV 4");
-        conversationsList.add("CONV 5");
-        conversationsList.add("CONV 6");
-        conversationsList.add("CONV 7");
-        conversationsList.add("CONV 8");
-        conversationsList.add("CONV 9");
 
         ListView conversationsListView = rootView.findViewById(R.id.list_view);
         adapter = new ConversationListAdapter(getContext(), R.layout.row_conversation, conversationsList);
@@ -67,32 +65,72 @@ public class ConversationsListFragment extends Fragment {
     }
 
     void refreshListOfConv(List<ConversationDao.CustomConversationUser> customConversationUsers) {
-        Log.d("TEST", "refreshListOfConv: !!!");
 
+        int              lastConvId = 0;
+        ConversationItem convItem   = null;
+        User             member;
 
-        int lastConvId = 0;
+        SharedPreferences pref   = PreferenceManager.getDefaultSharedPreferences(getContext());
+        int               userId = pref.getInt("user_id", 0);
 
-        for (ConversationDao.CustomConversationUser conversationUser : customConversationUsers) {
-            Log.d("TEST", "doInBackground: " + conversationUser.c_id);
-            Log.d("TEST", "doInBackground: " + conversationUser.u_id);
-
-            conversationsList.add(String.valueOf(conversationUser.c_id));
-
+        for (ConversationDao.CustomConversationUser convData : customConversationUsers) {
             // New conversation found
-            if (conversationUser.c_id != lastConvId) {
-//                conversation = new Conversation(row);
-//                member       = new User(row);
-//                conversation.members.push(member);
-                lastConvId = conversationUser.c_id;
-//                conversations.push(conversation);
+            if (convData.c_id != lastConvId) {
+
+                convItem = new ConversationItem(convData.c_id, convData.c_title, convData.c_picture);
+
+                if (userId != convData.u_id) {
+                    member = new User(
+                            convData.u_id,
+                            convData.u_login,
+                            convData.u_email,
+                            convData.u_firstname,
+                            convData.u_lastname,
+                            null
+                    );
+                    convItem.addMemberLabel(getLabelFromUser(member));
+                }
+
+                conversationsList.add(convItem);
+                lastConvId = convData.c_id;
             }
             // Conversation member found
-            else {
-//                member = new User(row);
-//                conversation.members.push(member);
+            else if (userId != convData.u_id) {
+                member = new User(
+                        convData.u_id,
+                        convData.u_login,
+                        convData.u_email,
+                        convData.u_firstname,
+                        convData.u_lastname,
+                        null
+                );
+                assert convItem != null;
+                convItem.addMemberLabel(getLabelFromUser(member));
             }
-
-            adapter.notifyDataSetChanged();
         }
+
+        adapter.notifyDataSetChanged();
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        mProgressBar.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mProgressBar.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private String getLabelFromUser(User member) {
+        String res;
+        if (member.getLogin() != null)
+            res = member.getLogin();
+        else if (member.getFirstname() != null && member.getLastname() != null)
+            res = member.getFirstname() + " " + member.getLastname();
+        else if (member.getFirstname() != null)
+            res = member.getFirstname();
+        else if (member.getLastname() != null)
+            res = member.getLastname();
+        else
+            res = member.getEmail();
+        return res;
     }
 }

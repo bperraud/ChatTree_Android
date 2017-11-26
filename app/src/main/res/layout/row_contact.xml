@@ -5,7 +5,7 @@
               android:layout_height="match_parent" android:padding="8dp" android:gravity="center_vertical"
               android:paddingTop="16dp" android:paddingBottom="16dp">
 
-    <ImageView android:id="@+id/avatar"
+    <ImageView android:id="@+id/picture"
                android:layout_width="48dp"
                android:layout_height="48dp"
                android:src="@drawable/ic_account_circle_black_24dp"

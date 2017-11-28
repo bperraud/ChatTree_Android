@@ -35,7 +35,8 @@
         <activity
                 android:name=".home.HomeActivity"
                 android:configChanges="orientation|keyboardHidden"
-                android:screenOrientation="portrait">
+                android:screenOrientation="portrait"
+                >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -50,7 +51,8 @@
                 android:name=".home.conversation.ConversationActivity"
                 android:configChanges="orientation|keyboardHidden"
                 android:screenOrientation="portrait"
-                android:parentActivityName=".home.HomeActivity">
+                android:parentActivityName=".home.HomeActivity"
+                android:windowSoftInputMode="adjustPan">
         </activity>
     </application>
 

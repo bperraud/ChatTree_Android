@@ -1,18 +1,27 @@
 package com.chattree.chattree.network;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.util.Log;
+import com.chattree.chattree.ChatTreeApplication;
+import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.login.LoginActivity;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
+import java.net.CookieManager;
+import java.net.HttpCookie;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.
@@ -28,7 +37,7 @@ public class NetworkFragment extends Fragment {
     private static final String URL_KEY         = "UrlKey";
     private static final String HTTP_METHOD_KEY = "HttpMethodKey";
 
-    private static final String BASE_URL = "https://bd872441.ngrok.io/";
+    public static final String BASE_URL = "https://7988af10.ngrok.io/";
 
     private NetConnectCallback<String> mCallback;
     private RequestTask                mRequestTask;
@@ -64,7 +73,7 @@ public class NetworkFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        Fragment caller = null;
+        Object caller = null;
 
         switch (getArguments().getString(URL_KEY)) {
             case "login":
@@ -72,6 +81,9 @@ public class NetworkFragment extends Fragment {
                 break;
             case "signup":
                 caller = ((LoginActivity) context).getSignupFragment();
+                break;
+            case "api/get-conversations":
+                caller = context;
                 break;
         }
         //noinspection unchecked
@@ -229,14 +241,20 @@ public class NetworkFragment extends Fragment {
                 // Set HTTP method.
                 connection.setRequestMethod(httpMethod);
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                connection.setDoOutput(true);
+                SharedPreferences pref  = PreferenceManager.getDefaultSharedPreferences(getContext());
+                String            token = pref.getString("token", null);
+                connection.setRequestProperty("x-access-token", token);
+
                 // Already true by default but setting just in case; needs to be true since this request
                 // is carrying an input (response) body.
                 connection.setDoInput(true);
 
-                OutputStream os = connection.getOutputStream();
-                os.write(body.getBytes("UTF-8"));
-                os.close();
+                if (!httpMethod.equals(HTTP_METHOD_GET)) {
+                    connection.setDoOutput(true);
+                    OutputStream os = connection.getOutputStream();
+                    os.write(body.getBytes("UTF-8"));
+                    os.close();
+                }
 
                 // Open communications link (network traffic occurs here).
                 connection.connect();
@@ -251,6 +269,19 @@ public class NetworkFragment extends Fragment {
                 if (stream != null) {
                     // Converts Stream to String with max length.
                     result = readStream(stream, 2000);
+
+                    // Get Cookies from response header and load them into cookieManager:
+//                    final String  COOKIES_HEADER  = "Set-Cookie";
+//                    CookieManager msCookieManager = ChatTreeApplication.getCookieManager();
+//
+//                    Map<String, List<String>> headerFields  = connection.getHeaderFields();
+//                    List<String>              cookiesHeader = headerFields.get(COOKIES_HEADER);
+//
+//                    if (cookiesHeader != null) {
+//                        for (String cookie : cookiesHeader) {
+//                            msCookieManager.getCookieStore().add(null, HttpCookie.parse(cookie).get(0));
+//                        }
+//                    }
                 }
             } finally {
                 // Close Stream and disconnect HTTPS connection.

@@ -5,7 +5,7 @@
               android:layout_height="match_parent" android:padding="8dp" android:gravity="center_vertical"
               android:paddingTop="16dp" android:paddingBottom="16dp">
 
-    <ImageView android:id="@+id/avatar"
+    <ImageView android:id="@+id/picture"
                android:layout_width="48dp"
                android:layout_height="48dp"
                android:src="@drawable/ic_people_black_24dp"
@@ -14,16 +14,17 @@
     <LinearLayout android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:orientation="vertical">
-        <TextView
-                android:text="@string/bob_l_indien"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/nameTextView"
-                style="@style/Base.TextAppearance.AppCompat.Headline" android:textSize="18sp"/>
 
-        <TextView
-                android:text="@string/bla_bla_bla"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/overviewTextView"/>
+        <TextView android:id="@+id/nameTextView"
+                  android:text="@string/bob_l_indien"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  style="@style/Base.TextAppearance.AppCompat.Headline" android:textSize="18sp"/>
+
+        <TextView android:id="@+id/overviewTextView"
+                  android:text="@string/bla_bla_bla"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"/>
     </LinearLayout>
 
 </LinearLayout>

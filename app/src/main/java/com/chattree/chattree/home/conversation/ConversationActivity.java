@@ -7,23 +7,19 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.chattree.chattree.R;
-import com.chattree.chattree.home.ContactsListFragment;
-import com.chattree.chattree.home.ConversationsListFragment;
-import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 import java.util.Locale;
+
+import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_TITLE;
 
 public class ConversationActivity extends AppCompatActivity {
 
@@ -36,8 +32,7 @@ public class ConversationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
 
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -45,8 +40,8 @@ public class ConversationActivity extends AppCompatActivity {
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        TextView profileTextView = (TextView) findViewById(R.id.profileTextView);
-        profileTextView.setOnClickListener(new View.OnClickListener() {
+        ImageButton profileImageBtn = findViewById(R.id.profileImageBtn);
+        profileImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
@@ -55,15 +50,21 @@ public class ConversationActivity extends AppCompatActivity {
         });
 
         mFixedTabsPagerAdapter = new FixedTabsPagerAdapter(getSupportFragmentManager());
-        mViewPager = (ViewPager) findViewById(R.id.viewpager);
+        mViewPager = findViewById(R.id.viewpager);
         mViewPager.setAdapter(mFixedTabsPagerAdapter);
 
         // Give the SlidingTabLayout the ViewPager, this must be done AFTER the ViewPager has had
         // it's PagerAdapter set.
-        mSlidingTabLayout = (SlidingTabLayout) findViewById(R.id.sliding_tabs);
+        mSlidingTabLayout = findViewById(R.id.sliding_tabs);
         mSlidingTabLayout.setDistributeEvenly(true);
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
+
+
+        String convTitle = getIntent().getStringExtra(EXTRA_CONVERSATION_TITLE);
+        TextView convTitleTextView = findViewById(R.id.conversationTitleTextView);
+        convTitleTextView.setText(convTitle);
+
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
+import com.chattree.chattree.websocket.UpdaterService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -125,6 +126,9 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
 
+        // Start the updater service
+        Intent updaterServiceIntent = new Intent(this, UpdaterService.class);
+        startService(updaterServiceIntent);
 
         Intent intent        = getIntent();
         String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);

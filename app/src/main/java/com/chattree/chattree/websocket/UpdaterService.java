@@ -2,13 +2,17 @@ package com.chattree.chattree.websocket;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.*;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import io.socket.client.IO;
 import io.socket.client.Socket;
+
 import java.net.URISyntaxException;
 
+import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
 import static io.socket.emitter.Emitter.*;
 
 public class UpdaterService extends Service {
@@ -17,14 +21,6 @@ public class UpdaterService extends Service {
     private final String TAG = "UpdaterService";
 
     private Socket mSocket;
-
-    {
-        try {
-            mSocket = IO.socket("http://localhost:3000?token=sometoken");
-        } catch (URISyntaxException e) {
-            Log.d(TAG, e.getMessage());
-        }
-    }
 
     private Listener onConnection = new Listener() {
         @Override
@@ -91,13 +87,30 @@ public class UpdaterService extends Service {
 
     @Override
     public void onCreate() {
-        Log.d(TAG, "Service created");
+        Log.d(TAG, "SERVICE CREATED");
 
-        mSocket.on("connect", onConnection);
-        mSocket.on("connect_error", onConnectError);
-        mSocket.on("error", onError);
+        SharedPreferences pref  = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String            token = pref.getString("token", null);
 
-        mSocket.connect();
+        try {
+
+            IO.Options opts = new IO.Options();
+            opts.forceNew = true;
+            opts.query = "token=" + token;
+
+//            mSocket = IO.socket(BASE_URL + "?token=" + token);
+            mSocket = IO.socket(BASE_URL, opts);
+
+            mSocket.on("connect", onConnection);
+            mSocket.on("connect_error", onConnectError);
+            mSocket.on("error", onError);
+
+            mSocket.connect();
+
+        } catch (URISyntaxException e) {
+            Log.d(TAG, e.getMessage());
+        }
+
     }
 
     private void attemptSend() {

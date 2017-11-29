@@ -6,18 +6,6 @@
     >
 
 
-    <ListView
-        android:id="@+id/liste"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-
-        android:divider="@null"
-        android:paddingBottom="10dp"
-        android:clickable="false">
-    </ListView>
-
-
 
     <LinearLayout
         android:id="@+id/form"
@@ -27,10 +15,12 @@
         android:layout_alignParentLeft="true"
         android:background="#91f1f1f1"
         android:orientation="horizontal"
-        android:paddingBottom="2dp" >
+        android:paddingBottom="2dp"
+        >
 
 
         <EditText
+
             android:id="@+id/messageEditText"
             android:layout_width="252dp"
             android:layout_height="wrap_content"
@@ -51,7 +41,19 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:background="@drawable/send"
-            android:text="d" />
+             />
 
     </LinearLayout>
+
+    <ListView
+        android:id="@+id/liste"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+
+        android:divider="@null"
+        android:clickable="false"
+        android:layout_above="@id/form">
+    </ListView>
+
 </RelativeLayout>

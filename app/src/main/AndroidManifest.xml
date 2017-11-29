@@ -85,6 +85,9 @@
                        android:resource="@xml/syncadapter"/>
         </service>
 
+        <!-- WEBSOCKET SERVICE -->
+        <service android:name=".websocket.UpdaterService"/>
+
     </application>
 
 </manifest>

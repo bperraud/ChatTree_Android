@@ -30,6 +30,22 @@ public class Conversation {
         this.picture = picture;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        Conversation c = (Conversation) obj;
+        boolean ret = true;
+        ret = ret && this.id==c.id && this.fk_root_thread==c.fk_root_thread;
+        if(this.title==null)
+            ret = ret && c.title==null;
+        else
+            ret = ret && this.title.equals(c.title);
+        if(this.picture==null)
+            ret = ret && c.picture==null;
+        else
+            ret = ret && this.picture.equals(c.picture);
+        return ret;
+    }
+
     public int getId() {
         return id;
     }

@@ -1,9 +1,6 @@
 package com.chattree.chattree.db;
 
-import android.arch.persistence.room.Dao;
-import android.arch.persistence.room.Delete;
-import android.arch.persistence.room.Insert;
-import android.arch.persistence.room.Query;
+import android.arch.persistence.room.*;
 
 import java.util.List;
 
@@ -36,13 +33,37 @@ public interface ConversationDao {
         public String u_pp;
     }
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(Conversation... conversations);
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<Conversation> conversations);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertConversationUsers(ConversationUser... conversationUsers);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertConversationUsers(List<ConversationUser> conversationUsers);
+
+    @Query("SELECT * FROM t_conversation WHERE id = :convId")
+    Conversation findById(int convId);
+
+    @Query("SELECT * FROM t_conversation")
+    List<Conversation> findAll();
+
+    @Query("SELECT * FROM t_conversation_user")
+    List<ConversationUser> findAllConversationUser();
+
+    @Query("SELECT * FROM t_conversation_user WHERE fk_conversation = :convId and fk_member = :userId")
+    ConversationUser findConversionUser(int convId, int userId);
 
     @Delete
     void delete(Conversation conversation);
+
+    @Delete
+    void deleteAll(List<Conversation> conversations);
+
+    @Delete
+    void deleteConversationUsers(List<ConversationUser> convUsers);
 
 }

@@ -1,9 +1,6 @@
 package com.chattree.chattree.db;
 
-import android.arch.persistence.room.Dao;
-import android.arch.persistence.room.Delete;
-import android.arch.persistence.room.Insert;
-import android.arch.persistence.room.Query;
+import android.arch.persistence.room.*;
 
 import java.util.List;
 
@@ -19,10 +16,18 @@ public interface UserDao {
             + "lastname LIKE :last LIMIT 1")
     User findByName(String first, String last);
 
-    @Insert
+    @Query("SELECT * FROM t_user WHERE id = :id")
+    User findById(int id);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(User... users);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(List<User> users);
 
     @Delete
     void delete(User user);
 
+    @Delete
+    void deleteAll(List<User> users);
 }

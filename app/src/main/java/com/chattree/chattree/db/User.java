@@ -34,6 +34,34 @@ public class User {
         this.profile_picture = profile_picture;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        User u = (User) obj;
+        boolean ret = true;
+        ret = ret && this.id==u.id;
+        if(this.login==null)
+            ret = ret && u.login==null;
+        else
+            ret = ret && this.login.equals(u.login);
+        if(this.email==null)
+            ret = ret && u.email==null;
+        else
+            ret = ret && this.email.equals(u.email);
+        if(this.firstname==null)
+            ret = ret && u.firstname==null;
+        else
+            ret = ret && this.firstname.equals(u.firstname);
+        if(this.lastname==null)
+            ret = ret && u.lastname==null;
+        else
+            ret = ret && this.lastname.equals(u.lastname);
+        if(this.profile_picture==null)
+            ret = ret && u.profile_picture==null;
+        else
+            ret = ret && this.profile_picture.equals(u.profile_picture);
+        return ret;
+    }
+
     public int getId() {
         return id;
     }

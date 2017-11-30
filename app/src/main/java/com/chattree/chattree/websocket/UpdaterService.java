@@ -7,10 +7,19 @@ import android.os.*;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
+//import com.github.nkzawa.emitter.Emitter;
+//import com.github.nkzawa.engineio.client.Transport;
+//import com.github.nkzawa.socketio.client.IO;
+//import com.github.nkzawa.socketio.client.Manager;
+//import com.github.nkzawa.socketio.client.Socket;
 import io.socket.client.IO;
+import io.socket.client.Manager;
 import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
+import io.socket.engineio.client.Transport;
 
 import java.net.URISyntaxException;
+import java.util.*;
 
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
 import static io.socket.emitter.Emitter.*;
@@ -93,17 +102,51 @@ public class UpdaterService extends Service {
         String            token = pref.getString("token", null);
 
         try {
-
             IO.Options opts = new IO.Options();
             opts.forceNew = true;
             opts.query = "token=" + token;
 
-//            mSocket = IO.socket(BASE_URL + "?token=" + token);
             mSocket = IO.socket(BASE_URL, opts);
 
-            mSocket.on("connect", onConnection);
-            mSocket.on("connect_error", onConnectError);
-            mSocket.on("error", onError);
+            mSocket.on(Socket.EVENT_CONNECT, onConnection);
+            mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
+            mSocket.on(Socket.EVENT_ERROR, onError);
+
+            // Called upon transport creation.
+            mSocket.io().on(Manager.EVENT_TRANSPORT, new Listener() {
+                @Override
+                public void call(Object... args) {
+                    Transport transport = (Transport) args[0];
+
+                    transport.on(Transport.EVENT_REQUEST_HEADERS, new Listener() {
+                        @Override
+                        public void call(Object... args) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
+                            // modify request headers
+//                            Log.d(TAG, "call: COOKIE: " + headers.get("Cookie"));
+//                            headers.put("Cookie", "foo=1;");
+//                            headers.put("Cookie", "io=TfYgzxX9Y3A12NWgAAAA");
+                            headers.put("Origin", Collections.singletonList("http://localhost:4200"));
+                        }
+                    });
+
+                    transport.on(Transport.EVENT_RESPONSE_HEADERS, new Listener() {
+                        @Override
+                        public void call(Object... args) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
+                            // access response headers
+//                            Log.d(TAG, "call: headers: " + headers.toString());
+                            List<String> setCookieHeader = headers.get("Set-Cookie");
+                            if (setCookieHeader != null) {
+                                String cookie = setCookieHeader.get(0);
+                                Log.d(TAG, "call: COOKIE: " + cookie);
+                            }
+                        }
+                    });
+                }
+            });
 
             mSocket.connect();
 

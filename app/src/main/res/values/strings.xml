@@ -493,5 +493,7 @@
 
     <!-- Strings related to location -->
     <string name="Update_location">Mettre à jour votre position</string>
+    <string name="send_message">send message</string>
+    <string name="votre_message">Votre Message...</string>
 
 </resources>

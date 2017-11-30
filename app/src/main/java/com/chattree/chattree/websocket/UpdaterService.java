@@ -7,15 +7,9 @@ import android.os.*;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
-//import com.github.nkzawa.emitter.Emitter;
-//import com.github.nkzawa.engineio.client.Transport;
-//import com.github.nkzawa.socketio.client.IO;
-//import com.github.nkzawa.socketio.client.Manager;
-//import com.github.nkzawa.socketio.client.Socket;
 import io.socket.client.IO;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
 import io.socket.engineio.client.Transport;
 
 import java.net.URISyntaxException;
@@ -34,8 +28,9 @@ public class UpdaterService extends Service {
     private Listener onConnection = new Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(TAG, "WS onConnection");
             for (Object arg : args) {
-                Log.d(TAG, "onConnection: " + arg.toString());
+                Log.d(TAG, "call: " + arg.toString());
             }
         }
     };
@@ -43,8 +38,9 @@ public class UpdaterService extends Service {
     private Listener onConnectError = new Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(TAG, "WS onConnectError");
             for (Object arg : args) {
-                Log.d(TAG, "onConnectError: " + arg.toString());
+                Log.d(TAG, "call: " + arg.toString());
             }
             mSocket.disconnect();
         }
@@ -53,8 +49,9 @@ public class UpdaterService extends Service {
     private Listener onError = new Listener() {
         @Override
         public void call(Object... args) {
+            Log.d(TAG, "WS onError");
             for (Object arg : args) {
-                Log.d(TAG, "onError: " + arg.toString());
+                Log.d(TAG, "call: " + arg.toString());
             }
         }
     };

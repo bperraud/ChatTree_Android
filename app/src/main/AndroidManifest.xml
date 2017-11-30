@@ -56,7 +56,7 @@
                 android:configChanges="orientation|keyboardHidden"
                 android:screenOrientation="portrait"
                 android:parentActivityName=".home.HomeActivity"
-                android:windowSoftInputMode="adjustPan">
+                android:windowSoftInputMode="adjustResize">
         </activity>
 
         <service

@@ -21,6 +21,8 @@ public abstract class AppDatabase extends RoomDatabase {
 
     public abstract ThreadDao threadDao();
 
+    public abstract MessageDao messageDao();
+
     private static AppDatabase instance = null;
 
     public static AppDatabase getInstance(Context context) {

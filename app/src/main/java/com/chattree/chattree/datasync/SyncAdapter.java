@@ -18,10 +18,8 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.*;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static com.chattree.chattree.home.HomeActivity.SYNC_CALLBACK_INTENT_ACTION;
 
@@ -34,6 +32,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String EXTRA_SYNC_STATUS       = "SyncStatus";
     public static final String EXTRA_SYNC_STATUS_START = "START";
     public static final String EXTRA_SYNC_STATUS_DONE  = "DONE";
+
+    public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.CANADA_FRENCH);
 
     // Global variables
     // Define a variable to contain a content resolver instance
@@ -103,7 +103,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             getContext().sendBroadcast(intent);
 
             for(int convId : convIds){
-                syncConvWithLocalDB(convId);
+                int[] threadIds = syncConvWithLocalDB(convId);
+                for(int threadId : threadIds){
+                    syncThreadWithLocalDB(convId, threadId);
+                }
             }
 
         } catch (Exception e) {
@@ -185,6 +188,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         return buffer.toString();
     }
 
+    //returns conv ids
     private int[] syncConversationsWithLocalDB(String jsonData) {
 
         try {
@@ -282,7 +286,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         return null;
     }
 
-    private void syncConvWithLocalDB(int convId){
+    //returns thread ids
+    private int[] syncConvWithLocalDB(int convId){
         try {
             URL url = new URL(NetworkFragment.BASE_URL + "api/get-conv/"+convId);
             String result = requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
@@ -299,13 +304,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             List<Thread> localThreads = threadDao.findAll();
 
+            int[] threadIds = new int[threadJsonArray.length()];
+
             //let's insert threads
             for (int i = 0, size = threadJsonArray.length(); i < size; ++i) {
                 JSONObject threadJsonObj = threadJsonArray.getJSONObject(i);
                 int threadId = threadJsonObj.getInt("id");
+                threadIds[i] = threadId;
                 Thread receivedThread = new Thread(
                         threadId,
-                        threadJsonObj.isNull("creation_date") ? null : Date.valueOf(threadJsonObj.getString("creation_date")),
+                        threadJsonObj.isNull("date") ? null : simpleDateFormat.parse(threadJsonObj.getString("date")),
                         threadJsonObj.isNull("title") ? null : threadJsonObj.getString("title"),
                         threadJsonObj.isNull("fk_author") ? null : threadJsonObj.getInt("fk_author"),
                         threadJsonObj.isNull("fk_conversation") ? null : threadJsonObj.getInt("fk_conversation"),
@@ -331,7 +339,50 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 conversationDao.updateFKRootThreadById(fkrt,convId);
                 System.out.println("fk_root_thread updated");
             }
+            return threadIds;
 
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private void syncThreadWithLocalDB(int convId, int threadId){
+        try {
+            URL url = new URL(NetworkFragment.BASE_URL + "api/get-thread/" + convId + "/"+threadId);
+            String result = requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
+            Log.i("SyncAdapter", "GET-THREAD/" + convId + "/"+threadId+" : " + result);
+
+            JSONObject   json                  = new JSONObject(result);
+            JSONArray   messageJsonArray         = json.getJSONObject("data").getJSONArray("messages");
+
+            MessageDao messageDao = AppDatabase.getInstance(getContext()).messageDao();
+
+            ArrayList<Message> messagesToInsertOrUpdate = new ArrayList<>();
+
+            List<Message> localMessages = messageDao.findAll();
+
+            for(int i =0; i<messageJsonArray.length(); i++){
+                JSONObject messJsonObj = messageJsonArray.getJSONObject(i);
+                int messId = messJsonObj.getInt("id");
+                Message receivedMess = new Message(
+                        messId,
+                        messJsonObj.getInt("author"),
+                        messJsonObj.isNull("date") ? null : simpleDateFormat.parse(messJsonObj.getString("date")),
+                        messJsonObj.getString("content"),
+                        messJsonObj.getInt("thread")
+                );
+                int localMessIndex = getMessageById(messId,localMessages);
+                if((localMessIndex==-1) || (!localMessages.get(localMessIndex).equals(receivedMess))){
+                    //need to insert or update
+                    messagesToInsertOrUpdate.add(receivedMess);
+                }
+            }
+
+            //INSERTS OR UPDATES
+            messageDao.insertAll(messagesToInsertOrUpdate);
+            System.out.println(messagesToInsertOrUpdate.size() + " messages inserted or updated");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -355,6 +406,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private int getThreadById(int id, List<Thread> l){
+        for(int i=0; i<l.size(); i++){
+            if(l.get(i).getId() == id)
+                return i;
+        }
+        return -1;
+    }
+
+    private int getMessageById(int id, List<Message> l){
         for(int i=0; i<l.size(); i++){
             if(l.get(i).getId() == id)
                 return i;

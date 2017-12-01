@@ -34,7 +34,7 @@ public class Conversation {
     public boolean equals(Object obj) {
         Conversation c = (Conversation) obj;
         boolean ret = true;
-        ret = ret && this.id==c.id && this.fk_root_thread==c.fk_root_thread;
+        ret = ret && this.id==c.id;
         if(this.title==null)
             ret = ret && c.title==null;
         else

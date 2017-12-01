@@ -36,6 +36,29 @@ public class Message {
         return id;
     }
 
+    public Message(int id, int fk_author, Date creation_date, String content, int fk_thread_parent){
+        this.id = id;
+        this.fk_author = fk_author;
+        this.creation_date = creation_date;
+        this.content = content;
+        this.fk_thread_parent = fk_thread_parent;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Message m = (Message) obj;
+        boolean ret = this.id == m.id && this.fk_author==m.fk_author && this.fk_thread_parent==m.fk_thread_parent;
+        if(this.creation_date==null)
+            ret = ret && m.creation_date==null;
+        else
+            ret = ret && this.creation_date.equals(m.creation_date);
+        if(this.content==null)
+            ret = ret && m.content==null;
+        else
+            ret = ret && this.content.equals(m.content);
+        return ret;
+    }
+
     public void setId(int id) {
         this.id = id;
     }

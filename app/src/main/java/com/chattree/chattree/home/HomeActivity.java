@@ -159,8 +159,6 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
 
         // Create the dummy account
         mAccount = CreateSyncAccount(this);
-        // Enable syncing
-        ContentResolver.setSyncAutomatically(mAccount, AUTHORITY, true);
 
         // Pass the settings flags by inserting them in a bundle
         Bundle settingsBundle = new Bundle();

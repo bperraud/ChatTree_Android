@@ -1,9 +1,6 @@
 package com.chattree.chattree.db;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.ForeignKey;
-import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.*;
 
 @Entity(tableName = "t_conversation_user",
     foreignKeys = {
@@ -25,10 +22,24 @@ public class ConversationUser {
     @ColumnInfo(name = "fk_member")
     private int fk_member;
 
+    public ConversationUser(int fk_conversation, int fk_member) {
+        this.fk_conversation = fk_conversation;
+        this.fk_member = fk_member;
+    }
+    @Ignore
     public ConversationUser(int id, int fk_conversation, int fk_member) {
         this.id = id;
         this.fk_conversation = fk_conversation;
         this.fk_member = fk_member;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        ConversationUser cu = (ConversationUser) obj;
+        if(this.fk_conversation==cu.fk_conversation && this.fk_member==cu.fk_member)
+            return true;
+        else
+            return false;
     }
 
     public int getId() {

@@ -11,16 +11,20 @@ import java.util.Date;
         foreignKeys = {
         @ForeignKey(entity = User.class,
                 parentColumns = "id",
-                childColumns = "fk_author"),
+                childColumns = "fk_author",
+                deferred = true),
         @ForeignKey(entity = Conversation.class,
                 parentColumns = "id",
-                childColumns = "fk_conversation"),
+                childColumns = "fk_conversation",
+                deferred = true),
         @ForeignKey(entity = Thread.class,
                 parentColumns = "id",
-                childColumns = "fk_thread_parent"),
+                childColumns = "fk_thread_parent",
+                deferred = true),
         @ForeignKey(entity = Message.class,
                 parentColumns = "id",
-                childColumns = "fk_message_parent")
+                childColumns = "fk_message_parent",
+                deferred = true)
 })
 public class Thread {
     @PrimaryKey
@@ -33,16 +37,41 @@ public class Thread {
     private String title;
 
     @ColumnInfo(name = "fk_author")
-    private int fk_author;
+    private Integer fk_author;
 
     @ColumnInfo(name = "fk_conversation")
-    private int fk_conversation;
+    private Integer fk_conversation;
 
     @ColumnInfo(name = "fk_thread_parent")
-    private int fk_thread_parent;
+    private Integer fk_thread_parent;
 
     @ColumnInfo(name = "fk_message_parent")
-    private int fk_message_parent;
+    private Integer fk_message_parent;
+
+    public Thread(int id, Date creation_date, String title, Integer fk_author, Integer fk_conversation, Integer fk_thread_parent, Integer fk_message_parent){
+        this.id = id;
+        this.creation_date = creation_date;
+        this.title = title;
+        this.fk_author = fk_author;
+        this.fk_conversation = fk_conversation;
+        this.fk_thread_parent = fk_thread_parent;
+        this.fk_message_parent = fk_message_parent;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Thread t = (Thread) obj;
+        boolean ret = this.id == t.id && this.fk_author==t.fk_author && this.fk_conversation==t.fk_conversation && this.fk_thread_parent==t.fk_thread_parent && this.fk_message_parent==t.fk_message_parent;
+        if(creation_date==null)
+            ret = ret && t.creation_date==null;
+        else
+            ret = ret && this.creation_date.equals(t.creation_date);
+        if(title==null)
+            ret = ret && t.title==null;
+        else
+            ret = ret && this.title.equals(t.title);
+        return ret;
+    }
 
     public int getId() {
         return id;
@@ -68,35 +97,35 @@ public class Thread {
         this.title = title;
     }
 
-    public int getFk_author() {
+    public Integer getFk_author() {
         return fk_author;
     }
 
-    public void setFk_author(int fk_author) {
+    public void setFk_author(Integer fk_author) {
         this.fk_author = fk_author;
     }
 
-    public int getFk_conversation() {
+    public Integer getFk_conversation() {
         return fk_conversation;
     }
 
-    public void setFk_conversation(int fk_conversation) {
+    public void setFk_conversation(Integer fk_conversation) {
         this.fk_conversation = fk_conversation;
     }
 
-    public int getFk_thread_parent() {
+    public Integer getFk_thread_parent() {
         return fk_thread_parent;
     }
 
-    public void setFk_thread_parent(int fk_thread_parent) {
+    public void setFk_thread_parent(Integer fk_thread_parent) {
         this.fk_thread_parent = fk_thread_parent;
     }
 
-    public int getFk_message_parent() {
+    public Integer getFk_message_parent() {
         return fk_message_parent;
     }
 
-    public void setFk_message_parent(int fk_message_parent) {
+    public void setFk_message_parent(Integer fk_message_parent) {
         this.fk_message_parent = fk_message_parent;
     }
 }

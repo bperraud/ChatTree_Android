@@ -14,6 +14,7 @@ import android.util.Log;
 import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.login.LoginActivity;
+import com.chattree.chattree.tools.Utils;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
@@ -268,7 +269,7 @@ public class NetworkFragment extends Fragment {
                 publishProgress(NetConnectCallback.Progress.GET_INPUT_STREAM_SUCCESS, 0);
                 if (stream != null) {
                     // Converts Stream to String with max length.
-                    result = readStream(stream, 2000);
+                    result = Utils.readStream(stream, 2000);
 
                     // Get Cookies from response header and load them into cookieManager:
 //                    final String  COOKIES_HEADER  = "Set-Cookie";
@@ -293,24 +294,6 @@ public class NetworkFragment extends Fragment {
                 }
             }
             return result;
-        }
-
-        /**
-         * Converts the contents of an InputStream to a String.
-         */
-        String readStream(InputStream stream, int maxReadSize) throws IOException {
-            Reader        reader    = new InputStreamReader(stream, "UTF-8");
-            char[]        rawBuffer = new char[maxReadSize];
-            int           readSize;
-            StringBuilder buffer    = new StringBuilder();
-            while (((readSize = reader.read(rawBuffer)) != -1) && maxReadSize > 0) {
-                if (readSize > maxReadSize) {
-                    readSize = maxReadSize;
-                }
-                buffer.append(rawBuffer, 0, readSize);
-                maxReadSize -= readSize;
-            }
-            return buffer.toString();
         }
     }
 }

@@ -57,6 +57,9 @@ public interface ConversationDao {
     @Query("SELECT * FROM t_conversation_user WHERE fk_conversation = :convId and fk_member = :userId")
     ConversationUser findConversionUser(int convId, int userId);
 
+    @Query("UPDATE t_conversation SET fk_root_thread = :fkrt WHERE id = :convId")
+    void updateFKRootThreadById(int fkrt, int convId);
+
     @Delete
     void delete(Conversation conversation);
 

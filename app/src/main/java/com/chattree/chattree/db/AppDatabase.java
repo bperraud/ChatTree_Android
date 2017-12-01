@@ -19,12 +19,14 @@ public abstract class AppDatabase extends RoomDatabase {
 
     public abstract ConversationDao conversationDao();
 
+    public abstract ThreadDao threadDao();
+
     private static AppDatabase instance = null;
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
-            instance = Room.inMemoryDatabaseBuilder(context, AppDatabase.class).build();
-//            instance = Room.databaseBuilder(context, AppDatabase.class, "chattree-database").build();
+            //instance = Room.inMemoryDatabaseBuilder(context, AppDatabase.class).build();
+            instance = Room.databaseBuilder(context, AppDatabase.class, "chattree-database").build();
         }
         return instance;
     }

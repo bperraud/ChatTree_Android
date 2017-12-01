@@ -7,7 +7,9 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import com.chattree.chattree.db.*;
+import com.chattree.chattree.db.Thread;
 import com.chattree.chattree.network.NetworkFragment;
+import io.socket.client.Url;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,6 +17,7 @@ import org.json.JSONObject;
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.*;
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -89,21 +92,21 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         intent.putExtra(EXTRA_SYNC_STATUS, EXTRA_SYNC_STATUS_START);
         getContext().sendBroadcast(intent);
 
-        URL url = null;
         try {
-            url = new URL(NetworkFragment.BASE_URL + "api/get-conversations");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        try {
+            URL url = new URL(NetworkFragment.BASE_URL + "api/get-conversations");
             String result = requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
-            Log.i("SyncAdapter", "RESULT : " + result);
+            Log.i("SyncAdapter", "GET-CONVERSATIONS : " + result);
 
-            syncConversationsWithLocalDB(result);
+            int[] convIds = syncConversationsWithLocalDB(result);
 
             intent.putExtra(EXTRA_SYNC_STATUS, EXTRA_SYNC_STATUS_DONE);
             getContext().sendBroadcast(intent);
-        } catch (IOException e) {
+
+            for(int convId : convIds){
+                syncConvWithLocalDB(convId);
+            }
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -182,13 +185,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         return buffer.toString();
     }
 
-    private void syncConversationsWithLocalDB(String jsonData) {
+    private int[] syncConversationsWithLocalDB(String jsonData) {
 
         try {
             JSONObject   json                  = new JSONObject(jsonData);
             JSONArray    convJsonArray         = json.getJSONObject("data").getJSONArray("conversations");
-            Set<Integer> userIdSet             = new HashSet<>();
-            Integer      conversationUserIndex = 0;
 
             ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
             UserDao         userDao         = AppDatabase.getInstance(getContext()).userDao();
@@ -201,9 +202,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             List<User> localUsers = userDao.getAll();
             List<ConversationUser> localConvUsers = conversationDao.findAllConversationUser();
 
+            int[] convIds = new int[convJsonArray.length()];
+
             for (int i = 0, size = convJsonArray.length(); i < size; ++i) {
                 JSONObject convJsonObj = convJsonArray.getJSONObject(i);
                 int        convId      = convJsonObj.getInt("id");
+                convIds[i] = convId;
 
                 int localConvIndex = getConvById(convId,localConvs);
                 Conversation receivedConv = new Conversation(
@@ -253,13 +257,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
             }
 
-            //DELETES
-            conversationDao.deleteConversationUsers(localConvUsers);
+            //DELETES - NO DELETES FOR NOW (FOREIGN KEYS...)
+            /*conversationDao.deleteConversationUsers(localConvUsers);
             System.out.println(localConvUsers.size()+" conv users deleted");
             conversationDao.deleteAll(localConvs);
             System.out.println(localConvs.size() + " convs deleted");
             userDao.deleteAll(localUsers);
-            System.out.println(localUsers.size() + " users deleted");
+            System.out.println(localUsers.size() + " users deleted");*/
 
             //INSERTS OR UPDATES
             conversationDao.insertAll(convsToInsertOrUpdate);
@@ -268,11 +272,71 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             System.out.println(usersToInsertOrUpdate.size() + " users inserted");
             conversationDao.insertConversationUsers(convUsersToInsert);
             System.out.println(convUsersToInsert.size()+" conv users inserted");
+
+            return convIds;
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        return null;
     }
 
+    private void syncConvWithLocalDB(int convId){
+        try {
+            URL url = new URL(NetworkFragment.BASE_URL + "api/get-conv/"+convId);
+            String result = requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
+            Log.i("SyncAdapter", "GET-CONV/"+convId+" : " + result);
+
+            JSONObject   json                  = new JSONObject(result);
+            JSONObject    convJson         = json.getJSONObject("data").getJSONObject("conversation");
+            JSONArray   threadJsonArray     = convJson.getJSONArray("threads");
+
+            ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
+            ThreadDao threadDao = AppDatabase.getInstance(getContext()).threadDao();
+
+            ArrayList<Thread> threadsToInsertOrUpdate = new ArrayList<>();
+
+            List<Thread> localThreads = threadDao.findAll();
+
+            //let's insert threads
+            for (int i = 0, size = threadJsonArray.length(); i < size; ++i) {
+                JSONObject threadJsonObj = threadJsonArray.getJSONObject(i);
+                int threadId = threadJsonObj.getInt("id");
+                Thread receivedThread = new Thread(
+                        threadId,
+                        threadJsonObj.isNull("creation_date") ? null : Date.valueOf(threadJsonObj.getString("creation_date")),
+                        threadJsonObj.isNull("title") ? null : threadJsonObj.getString("title"),
+                        threadJsonObj.isNull("fk_author") ? null : threadJsonObj.getInt("fk_author"),
+                        threadJsonObj.isNull("fk_conversation") ? null : threadJsonObj.getInt("fk_conversation"),
+                        threadJsonObj.isNull("fk_thread_parent") ? null : threadJsonObj.getInt("fk_thread_parent"),
+                        threadJsonObj.isNull("fk_message_parent") ? null : threadJsonObj.getInt("fk_message_parent")
+                );
+                int localThreadIndex = getThreadById(threadId,localThreads);
+                if((localThreadIndex==-1) || (!localThreads.get(localThreadIndex).equals(receivedThread))){
+                    //need to insert or update
+                    threadsToInsertOrUpdate.add(receivedThread);
+                }
+
+            }
+
+
+            //INSERTS OR UPDATES
+            threadDao.insertAll(threadsToInsertOrUpdate);
+            System.out.println(threadsToInsertOrUpdate.size()+" threads inserted");
+
+            //then let's update conversation.fk_root_thread
+            if(!convJson.isNull("fk_root_thread")){
+                int fkrt = convJson.getInt("fk_root_thread");
+                conversationDao.updateFKRootThreadById(fkrt,convId);
+                System.out.println("fk_root_thread updated");
+            }
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
     private int getConvById(int id, List<Conversation> l){
         for(int i=0; i<l.size(); i++){
@@ -283,6 +347,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     }
 
     private int getUserById(int id, List<User> l){
+        for(int i=0; i<l.size(); i++){
+            if(l.get(i).getId() == id)
+                return i;
+        }
+        return -1;
+    }
+
+    private int getThreadById(int id, List<Thread> l){
         for(int i=0; i<l.size(); i++){
             if(l.get(i).getId() == id)
                 return i;

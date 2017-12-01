@@ -2,9 +2,6 @@ package com.chattree.chattree.home.conversation;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -66,9 +63,8 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
             Toast.makeText(this.getContext(), "To send:\n" + mMessage.getText(), Toast.LENGTH_LONG).show();
 
             WebSocketService wsService = ((ConversationActivity) getActivity()).getWsService();
-            Toast.makeText(this.getContext(), wsService.toString(), Toast.LENGTH_LONG).show();
 
-            wsService.doServiceStuff();
+            wsService.sendMessage(mMessage.getText().toString());
         }
     }
 }

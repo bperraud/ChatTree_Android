@@ -26,11 +26,13 @@ import com.chattree.chattree.websocket.WebSocketService;
 
 import java.util.Locale;
 
+import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_TITLE;
 
 public class ConversationActivity extends AppCompatActivity {
 
     private final String TAG = "CONVERSATION ACTIVITY";
+    private int convId;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
@@ -71,17 +73,28 @@ public class ConversationActivity extends AppCompatActivity {
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
 
-
-        String   convTitle         = getIntent().getStringExtra(EXTRA_CONVERSATION_TITLE);
+        Intent   activityIntent    = getIntent();
+        String   convTitle         = activityIntent.getStringExtra(EXTRA_CONVERSATION_TITLE);
         TextView convTitleTextView = findViewById(R.id.conversationTitleTextView);
         convTitleTextView.setText(convTitle);
+        convId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0);
 
         // Prevent keyboard from auto-appearing
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
 
-        // ------------------------------ WS SERVICE ------------------------------ //
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // WS Service binding
         Intent wsServiceIntent = new Intent(this, WebSocketService.class);
         bindService(wsServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unbindService(serviceConnection);
     }
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -89,8 +102,9 @@ public class ConversationActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "onServiceConnected: SERVICE IS BOUND");
             wsService = ((WebSocketService.LocalBinder) service).getService();
-            // Set initial args
-//            wsService.setParams(1);
+
+            // Connect to the conversation namespace
+//            wsService.connectToConvNsp(convId);
         }
 
         @Override

@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 import com.chattree.chattree.R;
+import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.AppDatabase;
 import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
@@ -37,8 +38,6 @@ import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 import java.util.*;
 
-import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_STATUS;
-import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_STATUS_DONE;
 import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
 import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 
@@ -53,8 +52,6 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
 
 
     private static final String TAG = "HOME ACTIVITY";
-
-    public static final String SYNC_CALLBACK_INTENT_ACTION = "com.chattree.chattree.SYNC";
 
     Account mAccount;
 
@@ -172,7 +169,7 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
          * Register a broadcast receiver to listen when the data are ready to be read from the local DB
          */
         dataLoadedReceiver = new SyncReceiver();
-        registerReceiver(dataLoadedReceiver, new IntentFilter(SYNC_CALLBACK_INTENT_ACTION));
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_ALL_CONV_LOADED_ACTION));
 
         /*
          * Signal the framework to run your sync adapter. Assume that
@@ -186,22 +183,20 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if (intent.getStringExtra(EXTRA_SYNC_STATUS).equals(EXTRA_SYNC_STATUS_DONE)) {
+            new AsyncTask<Void, Void, List<CustomConversationUser>>() {
+                @Override
+                protected List<CustomConversationUser> doInBackground(Void... params) {
+                    ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
+                    return conversationDao.getCustomConversationUsers();
+                }
 
-                new AsyncTask<Void, Void, List<CustomConversationUser>>() {
-                    @Override
-                    protected List<CustomConversationUser> doInBackground(Void... params) {
-                        ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
-                        return conversationDao.getCustomConversationUsers();
-                    }
+                @Override
+                protected void onPostExecute(List<CustomConversationUser> customConversationUsers) {
+                    conversationsListFragment.refreshListOfConv(customConversationUsers);
+                }
+            }.execute();
 
-                    @Override
-                    protected void onPostExecute(List<CustomConversationUser> customConversationUsers) {
-                        conversationsListFragment.refreshListOfConv(customConversationUsers);
-                    }
-                }.execute();
 
-            }
         }
     }
 

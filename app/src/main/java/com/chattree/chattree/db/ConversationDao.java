@@ -54,6 +54,9 @@ public interface ConversationDao {
     @Query("SELECT * FROM t_conversation_user")
     List<ConversationUser> findAllConversationUser();
 
+    @Query("SELECT MAX(id) FROM t_conversation_user")
+    int getConversationUserMaxId();
+
     @Query("SELECT * FROM t_conversation_user WHERE fk_conversation = :convId and fk_member = :userId")
     ConversationUser findConversionUser(int convId, int userId);
 

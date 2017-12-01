@@ -86,7 +86,8 @@
         </service>
 
         <!-- WEBSOCKET SERVICE -->
-        <service android:name=".websocket.UpdaterService"/>
+        <service android:name=".websocket.WebSocketService"
+                 android:exported="false"/>
 
     </application>
 

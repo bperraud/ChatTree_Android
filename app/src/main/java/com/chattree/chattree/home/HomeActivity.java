@@ -2,10 +2,13 @@ package com.chattree.chattree.home;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.*;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -27,7 +30,7 @@ import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
-import com.chattree.chattree.websocket.UpdaterService;
+import com.chattree.chattree.websocket.WebSocketService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,18 +48,18 @@ import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 public class HomeActivity extends AppCompatActivity implements NetConnectCallback {
 
     // Content provider authority
-    public static final String AUTHORITY    = "com.chattree.chattree.provider";
+    private static final String AUTHORITY    = "com.chattree.chattree.provider";
     // Account
-    public static final String ACCOUNT      = "default_account";
+    private static final String ACCOUNT      = "default_account";
     // An account type, in the form of a domain name
-    public static final String ACCOUNT_TYPE = "chattree.com";
+    private static final String ACCOUNT_TYPE = "chattree.com";
 
 
     private static final String TAG = "HOME ACTIVITY";
 
     public static final String SYNC_CALLBACK_INTENT_ACTION = "com.chattree.chattree.SYNC";
 
-    Account mAccount;
+    private Account mAccount;
 
     private SyncReceiver dataLoadedReceiver;
 
@@ -126,14 +129,12 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
 
-        // Start the updater service
-        Intent updaterServiceIntent = new Intent(this, UpdaterService.class);
-        startService(updaterServiceIntent);
+        // ------------------------------------------------------------------ //
+        // ----------------------- Save the user data ----------------------- //
+        // ------------------------------------------------------------------ //
 
-        Intent intent        = getIntent();
-        String loginDataJson = intent.getStringExtra(EXTRA_LOGIN_DATA);
-
-        // Save the user data
+        Intent     activityIntent = getIntent();
+        String loginDataJson = activityIntent.getStringExtra(EXTRA_LOGIN_DATA);
         try {
             SharedPreferences        pref = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor edit = pref.edit();
@@ -156,6 +157,18 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+
+        // ----------------------------------------------------------------- //
+        // ----------------------- WebSocket Service ----------------------- //
+        // ----------------------------------------------------------------- //
+
+        // Start the updater service
+        Intent wsServiceIntent = new Intent(this, WebSocketService.class);
+        startService(wsServiceIntent);
+
+        //-------------------------------------------------------------------------------------
+        //-------------------------------------------------------------------------------------
 
         // Create the dummy account
         mAccount = CreateSyncAccount(this);
@@ -182,6 +195,18 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
          */
         ContentResolver.requestSync(mAccount, AUTHORITY, settingsBundle);
     }
+
+//    private boolean isWsServiceRunning() {
+//        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+//        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+//            if (WebSocketService.class.getName().equals(service.service.getClassName())) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+//
+
 
     public class SyncReceiver extends BroadcastReceiver {
 

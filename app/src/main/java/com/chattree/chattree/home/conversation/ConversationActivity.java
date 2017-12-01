@@ -1,13 +1,18 @@
 package com.chattree.chattree.home.conversation;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,6 +22,7 @@ import android.widget.TextView;
 import com.chattree.chattree.R;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
+import com.chattree.chattree.websocket.WebSocketService;
 
 import java.util.Locale;
 
@@ -24,9 +30,13 @@ import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERS
 
 public class ConversationActivity extends AppCompatActivity {
 
+    private final String TAG = "CONVERSATION ACTIVITY";
+
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
     private ViewPager             mViewPager;
+
+    private WebSocketService wsService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,19 +72,38 @@ public class ConversationActivity extends AppCompatActivity {
         mSlidingTabLayout.setViewPager(mViewPager);
 
 
-        String convTitle = getIntent().getStringExtra(EXTRA_CONVERSATION_TITLE);
+        String   convTitle         = getIntent().getStringExtra(EXTRA_CONVERSATION_TITLE);
         TextView convTitleTextView = findViewById(R.id.conversationTitleTextView);
         convTitleTextView.setText(convTitle);
 
+        // Prevent keyboard from auto-appearing
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+        // ------------------------------ WS SERVICE ------------------------------ //
+        Intent wsServiceIntent = new Intent(this, WebSocketService.class);
+        bindService(wsServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "onServiceConnected: SERVICE IS BOUND");
+            wsService = ((WebSocketService.LocalBinder) service).getService();
+            // Set initial args
+//            wsService.setParams(1);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            wsService = null;
+        }
+    };
 
     @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -137,4 +166,7 @@ public class ConversationActivity extends AppCompatActivity {
         }
     }
 
+    public WebSocketService getWsService() {
+        return wsService;
+    }
 }

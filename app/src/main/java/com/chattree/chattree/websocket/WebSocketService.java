@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.*;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 import io.socket.client.IO;
@@ -18,12 +19,24 @@ import java.util.*;
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
 import static io.socket.emitter.Emitter.*;
 
-public class UpdaterService extends Service {
-    private final IBinder binder = new MyBinder();
+public class WebSocketService extends Service {
 
-    private final String TAG = "UpdaterService";
+    private final String TAG = "WEBSOCKET SERVICE";
 
     private Socket mSocket;
+
+    public class LocalBinder extends Binder {
+        public WebSocketService getService() {
+            return WebSocketService.this;
+        }
+    }
+
+    private final IBinder binder = new LocalBinder();
+
+
+    // -------------------------------------------------------------- //
+    // ------------------------ WS Listeners ------------------------ //
+    // -------------------------------------------------------------- //
 
     private Listener onConnection = new Listener() {
         @Override
@@ -75,25 +88,31 @@ public class UpdaterService extends Service {
 //    };
 
 
+    @Nullable
     @Override
-    public IBinder onBind(Intent arg0) {
+    public IBinder onBind(Intent intent) {
         return binder;
+    }
+
+    public void setParams(double d){
+//        arg0=d;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "Service started");
+
+        return START_NOT_STICKY;
     }
 
     public void doServiceStuff() {
         serviceTask.execute();
     }
 
-    // create an inner Binder class
-    public class MyBinder extends Binder {
-        public UpdaterService getService() {
-            return UpdaterService.this;
-        }
-    }
-
     @Override
     public void onCreate() {
-        Log.d(TAG, "SERVICE CREATED");
+        super.onCreate();
+        Log.d(TAG, "Service created");
 
         SharedPreferences pref  = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String            token = pref.getString("token", null);

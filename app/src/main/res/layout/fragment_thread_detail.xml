@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent">
 
@@ -8,8 +9,11 @@
                   android:layout_height="wrap_content"
                   android:layout_alignParentBottom="true"
                   android:layout_alignParentLeft="true"
+                  android:gravity="bottom"
                   android:background="#91f1f1f1"
                   android:orientation="horizontal"
+                  android:paddingStart="6dp"
+                  android:paddingEnd="6dp"
                   android:paddingBottom="2dp">
 
         <EditText android:id="@+id/messageEditText"
@@ -20,15 +24,20 @@
                   android:maxHeight="80dp"
                   android:hint="@string/votre_message"/>
 
-        <ImageButton android:id="@+id/sendMessageButton"
-                     android:layout_width="wrap_content"
-                     android:layout_height="wrap_content"
-                     android:background="@drawable/send"
-                     android:contentDescription="@string/send_message"/>
+        <com.github.johnkil.print.PrintView
+                android:id="@+id/sendMessageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingBottom="4dp"
+                app:iconText="@string/ic_send"
+                app:iconColor="@color/colorPrimary"
+                app:iconFont="fonts/material-icon-font.ttf"
+                app:iconSize="32dp"/>
     </LinearLayout>
 
     <ListView
-            android:id="@+id/liste"
+            android:id="@+id/messagesListView"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_centerHorizontal="true"

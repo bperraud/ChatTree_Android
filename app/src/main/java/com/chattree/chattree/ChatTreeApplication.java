@@ -8,7 +8,7 @@ import java.net.CookieManager;
 
 public class ChatTreeApplication extends Application {
 
-//    static private CookieManager cookieManager = new CookieManager();
+    static private CookieManager cookieManager;
 
 
     @Override
@@ -16,12 +16,11 @@ public class ChatTreeApplication extends Application {
         super.onCreate();
         PrintConfig.initDefault(getAssets(), "fonts/material-icon-font.ttf");
 
-//        CookieHandler.setDefault(new CookieManager());
-        CookieManager cookieManager = new CookieManager();
+        cookieManager = new CookieManager();
         CookieHandler.setDefault(cookieManager);
     }
 
-//    public static CookieManager getCookieManager() {
-//        return cookieManager;
-//    }
+    public static CookieManager getCookieManager() {
+        return cookieManager;
+    }
 }

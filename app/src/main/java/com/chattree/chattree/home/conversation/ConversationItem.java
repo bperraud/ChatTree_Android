@@ -7,16 +7,18 @@ import java.util.List;
 
 public class ConversationItem {
 
-    private int id;
-    private String title;
-    private String picture;
+    private int          id;
+    private String       title;
+    private String       picture;
     private List<String> memberLabels;
+    private int          rootThreadId;
 
-    public ConversationItem(int id, String title, String picture) {
+    public ConversationItem(int id, String title, String picture, int rootThreadId) {
         this.id = id;
         this.title = title;
         this.picture = picture;
         this.memberLabels = new ArrayList<>();
+        this.rootThreadId = rootThreadId;
     }
 
     public void addMemberLabel(String label) {
@@ -37,6 +39,10 @@ public class ConversationItem {
 
     public List<String> getMemberLabels() {
         return memberLabels;
+    }
+
+    public int getRootThreadId() {
+        return rootThreadId;
     }
 
     public String getMemberLabelsFormated() {

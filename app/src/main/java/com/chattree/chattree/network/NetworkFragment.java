@@ -270,19 +270,6 @@ public class NetworkFragment extends Fragment {
                 if (stream != null) {
                     // Converts Stream to String with max length.
                     result = Utils.readStream(stream, 2000);
-
-                    // Get Cookies from response header and load them into cookieManager:
-//                    final String  COOKIES_HEADER  = "Set-Cookie";
-//                    CookieManager msCookieManager = ChatTreeApplication.getCookieManager();
-//
-//                    Map<String, List<String>> headerFields  = connection.getHeaderFields();
-//                    List<String>              cookiesHeader = headerFields.get(COOKIES_HEADER);
-//
-//                    if (cookiesHeader != null) {
-//                        for (String cookie : cookiesHeader) {
-//                            msCookieManager.getCookieStore().add(null, HttpCookie.parse(cookie).get(0));
-//                        }
-//                    }
                 }
             } finally {
                 // Close Stream and disconnect HTTPS connection.

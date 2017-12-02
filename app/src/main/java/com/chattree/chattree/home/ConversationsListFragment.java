@@ -30,8 +30,9 @@ public class ConversationsListFragment extends Fragment {
 
     private ProgressBar mProgressBar;
 
-    public static final String EXTRA_CONVERSATION_TITLE = "com.chattree.chattree.CONVERSATION_TITLE";
-    public static final String EXTRA_CONVERSATION_ID    = "com.chattree.chattree.CONVERSATION_ID";
+    public static final String EXTRA_CONVERSATION_TITLE          = "com.chattree.chattree.CONVERSATION_TITLE";
+    public static final String EXTRA_CONVERSATION_ID             = "com.chattree.chattree.CONVERSATION_ID";
+    public static final String EXTRA_CONVERSATION_ROOT_THREAD_ID = "com.chattree.chattree.CONVERSATION_ROOT_THREAD_ID";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,6 +54,7 @@ public class ConversationsListFragment extends Fragment {
                 Intent intent = new Intent(getContext(), ConversationActivity.class);
                 intent.putExtra(EXTRA_CONVERSATION_ID, conversationsList.get(position).getId());
                 intent.putExtra(EXTRA_CONVERSATION_TITLE, conversationsList.get(position).getTitle());
+                intent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, conversationsList.get(position).getRootThreadId());
                 startActivity(intent);
             }
         });
@@ -82,7 +84,7 @@ public class ConversationsListFragment extends Fragment {
             // New conversation found
             if (convData.c_id != lastConvId) {
 
-                convItem = new ConversationItem(convData.c_id, convData.c_title, convData.c_picture);
+                convItem = new ConversationItem(convData.c_id, convData.c_title, convData.c_picture, convData.c_fk_root_thread);
 
                 if (userId != convData.u_id) {
                     member = new User(

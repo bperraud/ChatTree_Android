@@ -1,5 +1,7 @@
 package com.chattree.chattree.home.conversation;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -17,9 +19,13 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
 
     private static final String TAG = "THREAD DETAIL FRAGMENT";
 
+    private View      progressBar;
     private ListView  listView;
     private EditText  mMessage;
     private PrintView sendMessageBtn;
+
+    private boolean isInit;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -28,9 +34,11 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
         listView = rootView.findViewById(R.id.messagesListView);
         mMessage = rootView.findViewById(R.id.messageEditText);
         sendMessageBtn = rootView.findViewById(R.id.sendMessageButton);
+        progressBar = rootView.findViewById(R.id.thread_detail_progress);
 
         sendMessageBtn.setOnClickListener(this);
 
+        isInit = false;
 
         ChatArrayAdapter chatArrayAdapter = new ChatArrayAdapter(getContext(), R.layout.messagefrommyself);
 
@@ -66,5 +74,17 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
 
             wsService.sendMessage(mMessage.getText().toString());
         }
+    }
+
+    public void initThread() {
+        if (isInit) return;
+        isInit = true;
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        progressBar.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                progressBar.setVisibility(View.GONE);
+            }
+        });
     }
 }

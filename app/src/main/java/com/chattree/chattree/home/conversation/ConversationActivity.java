@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.profile.ProfileActivity;
@@ -25,16 +26,24 @@ import com.chattree.chattree.websocket.WebSocketService;
 import java.util.Locale;
 
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ID;
+import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ROOT_THREAD_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_TITLE;
 
 public class ConversationActivity extends AppCompatActivity {
 
     private final String TAG = "CONVERSATION ACTIVITY";
     private int convId;
+    private int rootThreadId;
+
+    ThreadDetailFragment     threadDetailFragment;
+    ConversationTreeFragment conversationTreeFragment;
 
     private SyncReceiver dataLoadedReceiver;
     private boolean      convIsReady;
+    private boolean      rootThreadIsReady;
+    private boolean      currentTabIsRootThread;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
@@ -48,6 +57,8 @@ public class ConversationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_conversation);
 
         convIsReady = false;
+        rootThreadIsReady = false;
+        currentTabIsRootThread = true;
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -76,18 +87,41 @@ public class ConversationActivity extends AppCompatActivity {
         mSlidingTabLayout.setDistributeEvenly(true);
         mSlidingTabLayout.setSelectedIndicatorColors(getResources().getColor(R.color.colorComplement));
         mSlidingTabLayout.setViewPager(mViewPager);
+        mSlidingTabLayout.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            // This method will be invoked when a new page becomes selected.
+            @Override
+            public void onPageSelected(int position) {
+                // If we return to the main thread, we need to join the corresponding ws room
+                if (position == 0 && wsService != null) {
+                    wsService.joinThreadRoom(rootThreadId);
+                    threadDetailFragment.initThread();
+                }
+                currentTabIsRootThread = position == 0;
+            }
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
 
         Intent   activityIntent    = getIntent();
         String   convTitle         = activityIntent.getStringExtra(EXTRA_CONVERSATION_TITLE);
         TextView convTitleTextView = findViewById(R.id.conversationTitleTextView);
         convTitleTextView.setText(convTitle);
         convId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0);
+        rootThreadId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, 0);
 
         /*
          * Register a broadcast receiver to listen when the data are ready to be read from the local DB
          */
         dataLoadedReceiver = new SyncReceiver();
         registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION));
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION));
 
         // Prevent keyboard from auto-appearing
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -96,10 +130,24 @@ public class ConversationActivity extends AppCompatActivity {
     public class SyncReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0) == convId && !convIsReady) {
-                // Connect to the conversation namespace because the conversation is ready
-                wsService.connectToConvNsp(convId);
-                convIsReady = true;
+            if (intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0) != convId) return; // Skip if we are not concerned
+            switch (intent.getAction()) {
+                case SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION:
+                    if (!convIsReady) {
+                        // Connect to the conversation namespace because the conversation is ready
+                        wsService.connectToConvNsp(convId);
+                        convIsReady = true;
+                    }
+                    break;
+                case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
+                    if (intent.getIntExtra(EXTRA_SYNC_THREAD_ID, 0) == rootThreadId) {
+                        rootThreadIsReady = true;
+                    }
+                    if (currentTabIsRootThread) {
+                        wsService.joinThreadRoom(rootThreadId);
+                        threadDetailFragment.initThread();
+                    }
+                    break;
             }
         }
     }
@@ -134,6 +182,17 @@ public class ConversationActivity extends AppCompatActivity {
                 // Connect to the conversation namespace
                 wsService.connectToConvNsp(convId);
                 convIsReady = true;
+            }
+
+            Log.d(TAG, "onServiceConnected: " + wsService.localThreadIsReady(rootThreadId));
+            Log.d(TAG, "onServiceConnected: " + rootThreadIsReady);
+            Log.d(TAG, "onServiceConnected: " + currentTabIsRootThread);
+
+            if (wsService.localThreadIsReady(rootThreadId) && !rootThreadIsReady && currentTabIsRootThread) {
+                // Join the root thread room
+                wsService.joinThreadRoom(rootThreadId);
+                threadDetailFragment.initThread();
+                rootThreadIsReady = true;
             }
         }
 
@@ -189,9 +248,11 @@ public class ConversationActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             switch (position) {
                 case 0:
-                    return new ThreadDetailFragment();
+                    threadDetailFragment = new ThreadDetailFragment();
+                    return threadDetailFragment;
                 case 1:
-                    return new ConversationTreeFragment();
+                    conversationTreeFragment = new ConversationTreeFragment();
+                    return conversationTreeFragment;
                 default:
                     return null;
             }

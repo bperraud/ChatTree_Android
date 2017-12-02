@@ -89,6 +89,4 @@ public class ConversationTreeFragment extends Fragment {
         super.onSaveInstanceState(outState);
         outState.putString("tState", tView.getSaveState());
     }
-
-
 }

@@ -24,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
+import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.R;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.AppDatabase;
@@ -39,6 +40,9 @@ import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.HttpCookie;
 import java.util.*;
 
 import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;

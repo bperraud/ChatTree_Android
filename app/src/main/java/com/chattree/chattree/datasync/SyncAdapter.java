@@ -109,6 +109,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                     syncThreadWithLocalDB(convId, threadId);
                     Intent threadSyncIntent = new Intent();
                     threadSyncIntent.setAction(SYNC_CALLBACK_THREAD_LOADED_ACTION);
+                    threadSyncIntent.putExtra(EXTRA_SYNC_CONV_ID, convId);
                     threadSyncIntent.putExtra(EXTRA_SYNC_THREAD_ID, threadId);
                     getContext().sendBroadcast(threadSyncIntent);
                 }
@@ -126,10 +127,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         try {
             connection = (HttpsURLConnection) url.openConnection();
 
-            // Timeout for reading InputStream arbitrarily set to 3000ms.
-            connection.setReadTimeout(3000);
-            // Timeout for connection.connect() arbitrarily set to 3000ms.
-            connection.setConnectTimeout(3000);
+            // Timeout for reading InputStream arbitrarily set to 10000ms.
+            connection.setReadTimeout(10000);
+            // Timeout for connection.connect() arbitrarily set to 10000ms.
+            connection.setConnectTimeout(10000);
             // Set HTTP method.
             connection.setRequestMethod(httpMethod);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");

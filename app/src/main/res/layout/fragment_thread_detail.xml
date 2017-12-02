@@ -28,7 +28,8 @@
                 android:id="@+id/sendMessageButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="8dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="0dp"
                 android:paddingBottom="4dp"
                 app:iconText="@string/ic_send"
                 app:iconColor="@color/colorPrimary"
@@ -46,5 +47,13 @@
             android:clickable="false"
             android:layout_above="@id/form">
     </ListView>
+
+    <ProgressBar
+            android:id="@+id/thread_detail_progress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="visible"
+            android:layout_centerVertical="true"/>
 
 </RelativeLayout>

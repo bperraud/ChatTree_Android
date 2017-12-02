@@ -495,5 +495,6 @@
     <string name="Update_location">Mettre à jour votre position</string>
     <string name="send_message">send message</string>
     <string name="votre_message">Votre message…</string>
+    <string name="empty_messages">Aucun message pour le moment !</string>
 
 </resources>

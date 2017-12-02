@@ -48,6 +48,19 @@
             android:layout_above="@id/form">
     </ListView>
 
+    <TextView
+            android:id="@+id/emptyMessages"
+            android:text="@string/empty_messages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:visibility="gone"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textAppearance="@android:style/TextAppearance.Material.Large"
+            android:textColor="@color/extremeLightGrey"/>
+
     <ProgressBar
             android:id="@+id/thread_detail_progress"
             style="?android:attr/progressBarStyleLarge"

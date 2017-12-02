@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +17,7 @@ import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.User;
 import com.chattree.chattree.home.conversation.ConversationActivity;
 import com.chattree.chattree.home.conversation.ConversationItem;
+import com.chattree.chattree.tools.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +94,7 @@ public class ConversationsListFragment extends Fragment {
                             convData.u_lastname,
                             null
                     );
-                    convItem.addMemberLabel(getLabelFromUser(member));
+                    convItem.addMemberLabel(Utils.getLabelFromUser(member));
                 }
 
                 conversationsList.add(convItem);
@@ -112,7 +111,7 @@ public class ConversationsListFragment extends Fragment {
                         null
                 );
                 assert convItem != null;
-                convItem.addMemberLabel(getLabelFromUser(member));
+                convItem.addMemberLabel(Utils.getLabelFromUser(member));
             }
         }
 
@@ -126,18 +125,4 @@ public class ConversationsListFragment extends Fragment {
         });
     }
 
-    private String getLabelFromUser(User member) {
-        String res;
-        if (member.getLogin() != null)
-            res = member.getLogin();
-        else if (member.getFirstname() != null && member.getLastname() != null)
-            res = member.getFirstname() + " " + member.getLastname();
-        else if (member.getFirstname() != null)
-            res = member.getFirstname();
-        else if (member.getLastname() != null)
-            res = member.getLastname();
-        else
-            res = member.getEmail();
-        return res;
-    }
 }

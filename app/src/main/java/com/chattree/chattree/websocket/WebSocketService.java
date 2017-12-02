@@ -85,6 +85,7 @@ public class WebSocketService extends Service {
             for (Object arg : args) {
                 Log.d(TAG, "call: " + arg.toString());
             }
+            mainSocket.disconnect();
         }
     };
 
@@ -116,6 +117,7 @@ public class WebSocketService extends Service {
             for (Object arg : args) {
                 Log.d(TAG, "call: " + arg.toString());
             }
+            activeConvSocket.disconnect();
         }
     };
 
@@ -147,7 +149,8 @@ public class WebSocketService extends Service {
     @Override
     public boolean onUnbind(Intent intent) {
         activeConvSocket.disconnect();
-        return false;
+        Log.d(TAG, "onUnbind: WS DISCONNECTED");
+        return true;
     }
 
     public void setParams(double d) {
@@ -265,6 +268,11 @@ public class WebSocketService extends Service {
                             @SuppressWarnings("unchecked")
                             Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
                             headers.put("Origin", Collections.singletonList("http://localhost:4200"));
+                            List<String> cookies = new ArrayList<>();
+                            for (HttpCookie cookie : ChatTreeApplication.getCookieManager().getCookieStore().getCookies()) {
+                                cookies.add(cookie.toString());
+                            }
+                            headers.put("Cookie", cookies);
                         }
                     });
                 }

@@ -1,9 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.*;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
@@ -20,12 +17,14 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import com.chattree.chattree.R;
+import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 import com.chattree.chattree.websocket.WebSocketService;
 
 import java.util.Locale;
 
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_TITLE;
 
@@ -33,6 +32,9 @@ public class ConversationActivity extends AppCompatActivity {
 
     private final String TAG = "CONVERSATION ACTIVITY";
     private int convId;
+
+    private SyncReceiver dataLoadedReceiver;
+    private boolean      convIsReady;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
@@ -44,6 +46,8 @@ public class ConversationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
+
+        convIsReady = false;
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -79,8 +83,25 @@ public class ConversationActivity extends AppCompatActivity {
         convTitleTextView.setText(convTitle);
         convId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0);
 
+        /*
+         * Register a broadcast receiver to listen when the data are ready to be read from the local DB
+         */
+        dataLoadedReceiver = new SyncReceiver();
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION));
+
         // Prevent keyboard from auto-appearing
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    public class SyncReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0) == convId && !convIsReady) {
+                // Connect to the conversation namespace because the conversation is ready
+                wsService.connectToConvNsp(convId);
+                convIsReady = true;
+            }
+        }
     }
 
     @Override
@@ -97,14 +118,23 @@ public class ConversationActivity extends AppCompatActivity {
         unbindService(serviceConnection);
     }
 
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(dataLoadedReceiver);
+        super.onDestroy();
+    }
+
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(TAG, "onServiceConnected: SERVICE IS BOUND");
             wsService = ((WebSocketService.LocalBinder) service).getService();
 
-            // Connect to the conversation namespace
-//            wsService.connectToConvNsp(convId);
+            if (wsService.localConvIsReady(convId) && !convIsReady) {
+                // Connect to the conversation namespace
+                wsService.connectToConvNsp(convId);
+                convIsReady = true;
+            }
         }
 
         @Override

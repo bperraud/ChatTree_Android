@@ -1,12 +1,15 @@
 package com.chattree.chattree.websocket;
 
 import android.app.Service;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import com.chattree.chattree.datasync.SyncAdapter;
+import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.ConversationDao;
+import com.chattree.chattree.home.HomeActivity;
 import io.socket.client.IO;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
@@ -17,6 +20,7 @@ import org.json.JSONObject;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
 import static io.socket.emitter.Emitter.*;
 
@@ -26,6 +30,9 @@ public class WebSocketService extends Service {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final String WS_EVENT_CREATE_MESSAGE = "create-message";
+
+    private SyncReceiver dataLoadedReceiver;
+    private Set<Integer> localConvIdsLoaded;
 
     private String token;
     private Socket mainSocket;
@@ -140,6 +147,13 @@ public class WebSocketService extends Service {
         super.onCreate();
         Log.d(TAG, "Service created");
 
+        /*
+         * Register a broadcast receiver to listen when the data are ready to be read from the local DB
+         */
+        localConvIdsLoaded = new HashSet<>();
+        dataLoadedReceiver = new SyncReceiver();
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION));
+
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         token = pref.getString("token", null);
 
@@ -205,6 +219,10 @@ public class WebSocketService extends Service {
         return START_NOT_STICKY;
     }
 
+    public boolean localConvIsReady(int convId) {
+        return localConvIdsLoaded.contains(convId);
+    }
+
     public void connectToConvNsp(int convId) {
         try {
             IO.Options opts = new IO.Options();
@@ -238,6 +256,24 @@ public class WebSocketService extends Service {
 
         } catch (URISyntaxException e) {
             Log.d(TAG, e.getMessage());
+        }
+    }
+
+    public class SyncReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, final Intent intent) {
+
+            new AsyncTask<Void, Void, Integer>() {
+                @Override
+                protected Integer doInBackground(Void... params) {
+                    return intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0);
+                }
+
+                @Override
+                protected void onPostExecute(Integer convId) {
+                    localConvIdsLoaded.add(convId);
+                }
+            }.execute();
         }
     }
 

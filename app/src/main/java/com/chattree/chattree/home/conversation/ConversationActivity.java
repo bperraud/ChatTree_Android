@@ -27,6 +27,8 @@ public class ConversationActivity extends AppCompatActivity {
     private SlidingTabLayout      mSlidingTabLayout;
     private ViewPager             mViewPager;
 
+    private String convTitle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,7 +63,7 @@ public class ConversationActivity extends AppCompatActivity {
         mSlidingTabLayout.setViewPager(mViewPager);
 
 
-        String convTitle = getIntent().getStringExtra(EXTRA_CONVERSATION_TITLE);
+        convTitle = getIntent().getStringExtra(EXTRA_CONVERSATION_TITLE);
         TextView convTitleTextView = findViewById(R.id.conversationTitleTextView);
         convTitleTextView.setText(convTitle);
 
@@ -116,6 +118,10 @@ public class ConversationActivity extends AppCompatActivity {
                 case 0:
                     return new ThreadDetailFragment();
                 case 1:
+                    ConversationTreeFragment conversationTreeFragment = new ConversationTreeFragment();
+                    Bundle args = new Bundle();
+                    args.putString("CONV_TITLE", convTitle);
+                    conversationTreeFragment.setArguments(args);
                     return new ConversationTreeFragment();
                 default:
                     return null;

@@ -88,6 +88,16 @@
         <!-- WEBSOCKET SERVICE -->
         <service android:name=".websocket.UpdaterService"/>
 
+        <!-- THREAD ACTIVITY -->
+        <activity
+            android:name=".home.conversation.ThreadActivity"
+            android:configChanges="orientation|keyboardHidden"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".home.conversation.ConversationActivity"
+            android:windowSoftInputMode="adjustPan">
+        </activity>
+
+
     </application>
 
 </manifest>

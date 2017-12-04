@@ -66,8 +66,16 @@ public class NodeViewHolder extends TreeNode.BaseNodeViewHolder<NodeViewHolder.I
     }
 
     public static class IconTreeItem {
-        public int    icon;
-        public String text;
+        private int    icon;
+        private String text;
+
+        public int getIcon() {
+            return icon;
+        }
+
+        public String getText() {
+            return text;
+        }
 
         public IconTreeItem(int icon, String text) {
             this.icon = icon;

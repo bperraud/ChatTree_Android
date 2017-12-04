@@ -1,5 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -17,6 +18,8 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 public class ConversationTreeFragment extends Fragment {
     private AndroidTreeView tView;
     private static final String NAME = "Very long name for folder";
+    public static final String EXTRA_NAME_THREAD = "Thread_name";
+    public static final String EXTRA_NAME_CONV = "Conv_name";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -51,6 +54,18 @@ public class ConversationTreeFragment extends Fragment {
             @Override
             public void onClick(TreeNode node, Object value) {
                 Toast.makeText(getContext(), "START NEW ACTIVITY TO SHOW THE THREAD DETAIL!! (DESIR)", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), ThreadActivity.class);
+
+
+
+                Log.d("TEST", "onClick: " + value.getClass().getName());
+
+                IconTreeItem item = (IconTreeItem) value;
+                intent.putExtra(EXTRA_NAME_THREAD, item.getText());
+                //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
+
+
+                startActivity(intent);
             }
         });
         tView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {

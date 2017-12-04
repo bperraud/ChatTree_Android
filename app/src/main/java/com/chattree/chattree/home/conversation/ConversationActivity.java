@@ -29,6 +29,8 @@ import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ROOT_THREAD_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_TITLE;
+import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_CONV_ID;
+import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_ROOT_THREAD_ID;
 import static com.chattree.chattree.home.conversation.ThreadDetailFragment.BUNDLE_THREAD_ID;
 
 public class ConversationActivity extends AppCompatActivity {
@@ -53,6 +55,7 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "ON CREATE");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
 
@@ -96,13 +99,15 @@ public class ConversationActivity extends AppCompatActivity {
                     wsService.joinThreadRoom(rootThreadId);
                     rootThreadDetailFragment.initThread();
                 }
+                // Load the conv tree in the corresponding fragment
+                else if (position == 1 && conversationTreeFragment != null)
+                    conversationTreeFragment.initThread();
                 currentTabIsRootThread = position == 0;
             }
 
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
             }
-
 
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -138,6 +143,8 @@ public class ConversationActivity extends AppCompatActivity {
                         // Connect to the conversation namespace because the conversation is ready
                         wsService.connectToConvNsp(convId);
                         convIsReady = true;
+                        // Load the conv tree in the corresponding fragment
+                        conversationTreeFragment.initThread();
                     }
                     break;
                 case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
@@ -183,6 +190,9 @@ public class ConversationActivity extends AppCompatActivity {
                 // Connect to the conversation namespace
                 wsService.connectToConvNsp(convId);
                 convIsReady = true;
+                // Load the conv tree in the corresponding fragment
+                if (conversationTreeFragment != null)
+                    conversationTreeFragment.initThread();
             }
 
             Log.d(TAG, "onServiceConnected: join room ? " + rootThreadId + ", " + rootThreadIsReady + ", " +
@@ -255,12 +265,16 @@ public class ConversationActivity extends AppCompatActivity {
             switch (position) {
                 case 0:
                     rootThreadDetailFragment = new ThreadDetailFragment();
-                    Bundle args = new Bundle();
-                    args.putInt(BUNDLE_THREAD_ID, rootThreadId);
-                    rootThreadDetailFragment.setArguments(args);
+                    Bundle args1 = new Bundle();
+                    args1.putInt(BUNDLE_THREAD_ID, rootThreadId);
+                    rootThreadDetailFragment.setArguments(args1);
                     return rootThreadDetailFragment;
                 case 1:
                     conversationTreeFragment = new ConversationTreeFragment();
+                    Bundle args2 = new Bundle();
+                    args2.putInt(BUNDLE_CONV_ID, convId);
+                    args2.putInt(BUNDLE_ROOT_THREAD_ID, rootThreadId);
+                    conversationTreeFragment.setArguments(args2);
                     return conversationTreeFragment;
                 default:
                     return null;

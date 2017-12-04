@@ -1,35 +1,39 @@
 package com.chattree.chattree.home.conversation;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import com.chattree.chattree.R;
+import com.chattree.chattree.db.Thread;
 import com.github.johnkil.print.PrintView;
 import com.unnamed.b.atv.model.TreeNode;
 
-public class NodeViewHolder extends TreeNode.BaseNodeViewHolder<NodeViewHolder.IconTreeItem> {
-    private TextView  tvValue;
+public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNodeViewHolder.ThreadTreeItem> {
+    private static final String DEFAULT_THREAD_EMPTY_TITLE = "<Sans titre>";
+
+    private TextView  threadNodeTitleTextView;
     private PrintView arrowView;
 
-    public NodeViewHolder(Context context) {
+    public ThreadNodeViewHolder(Context context) {
         super(context);
     }
 
     @Override
-    public View createNodeView(final TreeNode node, IconTreeItem value) {
+    public View createNodeView(final TreeNode node, ThreadTreeItem threadItem) {
+        final Thread         thread   = threadItem.thread;
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View           view     = inflater.inflate(R.layout.layout_thread_node, null, false);
-        tvValue = view.findViewById(R.id.node_value);
-        tvValue.setText(value.text);
+        threadNodeTitleTextView = view.findViewById(R.id.thread_title);
+        threadNodeTitleTextView.setText(thread.getTitle() == null ? DEFAULT_THREAD_EMPTY_TITLE : thread.getTitle());
 
         // Tags
-        ((TextView) view.findViewById(R.id.tag_labels)).setText("Tag1, Tag2");
+//        ((TextView) view.findViewById(R.id.tag_labels)).setText("Tag1, Tag2");
+//        final TextView tagLabelsView = view.findViewById(R.id.tag_labels);
+        view.findViewById(R.id.tag_container).setVisibility(View.GONE);
 
         final PrintView iconView = view.findViewById(R.id.icon);
-        iconView.setIconText(context.getResources().getString(value.icon));
+        iconView.setIconText(context.getResources().getString(threadItem.icon));
 
         arrowView = view.findViewById(R.id.arrow_icon);
         if (node.getChildren().size() == 0) {
@@ -49,13 +53,6 @@ public class NodeViewHolder extends TreeNode.BaseNodeViewHolder<NodeViewHolder.I
                 }
             }
         });
-//
-//        view.findViewById(R.id.btn_delete).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                getTreeView().removeNode(node);
-//            }
-//        });
 
         return view;
     }
@@ -65,13 +62,13 @@ public class NodeViewHolder extends TreeNode.BaseNodeViewHolder<NodeViewHolder.I
         arrowView.setIconText(context.getResources().getString(active ? R.string.ic_keyboard_arrow_down : R.string.ic_keyboard_arrow_right));
     }
 
-    public static class IconTreeItem {
+    public static class ThreadTreeItem {
         public int    icon;
-        public String text;
+        public Thread thread;
 
-        public IconTreeItem(int icon, String text) {
+        ThreadTreeItem(int icon, Thread thread) {
             this.icon = icon;
-            this.text = text;
+            this.thread = thread;
         }
     }
 }

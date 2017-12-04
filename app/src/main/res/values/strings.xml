@@ -488,7 +488,7 @@
     <string name="root_thread_title">discussion</string>
     <string name="threads_title">thèmes</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
+    <!-- TODO: Remove or change this placeholder thread -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <!-- Strings related to location -->
@@ -496,5 +496,6 @@
     <string name="send_message">send message</string>
     <string name="votre_message">Votre message…</string>
     <string name="empty_messages">Aucun message pour le moment !</string>
+    <string name="empty_threads">Aucun thread pour le moment !</string>
 
 </resources>

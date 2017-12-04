@@ -13,7 +13,22 @@
     <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/container"/>
+            android:id="@+id/container">
+
+        <TextView
+                android:id="@+id/emptyThreads"
+                android:text="@string/empty_threads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+                android:visibility="gone"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:textAppearance="@android:style/TextAppearance.Material.Large"
+                android:textColor="@color/extremeLightGrey"/>
+
+    </RelativeLayout>
 
     <android.support.design.widget.FloatingActionButton
             android:id="@+id/new_thread_fab"

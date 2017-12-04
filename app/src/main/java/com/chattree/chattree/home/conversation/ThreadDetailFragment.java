@@ -33,7 +33,7 @@ import static com.chattree.chattree.home.conversation.MessageItem.OwnerValues.*;
 
 public class ThreadDetailFragment extends Fragment implements View.OnClickListener {
 
-    public static final String BUNDLE_THREAD_ID = "com.chattree.chattree.BUNDLE_THREAD_ID";
+    static final String BUNDLE_THREAD_ID = "com.chattree.chattree.BUNDLE_THREAD_ID";
 
     private static final String TAG = "THREAD DETAIL FRAGMENT";
 
@@ -51,6 +51,8 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "ON CREATE VIEW");
+
         // Inflate the layout resource that'll be returned
         View rootView = inflater.inflate(R.layout.fragment_thread_detail, container, false);
         messagesListView = rootView.findViewById(R.id.messagesListView);
@@ -110,8 +112,6 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
                 refreshListOfMessages(messages);
             }
         }.execute();
-
-
     }
 
     private void refreshListOfMessages(List<CustomMessageWithUser> messages) {

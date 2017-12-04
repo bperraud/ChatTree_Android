@@ -1,5 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -10,50 +11,59 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 import com.chattree.chattree.R;
-import com.chattree.chattree.home.conversation.NodeViewHolder.IconTreeItem;
+import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.Thread;
+import com.chattree.chattree.db.ThreadDao;
+import com.chattree.chattree.home.conversation.ThreadNodeViewHolder.ThreadTreeItem;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
+
+import java.util.Collection;
+import java.util.List;
 
 public class ConversationTreeFragment extends Fragment {
-    private AndroidTreeView tView;
-    private static final String NAME = "Very long name for folder";
+
+    static final String BUNDLE_CONV_ID        = "com.chattree.chattree.BUNDLE_CONV_ID";
+    static final String BUNDLE_ROOT_THREAD_ID = "com.chattree.chattree.BUNDLE_ROOT_THREAD_ID";
+
+    private static final String TAG = "CONVERSATION TREE";
+
+    private AndroidTreeView treeView;
+    private TreeNode        root;
+
+    private int     convId;
+    private int     rootThreadId;
+    private boolean isInit;
+
+    private List<Thread> threads;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+        Log.d(TAG, "ON CREATE VIEW");
         View      rootView      = inflater.inflate(R.layout.fragment_conversation_tree, null, false);
         ViewGroup containerView = rootView.findViewById(R.id.container);
 
-        TreeNode root = TreeNode.root();
+        convId = getArguments().getInt(BUNDLE_CONV_ID);
+        rootThreadId = getArguments().getInt(BUNDLE_ROOT_THREAD_ID);
+        isInit = false;
 
-        TreeNode thread1    = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1"));
-        TreeNode subThread1 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.1"));
-        TreeNode subThread2 = new TreeNode(new IconTreeItem(
-                R.string.ic_messenger,
-                "Fil 1.2 - avec un nom ou une profondeur tellement long(ue) que ça en devient ridicule"
-        ));
-        TreeNode subThread3 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.3"));
-        TreeNode subThread4 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 1.4"));
+        root = TreeNode.root();
 
-        thread1.addChildren(subThread1, subThread2, subThread3, subThread4);
-
-        TreeNode thread2 = new TreeNode(new IconTreeItem(R.string.ic_messenger, "Fil 2"));
-
-        root.addChildren(thread1, thread2);
-
-        tView = new AndroidTreeView(getActivity(), root);
-        tView.setDefaultAnimation(true);
-        tView.setUse2dScroll(true);
-        tView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
-        tView.setDefaultViewHolder(NodeViewHolder.class);
-        tView.setUseAutoToggle(false);
-        tView.setDefaultNodeClickListener(new TreeNode.TreeNodeClickListener() {
+        treeView = new AndroidTreeView(getActivity(), root);
+        treeView.setDefaultAnimation(true);
+        treeView.setUse2dScroll(true);
+        treeView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
+        treeView.setDefaultViewHolder(ThreadNodeViewHolder.class);
+        treeView.setUseAutoToggle(false);
+        treeView.setDefaultNodeClickListener(new TreeNode.TreeNodeClickListener() {
             @Override
             public void onClick(TreeNode node, Object value) {
                 Toast.makeText(getContext(), "START NEW ACTIVITY TO SHOW THE THREAD DETAIL!! (DESIR)", Toast.LENGTH_SHORT).show();
             }
         });
-        tView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
+        treeView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
             @Override
             public boolean onLongClick(TreeNode node, Object value) {
                 Toast.makeText(getContext(), "long click", Toast.LENGTH_SHORT).show();
@@ -61,13 +71,12 @@ public class ConversationTreeFragment extends Fragment {
             }
         });
 
-
-        containerView.addView(tView.getView());
+        containerView.addView(treeView.getView());
 
         if (savedInstanceState != null) {
             String state = savedInstanceState.getString("tState");
             if (!TextUtils.isEmpty(state)) {
-                tView.restoreState(state);
+                treeView.restoreState(state);
             }
         }
 
@@ -83,10 +92,66 @@ public class ConversationTreeFragment extends Fragment {
         return rootView;
     }
 
-
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("tState", tView.getSaveState());
+        outState.putString("tState", treeView.getSaveState());
+    }
+
+    public void initThread() {
+        if (isInit) return;
+        isInit = true;
+
+        new AsyncTask<Void, Void, List<Thread>>() {
+            @Override
+            protected List<Thread> doInBackground(Void... params) {
+                ThreadDao threadDao = AppDatabase.getInstance(getContext()).threadDao();
+                return threadDao.findByConvId(convId);
+            }
+
+            @Override
+            protected void onPostExecute(List<Thread> threads) {
+                buildConvTree(threads);
+            }
+        }.execute();
+    }
+
+    private TreeNode buildNodes(Thread parent) {
+        // Build the node corresponding to parent
+        TreeNode threadNode = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, parent));
+
+        // Find the children of the parent
+        for (Thread thread : threads) {
+            if (thread.getId() != rootThreadId && thread.getFk_thread_parent() == parent.getId()) {
+                threadNode.addChild(buildNodes(thread));
+            }
+        }
+
+        // If we are dealing with the direct children of the root thread, add them
+        if (parent.getId() != rootThreadId && parent.getFk_thread_parent() == rootThreadId) {
+            treeView.addNode(root, threadNode);
+        }
+
+        return threadNode;
+    }
+
+    private void buildConvTree(List<Thread> threadList) {
+        threads = threadList;
+
+        Collection result = CollectionUtils.select(threads, new Predicate() {
+            @Override
+            public boolean evaluate(Object object) {
+                Thread thread = (Thread) object;
+                return thread.getId() == rootThreadId;
+            }
+        });
+
+        Thread rootThread = (Thread) result.toArray()[0];
+        buildNodes(rootThread);
+
+        // No threads except the root one
+        if (threads.size() == 1) {
+            getView().findViewById(R.id.emptyThreads).setVisibility(View.VISIBLE);
+        }
     }
 }

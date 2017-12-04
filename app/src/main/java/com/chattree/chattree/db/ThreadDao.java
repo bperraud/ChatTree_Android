@@ -13,6 +13,9 @@ public interface ThreadDao {
     @Query("SELECT * FROM t_thread")
     List<Thread> findAll();
 
+    @Query("SELECT * FROM t_thread WHERE fk_conversation = :convId")
+    List<Thread> findByConvId(int convId);
+
     @Delete
     void deleteAll(List<Thread> threads);
 }

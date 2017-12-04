@@ -320,10 +320,10 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                         threadId,
                         threadJsonObj.isNull("date") ? null : simpleDateFormat.parse(threadJsonObj.getString("date")),
                         threadJsonObj.isNull("title") ? null : threadJsonObj.getString("title"),
-                        threadJsonObj.isNull("fk_author") ? null : threadJsonObj.getInt("fk_author"),
-                        threadJsonObj.isNull("fk_conversation") ? null : threadJsonObj.getInt("fk_conversation"),
-                        threadJsonObj.isNull("fk_thread_parent") ? null : threadJsonObj.getInt("fk_thread_parent"),
-                        threadJsonObj.isNull("fk_message_parent") ? null : threadJsonObj.getInt("fk_message_parent")
+                        threadJsonObj.isNull("author") ? null : threadJsonObj.getInt("author"),
+                        threadJsonObj.isNull("conversation") ? null : threadJsonObj.getInt("conversation"),
+                        threadJsonObj.isNull("thread_parent") ? null : threadJsonObj.getInt("thread_parent"),
+                        threadJsonObj.isNull("message_parent") ? null : threadJsonObj.getInt("message_parent")
                 );
                 int localThreadIndex = getThreadIndexInListById(threadId, localThreads);
                 if ((localThreadIndex == -1) || (!localThreads.get(localThreadIndex).equals(receivedThread))) {

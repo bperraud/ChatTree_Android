@@ -85,13 +85,12 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
     public void onClick(View view) {
         if (view.getId() == sendMessageBtn.getId()) {
 
-            if (mMessage.getText().toString().isEmpty())
-                return;
+            // Don't send an empty message
+            if (mMessage.getText().toString().isEmpty()) return;
 
             Toast.makeText(this.getContext(), "To send:\n" + mMessage.getText(), Toast.LENGTH_LONG).show();
 
             WebSocketService wsService = ((ConversationActivity) getActivity()).getWsService();
-
             wsService.sendMessage(mMessage.getText().toString());
         }
     }

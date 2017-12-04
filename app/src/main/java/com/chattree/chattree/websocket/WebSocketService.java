@@ -10,6 +10,7 @@ import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.AppDatabase;
 import com.chattree.chattree.db.ConversationDao;
+import com.chattree.chattree.db.Message;
 import com.chattree.chattree.home.HomeActivity;
 import io.socket.client.IO;
 import io.socket.client.Manager;
@@ -20,6 +21,9 @@ import org.json.JSONObject;
 
 import java.net.HttpCookie;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
@@ -33,8 +37,11 @@ public class WebSocketService extends Service {
     private final String TAG = "WEBSOCKET SERVICE";
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final String WS_EVENT_CREATE_MESSAGE   = "create-message";
-    private final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
+    private static final String WS_EVENT_CREATE_MESSAGE   = "create-message";
+    private static final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
+
+    public static final String NEW_MESSAGE_ACTION = "com.chattree.chattree.NEW_MESSAGE_ACTION";
+    public static final String EXTRA_MESSAGE_ID   = "com.chattree.chattree.EXTRA_MESSAGE_ID";
 
     private SyncReceiver dataLoadedReceiver;
     private Set<Integer> localConvIdsLoaded;
@@ -121,23 +128,20 @@ public class WebSocketService extends Service {
         }
     };
 
-//    private Listener onNewMessage = new Listener() {
-//        @Override
-//        public void call(final Object... args) {
-//            JSONObject data = (JSONObject) args[0];
-//            String     username;
-//            String     message;
-//            try {
-//                username = data.getString("username");
-//                message = data.getString("message");
-//            } catch (JSONException e) {
-//                return;
-//            }
-//
-//            Log.d(TAG, username);
-//            Log.d(TAG, message);
-//        }
-//    };
+    private Listener requestHeadersListener = new Listener() {
+        @Override
+        public void call(Object... args) {
+            @SuppressWarnings("unchecked")
+            Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
+            // modify request headers
+            headers.put("Origin", Collections.singletonList("http://localhost:4200"));
+            List<String> cookies = new ArrayList<>();
+            for (HttpCookie cookie : ChatTreeApplication.getCookieManager().getCookieStore().getCookies()) {
+                cookies.add(cookie.toString());
+            }
+            headers.put("Cookie", cookies);
+        }
+    };
 
 
     @Nullable
@@ -190,20 +194,7 @@ public class WebSocketService extends Service {
                 public void call(Object... args) {
                     Transport transport = (Transport) args[0];
 
-                    transport.on(Transport.EVENT_REQUEST_HEADERS, new Listener() {
-                        @Override
-                        public void call(Object... args) {
-                            @SuppressWarnings("unchecked")
-                            Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
-                            // modify request headers
-                            headers.put("Origin", Collections.singletonList("http://localhost:4200"));
-                            List<String> cookies = new ArrayList<>();
-                            for (HttpCookie cookie : ChatTreeApplication.getCookieManager().getCookieStore().getCookies()) {
-                                cookies.add(cookie.toString());
-                            }
-                            headers.put("Cookie", cookies);
-                        }
-                    });
+                    transport.on(Transport.EVENT_REQUEST_HEADERS, requestHeadersListener);
 
                     transport.on(Transport.EVENT_RESPONSE_HEADERS, new Listener() {
                         @Override
@@ -245,6 +236,39 @@ public class WebSocketService extends Service {
         return localThreadIdsLoaded.contains(threadId);
     }
 
+    private Listener onCreateMessage = new Listener() {
+        @Override
+        public void call(final Object... args) {
+            JSONObject data = (JSONObject) args[0];
+            Message    newMessage;
+            try {
+                JSONObject message   = data.getJSONObject("message");
+                int        messageId = message.getInt("id");
+                newMessage = new Message(
+                        messageId,
+                        message.getInt("author"),
+                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.CANADA_FRENCH).parse(message.getString("date")),
+                        message.getString("content"),
+                        message.getInt("thread")
+                );
+
+                // TODO: handle the update of the local db + event emission/catch
+
+                // Update the database
+                // TODO
+
+                // Send the event
+                Intent newMessageIntent = new Intent();
+                newMessageIntent.setAction(NEW_MESSAGE_ACTION);
+                newMessageIntent.putExtra(EXTRA_MESSAGE_ID, messageId);
+                getApplicationContext().sendBroadcast(newMessageIntent);
+
+            } catch (JSONException | ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
     public void connectToConvNsp(int convId) {
         try {
             IO.Options opts = new IO.Options();
@@ -255,6 +279,7 @@ public class WebSocketService extends Service {
             activeConvSocket.on(Socket.EVENT_CONNECT, onConnectionForConv);
             activeConvSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectErrorForConv);
             activeConvSocket.on(Socket.EVENT_ERROR, onErrorForConv);
+            activeConvSocket.on(WS_EVENT_CREATE_MESSAGE, onCreateMessage);
 
             // Called upon transport creation.
             activeConvSocket.io().on(Manager.EVENT_TRANSPORT, new Listener() {
@@ -262,19 +287,7 @@ public class WebSocketService extends Service {
                 public void call(Object... args) {
                     Transport transport = (Transport) args[0];
 
-                    transport.on(Transport.EVENT_REQUEST_HEADERS, new Listener() {
-                        @Override
-                        public void call(Object... args) {
-                            @SuppressWarnings("unchecked")
-                            Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
-                            headers.put("Origin", Collections.singletonList("http://localhost:4200"));
-                            List<String> cookies = new ArrayList<>();
-                            for (HttpCookie cookie : ChatTreeApplication.getCookieManager().getCookieStore().getCookies()) {
-                                cookies.add(cookie.toString());
-                            }
-                            headers.put("Cookie", cookies);
-                        }
-                    });
+                    transport.on(Transport.EVENT_REQUEST_HEADERS, requestHeadersListener);
                 }
             });
 
@@ -311,7 +324,7 @@ public class WebSocketService extends Service {
         JSONObject newMessage = new JSONObject();
         try {
             newMessage.put("message", new JSONObject().put("content", content));
-            mainSocket.emit(WS_EVENT_CREATE_MESSAGE, newMessage.toString());
+            activeConvSocket.emit(WS_EVENT_CREATE_MESSAGE, newMessage);
         } catch (JSONException e) {
             e.printStackTrace();
         }

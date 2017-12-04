@@ -28,7 +28,7 @@ public class ContactListAdapter extends ArrayAdapter<String> {
         }
 
         String contact = getItem(position);
-        ((TextView) v.findViewById(R.id.nameTextView)).setText(contact);
+        ((TextView) v.findViewById(R.id.contactPseudoTextView)).setText(contact);
 
         return v;
     }

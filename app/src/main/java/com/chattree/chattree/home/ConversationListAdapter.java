@@ -30,7 +30,7 @@ public class ConversationListAdapter extends ArrayAdapter<ConversationItem> {
         }
 
         ConversationItem conv             = getItem(position);
-        TextView         convName         = v.findViewById(R.id.nameTextView);
+        TextView         convName         = v.findViewById(R.id.contactPseudoTextView);
         TextView         convMembersLabel = v.findViewById(R.id.overviewTextView);
         ImageView        convPicture      = v.findViewById(R.id.picture);
         if (conv.getTitle() != null) {

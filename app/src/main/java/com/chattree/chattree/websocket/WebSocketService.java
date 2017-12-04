@@ -148,7 +148,9 @@ public class WebSocketService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        activeConvSocket.disconnect();
+        if (activeConvSocket != null) {
+            activeConvSocket.disconnect();
+        }
         Log.d(TAG, "onUnbind: WS DISCONNECTED");
         return true;
     }

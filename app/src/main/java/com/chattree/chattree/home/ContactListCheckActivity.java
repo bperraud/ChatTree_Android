@@ -5,11 +5,12 @@ import android.os.Bundle;
 
 import com.chattree.chattree.R;
 
-public class ContactListChekActivity extends AppCompatActivity {
+// TODO: rename this class and variants to a more explicit name (e.g. create-conv-activity)
+public class ContactListCheckActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_contact_list_chek);
+        setContentView(R.layout.activity_contact_list_check);
     }
 }

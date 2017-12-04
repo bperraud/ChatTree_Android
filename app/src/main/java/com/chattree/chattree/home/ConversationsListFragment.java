@@ -63,7 +63,8 @@ public class ConversationsListFragment extends Fragment {
         newConvFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "NEW CONVERSATION", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), ContactListCheckActivity.class);
+                startActivity(intent);
             }
         });
 

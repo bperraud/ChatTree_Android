@@ -51,6 +51,8 @@ public class ConversationTreeFragment extends Fragment {
 
         convId = getArguments().getInt(BUNDLE_CONV_ID);
         rootThreadId = getArguments().getInt(BUNDLE_ROOT_THREAD_ID);
+        if (rootThreadId == 0)
+            throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
         isInit = false;
 
         root = TreeNode.root();
@@ -109,7 +111,7 @@ public class ConversationTreeFragment extends Fragment {
         outState.putString("tState", treeView.getSaveState());
     }
 
-    public void initThread() {
+    public void initConvTree(int i) {
         if (isInit) return;
         isInit = true;
 

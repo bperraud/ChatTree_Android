@@ -291,7 +291,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         return null;
     }
 
-    //returns thread ids
+    // Returns thread ids
     private int[] syncConvWithLocalDB(int convId) {
         try {
             URL    url    = new URL(NetworkFragment.BASE_URL + "api/get-conv/" + convId);
@@ -311,7 +311,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             int[] threadIds = new int[threadJsonArray.length()];
 
-            //let's insert threads
+            // Let's insert threads
             for (int i = 0, size = threadJsonArray.length(); i < size; ++i) {
                 JSONObject threadJsonObj = threadJsonArray.getJSONObject(i);
                 int        threadId      = threadJsonObj.getInt("id");
@@ -329,7 +329,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 );
                 int localThreadIndex = getThreadIndexInListById(threadId, localThreads);
                 if ((localThreadIndex == -1) || (!localThreads.get(localThreadIndex).equals(receivedThread))) {
-                    //need to insert or update
+                    // Need to insert or update
                     threadsToInsertOrUpdate.add(receivedThread);
                 }
 
@@ -343,15 +343,15 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 }
             });
 
-            //INSERTS OR UPDATES
+            // INSERTS OR UPDATES
             threadDao.insertAll(threadsToInsertOrUpdate);
 //            System.out.println(threadsToInsertOrUpdate.size() + " threads inserted");
 
-            //then let's update conversation.fk_root_thread
+            // Then let's update conversation.fk_root_thread
             if (!convJson.isNull("fk_root_thread")) {
                 int fkrt = convJson.getInt("fk_root_thread");
                 conversationDao.updateFKRootThreadById(fkrt, convId);
-//                System.out.println("fk_root_thread updated");
+//                System.out.println("fk_root_thread updated, fk = " + fkrt + ", convId = " + convId);
             }
             return threadIds;
 

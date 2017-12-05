@@ -207,7 +207,7 @@ public class WebSocketService extends Service {
                             List<String> setCookieHeader = headers.get("Set-Cookie");
                             if (setCookieHeader != null) {
                                 String cookie = setCookieHeader.get(0);
-                                Log.d(TAG, "call: COOKIE: " + cookie);
+//                                Log.d(TAG, "call: COOKIE: " + cookie);
                             }
                         }
                     });

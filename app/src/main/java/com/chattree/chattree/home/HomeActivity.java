@@ -2,13 +2,10 @@ package com.chattree.chattree.home;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.content.*;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -24,10 +21,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
-import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.R;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.Conversation;
 import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.network.NetConnectCallback;
@@ -40,11 +37,11 @@ import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
 
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.HttpCookie;
 import java.util.*;
 
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
+import static com.chattree.chattree.datasync.SyncAdapter.SYNC_CALLBACK_ALL_CONV_LOADED_ACTION;
+import static com.chattree.chattree.datasync.SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION;
 import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
 import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 
@@ -134,8 +131,8 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         // ----------------------- Save the user data ----------------------- //
         // ------------------------------------------------------------------ //
 
-        Intent     activityIntent = getIntent();
-        String loginDataJson = activityIntent.getStringExtra(EXTRA_LOGIN_DATA);
+        Intent activityIntent = getIntent();
+        String loginDataJson  = activityIntent.getStringExtra(EXTRA_LOGIN_DATA);
         try {
             SharedPreferences        pref = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor edit = pref.edit();
@@ -186,7 +183,8 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
          * Register a broadcast receiver to listen when the data are ready to be read from the local DB
          */
         dataLoadedReceiver = new SyncReceiver();
-        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_ALL_CONV_LOADED_ACTION));
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SYNC_CALLBACK_ALL_CONV_LOADED_ACTION));
+        registerReceiver(dataLoadedReceiver, new IntentFilter(SYNC_CALLBACK_CONV_LOADED_ACTION));
 
         /*
          * Signal the framework to run your sync adapter. Assume that
@@ -195,35 +193,40 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
         ContentResolver.requestSync(mAccount, AUTHORITY, settingsBundle);
     }
 
-//    private boolean isWsServiceRunning() {
-//        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-//        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-//            if (WebSocketService.class.getName().equals(service.service.getClassName())) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-//
-
-
     public class SyncReceiver extends BroadcastReceiver {
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, final Intent intent) {
+            switch (intent.getAction()) {
+                case SYNC_CALLBACK_ALL_CONV_LOADED_ACTION:
+                    new AsyncTask<Void, Void, List<CustomConversationUser>>() {
+                        @Override
+                        protected List<CustomConversationUser> doInBackground(Void... params) {
+                            ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
+                            return conversationDao.getCustomConversationUsers();
+                        }
 
-            new AsyncTask<Void, Void, List<CustomConversationUser>>() {
-                @Override
-                protected List<CustomConversationUser> doInBackground(Void... params) {
-                    ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
-                    return conversationDao.getCustomConversationUsers();
-                }
+                        @Override
+                        protected void onPostExecute(List<CustomConversationUser> customConversationUsers) {
+                            conversationsListFragment.initConvsList(customConversationUsers);
+                        }
+                    }.execute();
+                    break;
+                case SYNC_CALLBACK_CONV_LOADED_ACTION:
+                    new AsyncTask<Void, Void, Conversation>() {
+                        @Override
+                        protected Conversation doInBackground(Void... params) {
+                            ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
+                            return conversationDao.findById(intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0));
+                        }
 
-                @Override
-                protected void onPostExecute(List<CustomConversationUser> customConversationUsers) {
-                    conversationsListFragment.refreshListOfConv(customConversationUsers);
-                }
-            }.execute();
+                        @Override
+                        protected void onPostExecute(Conversation conversation) {
+                            conversationsListFragment.updateRootThreadOfConv(conversation);
+                        }
+                    }.execute();
+                    break;
+            }
 
 
         }

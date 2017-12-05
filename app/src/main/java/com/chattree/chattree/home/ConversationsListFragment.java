@@ -13,13 +13,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 import com.chattree.chattree.R;
+import com.chattree.chattree.db.Conversation;
 import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.User;
 import com.chattree.chattree.home.conversation.ConversationActivity;
 import com.chattree.chattree.home.conversation.ConversationItem;
 import com.chattree.chattree.tools.Utils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ConversationsListFragment extends Fragment {
@@ -33,12 +37,16 @@ public class ConversationsListFragment extends Fragment {
     public static final String EXTRA_CONVERSATION_ID             = "com.chattree.chattree.CONVERSATION_ID";
     public static final String EXTRA_CONVERSATION_ROOT_THREAD_ID = "com.chattree.chattree.CONVERSATION_ROOT_THREAD_ID";
 
+    private Intent startConvActivityLastIntent;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout resource that'll be returned
         View rootView = inflater.inflate(R.layout.fragment_conversations_list, container, false);
 
         mProgressBar = rootView.findViewById(R.id.list_convs_progress);
+
+        startConvActivityLastIntent = null;
 
         // List of conversations
         conversationsList = new ArrayList<>();
@@ -50,11 +58,16 @@ public class ConversationsListFragment extends Fragment {
 
         conversationsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View view, int position, long id) {
-                Intent intent = new Intent(getContext(), ConversationActivity.class);
-                intent.putExtra(EXTRA_CONVERSATION_ID, conversationsList.get(position).getId());
-                intent.putExtra(EXTRA_CONVERSATION_TITLE, conversationsList.get(position).getTitle());
-                intent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, conversationsList.get(position).getRootThreadId());
-                startActivity(intent);
+                Intent           intent   = new Intent(getContext(), ConversationActivity.class);
+                ConversationItem convItem = conversationsList.get(position);
+                intent.putExtra(EXTRA_CONVERSATION_ID, convItem.getId());
+                intent.putExtra(EXTRA_CONVERSATION_TITLE, convItem.getTitle());
+                intent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, convItem.getRootThreadId());
+                if (convItem.getRootThreadId() == 0) {
+                    startConvActivityLastIntent = intent;
+                } else {
+                    startActivity(intent);
+                }
             }
         });
 
@@ -71,8 +84,7 @@ public class ConversationsListFragment extends Fragment {
         return rootView;
     }
 
-    void refreshListOfConv(List<ConversationDao.CustomConversationUser> customConversationUsers) {
-
+    void initConvsList(List<ConversationDao.CustomConversationUser> customConversationUsers) {
         int              lastConvId = 0;
         ConversationItem convItem   = null;
         User             member;
@@ -126,4 +138,21 @@ public class ConversationsListFragment extends Fragment {
         });
     }
 
+    void updateRootThreadOfConv(final Conversation conversation) {
+        Collection result = CollectionUtils.select(conversationsList, new Predicate() {
+            @Override
+            public boolean evaluate(Object object) {
+                ConversationItem conversationItem = (ConversationItem) object;
+                return conversationItem.getId() == conversation.getId();
+            }
+        });
+
+        ((ConversationItem) result.toArray()[0]).setRootThreadId(conversation.getFk_root_thread());
+
+        if (startConvActivityLastIntent != null &&
+            startConvActivityLastIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0) == conversation.getId()) {
+            startConvActivityLastIntent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, conversation.getFk_root_thread());
+            startActivity(startConvActivityLastIntent);
+        }
+    }
 }

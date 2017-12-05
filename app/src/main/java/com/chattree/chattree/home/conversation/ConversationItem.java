@@ -48,4 +48,8 @@ public class ConversationItem {
     public String getMemberLabelsFormated() {
         return TextUtils.join(", ", memberLabels);
     }
+
+    public void setRootThreadId(int rootThreadId) {
+        this.rootThreadId = rootThreadId;
+    }
 }

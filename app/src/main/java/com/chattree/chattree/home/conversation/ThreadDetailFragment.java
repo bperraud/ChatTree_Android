@@ -71,8 +71,13 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
         messagesListView.setAdapter(messagesListAdapter);
 
         if (getActivity().getClass() == ConversationActivity.class) {
-            ((ConversationActivity) getActivity()).attemptJoinThreadRoom();
-            initThread();
+            ConversationActivity activity = (ConversationActivity) getActivity();
+            activity.attemptJoinThreadRoom();
+
+            // Attempt to init the thread if possible
+            if (activity.getWsService() != null && activity.getWsService().localThreadIsReady(threadId)) {
+                initThread();
+            }
         }
 
         // Retrieve the user id

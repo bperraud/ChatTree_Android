@@ -41,6 +41,7 @@ public class ConversationActivity extends AppCompatActivity {
     private final String TAG = "CONVERSATION ACTIVITY";
     private int convId;
     private int rootThreadId;
+    private String convTitle;
 
     ThreadDetailFragment     rootThreadDetailFragment;
     ConversationTreeFragment conversationTreeFragment;
@@ -291,6 +292,7 @@ public class ConversationActivity extends AppCompatActivity {
                     Bundle args2 = new Bundle();
                     args2.putInt(BUNDLE_CONV_ID, convId);
                     args2.putInt(BUNDLE_ROOT_THREAD_ID, rootThreadId);
+                    args2.putString("CONV_TITLE", convTitle);
                     conversationTreeFragment.setArguments(args2);
                     return conversationTreeFragment;
                 default:

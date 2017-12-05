@@ -1,5 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -61,6 +62,18 @@ public class ConversationTreeFragment extends Fragment {
             @Override
             public void onClick(TreeNode node, Object value) {
                 Toast.makeText(getContext(), "START NEW ACTIVITY TO SHOW THE THREAD DETAIL!! (DESIR)", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getContext(), ThreadActivity.class);
+
+
+
+                Log.d("TEST", "onClick: " + value.getClass().getName());
+
+                IconTreeItem item = (IconTreeItem) value;
+                intent.putExtra(EXTRA_NAME_THREAD, item.getText());
+                //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
+
+
+                startActivity(intent);
             }
         });
         treeView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {

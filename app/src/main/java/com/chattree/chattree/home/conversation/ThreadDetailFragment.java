@@ -14,13 +14,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
-
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.AppDatabase;
-import com.chattree.chattree.db.Message;
 import com.chattree.chattree.db.MessageDao;
 import com.chattree.chattree.db.User;
-import com.chattree.chattree.home.conversation.MessageItem.OwnerValues;
 import com.chattree.chattree.tools.Utils;
 import com.chattree.chattree.websocket.WebSocketService;
 import com.github.johnkil.print.PrintView;
@@ -28,8 +25,9 @@ import com.github.johnkil.print.PrintView;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.chattree.chattree.db.MessageDao.*;
-import static com.chattree.chattree.home.conversation.MessageItem.OwnerValues.*;
+import static com.chattree.chattree.db.MessageDao.CustomMessageWithUser;
+import static com.chattree.chattree.home.conversation.MessageItem.OwnerValues.ME;
+import static com.chattree.chattree.home.conversation.MessageItem.OwnerValues.OTHER;
 
 public class ThreadDetailFragment extends Fragment implements View.OnClickListener {
 
@@ -45,6 +43,7 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
     private List<MessageItem>   messagesList;
     private MessagesListAdapter messagesListAdapter;
 
+    private int     userId;
     private int     threadId;
     private boolean isInit;
 
@@ -76,6 +75,10 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
             initThread();
         }
 
+        // Retrieve the user id
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        userId = pref.getInt("user_id", 0);
+
         return rootView;
     }
 
@@ -85,14 +88,12 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
     public void onClick(View view) {
         if (view.getId() == sendMessageBtn.getId()) {
 
-            if (mMessage.getText().toString().isEmpty())
-                return;
-
-            Toast.makeText(this.getContext(), "To send:\n" + mMessage.getText(), Toast.LENGTH_LONG).show();
+            // Don't send an empty message
+            if (mMessage.getText().toString().isEmpty()) return;
 
             WebSocketService wsService = ((ConversationActivity) getActivity()).getWsService();
-
             wsService.sendMessage(mMessage.getText().toString());
+            mMessage.setText("");
         }
     }
 
@@ -109,15 +110,18 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
 
             @Override
             protected void onPostExecute(List<CustomMessageWithUser> messages) {
-                refreshListOfMessages(messages);
+                initMessagesList(messages);
             }
         }.execute();
     }
 
-    private void refreshListOfMessages(List<CustomMessageWithUser> messages) {
-        SharedPreferences pref   = PreferenceManager.getDefaultSharedPreferences(getContext());
-        int               userId = pref.getInt("user_id", 0);
+    // TODO: find how to handle thread sync when active conv ws is detached
+    // option 1: keep ws connections active
+    // option 2: mini-call get with offset to the server
+    private void initMessagesList(List<CustomMessageWithUser> messages) {
         for (CustomMessageWithUser m : messages) {
+            if (messagesListAdapter.messageIds.contains(m.m_id)) continue;
+
             messagesList.add(new MessageItem(
                     m.m_id,
                     m.m_fk_thread_parent,
@@ -126,7 +130,6 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
                     m.m_creation_date,
                     Utils.getLabelFromUser(new User(m.u_id, m.u_login, m.u_email, m.u_firstname, m.u_lastname, m.u_pp)),
                     m.m_fk_author == userId ? ME : OTHER
-
             ));
         }
 
@@ -141,5 +144,39 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
 
         messagesListView.setSelection(messagesListAdapter.getCount() - 1);
         messagesListView.setEmptyView(getView().findViewById(R.id.emptyMessages));
+    }
+
+    public void addMessageToView(final int msgId) {
+        // Check first if we already have displayed the msg
+        if (messagesListAdapter.messageIds.contains(msgId)) return;
+
+        // Retrieve the message from db and add it to the view
+        new AsyncTask<Void, Void, CustomMessageWithUser>() {
+            @Override
+            protected CustomMessageWithUser doInBackground(Void... params) {
+                MessageDao messageDao = AppDatabase.getInstance(getContext()).messageDao();
+                return messageDao.findById(msgId);
+            }
+
+            @Override
+            protected void onPostExecute(CustomMessageWithUser m) {
+                messagesList.add(new MessageItem(
+                        m.m_id,
+                        m.m_fk_thread_parent,
+                        m.m_fk_author,
+                        m.m_content,
+                        m.m_creation_date,
+                        Utils.getLabelFromUser(new User(m.u_id, m.u_login, m.u_email, m.u_firstname, m.u_lastname, m.u_pp)),
+                        m.m_fk_author == userId ? ME : OTHER
+                ));
+                messagesListAdapter.notifyDataSetChanged();
+
+                // If we are the author of the message, scroll down in the list view
+                if (m.m_fk_author == userId) {
+                    messagesListView.smoothScrollToPosition(messagesListAdapter.getCount());
+                }
+            }
+        }.execute();
+
     }
 }

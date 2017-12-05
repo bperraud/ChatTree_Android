@@ -9,9 +9,9 @@ import android.widget.TextView;
 
 import com.chattree.chattree.R;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 import static com.chattree.chattree.home.conversation.MessageItem.*;
 
@@ -22,8 +22,11 @@ import static com.chattree.chattree.home.conversation.MessageItem.*;
 
 public class MessagesListAdapter extends ArrayAdapter<MessageItem> {
 
+    Set<Integer> messageIds;
+
     MessagesListAdapter(Context context, List<MessageItem> messages) {
         super(context, 0, messages);
+        messageIds = new HashSet<>();
     }
 
     // Return an integer representing the type by fetching the enum type ordinal
@@ -61,11 +64,14 @@ public class MessagesListAdapter extends ArrayAdapter<MessageItem> {
             content.setText(messageItem.getContent());
         }
 
-        String dateFormatted = new SimpleDateFormat("HH:mm", Locale.CANADA_FRENCH).format(messageItem.getDate());
-        TextView time = convertView.findViewById(R.id.time);
+        CharSequence dateFormatted = android.text.format.DateFormat.format("HH:mm", messageItem.getDate());
+        TextView     time          = convertView.findViewById(R.id.time);
         if (time != null) {
             time.setText(dateFormatted);
         }
+
+        // Add the msg id to the set
+        messageIds.add(messageItem.getId());
 
         // Return the completed view to render on screen
         return convertView;

@@ -115,8 +115,13 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
         }.execute();
     }
 
+    // TODO: find how to handle thread sync when active conv ws is detached
+    // option 1: keep ws connections active
+    // option 2: mini-call get with offset to the server
     private void initMessagesList(List<CustomMessageWithUser> messages) {
         for (CustomMessageWithUser m : messages) {
+            if (messagesListAdapter.messageIds.contains(m.m_id)) continue;
+
             messagesList.add(new MessageItem(
                     m.m_id,
                     m.m_fk_thread_parent,

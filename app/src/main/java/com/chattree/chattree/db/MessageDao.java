@@ -30,6 +30,23 @@ public interface MessageDao {
            "WHERE t_message.fk_thread_parent = :threadId")
     List<CustomMessageWithUser> getMessageWithUserByThreadId(int threadId);
 
+    @Query("SELECT " +
+           "t_message.id m_id, " +
+           "t_message.fk_author m_fk_author, " +
+           "t_message.creation_date m_creation_date, " +
+           "t_message.content m_content, " +
+           "t_message.fk_thread_parent m_fk_thread_parent, " +
+           "t_user.id u_id, " +
+           "t_user.login u_login, " +
+           "t_user.email u_email, " +
+           "t_user.firstname u_firstname, " +
+           "t_user.lastname u_lastname, " +
+           "t_user.profile_picture u_pp " +
+           "FROM t_message " +
+           "INNER JOIN t_user ON t_user.id = t_message.fk_author " +
+           "WHERE t_message.id = :msgId")
+    CustomMessageWithUser findById(int msgId);
+
     class CustomMessageWithUser {
         public int    m_id;
         public int    m_fk_author;

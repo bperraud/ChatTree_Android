@@ -33,7 +33,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     public static final String SYNC_CALLBACK_CONV_LOADED_ACTION     = "com.chattree.chattree.CONV_LOADED_ACTION";
     public static final String SYNC_CALLBACK_THREAD_LOADED_ACTION   = "com.chattree.chattree.THREAD_LOADED_ACTION";
 
-    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.CANADA_FRENCH);
+    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
 
     // Global variables
     // Define a variable to contain a content resolver instance
@@ -194,7 +194,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             ArrayList<ConversationUser> convUsersToInsert     = new ArrayList<>();
 
             List<Conversation>     localConvs     = conversationDao.findAll();
-            List<User>             localUsers     = userDao.getAll();
+            List<User>             localUsers     = userDao.findAll();
             List<ConversationUser> localConvUsers = conversationDao.findAllConversationUser();
             int                    convUserIndex  = conversationDao.getConversationUserMaxId();
 
@@ -318,12 +318,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 threadIds[i] = threadId;
                 Thread receivedThread = new Thread(
                         threadId,
-                        threadJsonObj.isNull("date") ? null : simpleDateFormat.parse(threadJsonObj.getString("date")),
+                        threadJsonObj.isNull("date") ? null : simpleDateFormat.parse(threadJsonObj.getString("date").replaceAll("Z$", "+0000")),
                         threadJsonObj.isNull("title") ? null : threadJsonObj.getString("title"),
                         threadJsonObj.isNull("author") ? null : threadJsonObj.getInt("author"),
                         threadJsonObj.isNull("conversation") ? null : threadJsonObj.getInt("conversation"),
                         threadJsonObj.isNull("thread_parent") ? null : threadJsonObj.getInt("thread_parent"),
-                        threadJsonObj.isNull("message_parent") ? null : threadJsonObj.getInt("message_parent")
+//                        threadJsonObj.isNull("message_parent") ? null : threadJsonObj.getInt("message_parent")
+                        null // TODO: find how to correctly update the fk_message_parent (fk exception
+                        // is thrown for now because we insert the messages AFTER the threads
                 );
                 int localThreadIndex = getThreadIndexInListById(threadId, localThreads);
                 if ((localThreadIndex == -1) || (!localThreads.get(localThreadIndex).equals(receivedThread))) {
@@ -333,6 +335,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             }
 
+            // Sort the threads so we are sure to insert them in the right order (according to their fks -> parents)
+            Collections.sort(threadsToInsertOrUpdate, new Comparator<Thread>() {
+                @Override
+                public int compare(Thread t1, Thread t2) {
+                    return t1.getId() < t2.getId() ? -1 : 1;
+                }
+            });
 
             //INSERTS OR UPDATES
             threadDao.insertAll(threadsToInsertOrUpdate);
@@ -373,7 +382,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 Message receivedMess = new Message(
                         messId,
                         messJsonObj.getInt("author"),
-                        messJsonObj.isNull("date") ? null : simpleDateFormat.parse(messJsonObj.getString("date")),
+                        messJsonObj.isNull("date") ? null : simpleDateFormat.parse(messJsonObj.getString("date").replaceAll("Z$", "+0000")),
                         messJsonObj.getString("content"),
                         messJsonObj.getInt("thread")
                 );
@@ -423,63 +432,4 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         }
         return -1;
     }
-
-//    private void insertConversationsIntoLocalDB(String jsonData) {
-//
-//        try {
-//            JSONObject   json                  = new JSONObject(jsonData);
-//            JSONArray    convJsonArray         = json.getJSONObject("data").getJSONArray("conversations");
-//            Set<Integer> userIdSet             = new HashSet<>();
-//            Integer      conversationUserIndex = 0;
-//
-//            ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
-//            UserDao         userDao         = AppDatabase.getInstance(getContext()).userDao();
-//
-//            for (int i = 0, size = convJsonArray.length(); i < size; ++i) {
-//                JSONObject convJsonObj = convJsonArray.getJSONObject(i);
-//                int        convId      = convJsonObj.getInt("id");
-//
-//                Conversation conv = new Conversation(
-//                        convId,
-//                        convJsonObj.isNull("fk_root_thread") ? null : convJsonObj.getInt("fk_root_thread"),
-//                        convJsonObj.isNull("title") ? null : convJsonObj.getString("title"),
-//                        convJsonObj.isNull("picture") ? null : convJsonObj.getString("picture")
-//                );
-//
-//                conversationDao.insertAll(conv);
-//
-//                JSONArray membersJsonArray = convJsonObj.getJSONArray("members");
-//
-//                for (int j = 0, membersSize = membersJsonArray.length(); j < membersSize; ++j) {
-//                    JSONObject memberJsonObj = membersJsonArray.getJSONObject(j);
-//                    int        memberId      = memberJsonObj.getInt("id");
-//
-//                    // Skip the insertion of the element to prevent duplicata
-//                    if (userIdSet.add(memberId)) {
-//                        User member = new User(
-//                                memberId,
-//                                memberJsonObj.isNull("login") ? null : memberJsonObj.getString("login"),
-//                                memberJsonObj.isNull("email") ? null : memberJsonObj.getString("email"),
-//                                memberJsonObj.isNull("firstname") ? null : memberJsonObj.getString("firstname"),
-//                                memberJsonObj.isNull("lastname") ? null : memberJsonObj.getString("lastname"),
-//                                memberJsonObj.isNull("profile_picture") ? null : memberJsonObj.getString("profile_picture")
-//                        );
-//
-//                        userDao.insertAll(member);
-//                    }
-//
-//                    ConversationUser conversationUser = new ConversationUser(
-//                            conversationUserIndex++,
-//                            convId,
-//                            memberId
-//                    );
-//                    conversationDao.insertConversationUsers(conversationUser);
-//                }
-//            }
-//
-//
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }

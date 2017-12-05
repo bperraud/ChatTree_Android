@@ -32,6 +32,9 @@ import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERS
 import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_CONV_ID;
 import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_ROOT_THREAD_ID;
 import static com.chattree.chattree.home.conversation.ThreadDetailFragment.BUNDLE_THREAD_ID;
+import static com.chattree.chattree.websocket.WebSocketService.EXTRA_MESSAGE_ID;
+import static com.chattree.chattree.websocket.WebSocketService.EXTRA_THREAD_ID;
+import static com.chattree.chattree.websocket.WebSocketService.WS_NEW_MESSAGE_ACTION;
 
 public class ConversationActivity extends AppCompatActivity {
 
@@ -42,10 +45,11 @@ public class ConversationActivity extends AppCompatActivity {
     ThreadDetailFragment     rootThreadDetailFragment;
     ConversationTreeFragment conversationTreeFragment;
 
-    private SyncReceiver dataLoadedReceiver;
-    private boolean      convIsReady;
-    private boolean      rootThreadIsReady;
-    private boolean      currentTabIsRootThread;
+    private SyncReceiver      dataLoadedReceiver;
+    private WebSocketReceiver newMsgInRootThreadReceiver;
+    private boolean           convIsReady;
+    private boolean           rootThreadIsReady;
+    private boolean           currentTabIsRootThread;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
@@ -129,6 +133,9 @@ public class ConversationActivity extends AppCompatActivity {
         registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION));
         registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION));
 
+        newMsgInRootThreadReceiver = new WebSocketReceiver();
+        registerReceiver(newMsgInRootThreadReceiver, new IntentFilter(WebSocketService.WS_NEW_MESSAGE_ACTION));
+
         // Prevent keyboard from auto-appearing
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
@@ -160,6 +167,15 @@ public class ConversationActivity extends AppCompatActivity {
         }
     }
 
+    public class WebSocketReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getIntExtra(EXTRA_THREAD_ID, 0) != rootThreadId) return; // Skip if we are not concerned
+
+            rootThreadDetailFragment.addMessageToView(intent.getIntExtra(EXTRA_MESSAGE_ID, 0));
+        }
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -176,6 +192,7 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        unregisterReceiver(newMsgInRootThreadReceiver);
         unregisterReceiver(dataLoadedReceiver);
         super.onDestroy();
     }

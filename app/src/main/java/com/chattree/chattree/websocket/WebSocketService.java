@@ -9,9 +9,8 @@ import android.util.Log;
 import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.AppDatabase;
-import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.Message;
-import com.chattree.chattree.home.HomeActivity;
+import com.chattree.chattree.db.MessageDao;
 import io.socket.client.IO;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
@@ -28,7 +27,6 @@ import java.util.*;
 
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
-import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ID;
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
 import static io.socket.emitter.Emitter.*;
 
@@ -40,8 +38,9 @@ public class WebSocketService extends Service {
     private static final String WS_EVENT_CREATE_MESSAGE   = "create-message";
     private static final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
 
-    public static final String NEW_MESSAGE_ACTION = "com.chattree.chattree.NEW_MESSAGE_ACTION";
-    public static final String EXTRA_MESSAGE_ID   = "com.chattree.chattree.EXTRA_MESSAGE_ID";
+    public static final String WS_NEW_MESSAGE_ACTION = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
+    public static final String EXTRA_THREAD_ID       = "com.chattree.chattree.EXTRA_THREAD_ID";
+    public static final String EXTRA_MESSAGE_ID      = "com.chattree.chattree.EXTRA_MESSAGE_ID";
 
     private SyncReceiver dataLoadedReceiver;
     private Set<Integer> localConvIdsLoaded;
@@ -242,24 +241,25 @@ public class WebSocketService extends Service {
             JSONObject data = (JSONObject) args[0];
             Message    newMessage;
             try {
-                JSONObject message   = data.getJSONObject("message");
-                int        messageId = message.getInt("id");
+                JSONObject message    = data.getJSONObject("message");
+                int        messageId  = message.getInt("id");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
                 newMessage = new Message(
                         messageId,
                         message.getInt("author"),
-                        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.CANADA_FRENCH).parse(message.getString("date")),
+                        dateFormat.parse(message.getString("date").replaceAll("Z$", "+0000")),
                         message.getString("content"),
                         message.getInt("thread")
                 );
 
-                // TODO: handle the update of the local db + event emission/catch
-
                 // Update the database
-                // TODO
+                MessageDao messageDao = AppDatabase.getInstance(getApplicationContext()).messageDao();
+                messageDao.insertAll(Collections.singletonList(newMessage));
 
                 // Send the event
                 Intent newMessageIntent = new Intent();
-                newMessageIntent.setAction(NEW_MESSAGE_ACTION);
+                newMessageIntent.setAction(WS_NEW_MESSAGE_ACTION);
+                newMessageIntent.putExtra(EXTRA_THREAD_ID, message.getInt("thread"));
                 newMessageIntent.putExtra(EXTRA_MESSAGE_ID, messageId);
                 getApplicationContext().sendBroadcast(newMessageIntent);
 

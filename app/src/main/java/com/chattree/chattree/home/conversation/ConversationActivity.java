@@ -1,5 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
+import android.app.Activity;
 import android.content.*;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 import com.chattree.chattree.R;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.profile.ProfileActivity;
+import com.chattree.chattree.tools.Utils;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 import com.chattree.chattree.websocket.WebSocketService;
 
@@ -39,8 +41,8 @@ import static com.chattree.chattree.websocket.WebSocketService.WS_NEW_MESSAGE_AC
 public class ConversationActivity extends AppCompatActivity {
 
     private final String TAG = "CONVERSATION ACTIVITY";
-    private int convId;
-    private int rootThreadId;
+    private int    convId;
+    private int    rootThreadId;
     private String convTitle;
 
     ThreadDetailFragment     rootThreadDetailFragment;
@@ -63,6 +65,8 @@ public class ConversationActivity extends AppCompatActivity {
         Log.d(TAG, "ON CREATE");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversation);
+
+        final Activity thisActivity = this;
 
         convIsReady = false;
         rootThreadIsReady = false;
@@ -105,8 +109,13 @@ public class ConversationActivity extends AppCompatActivity {
                     rootThreadDetailFragment.initThread();
                 }
                 // Load the conv tree in the corresponding fragment
-                else if (position == 1 && conversationTreeFragment != null)
-                    conversationTreeFragment.initThread();
+                else if (position == 1) {
+                    Utils.hideKeyboard(thisActivity);
+
+                    if (conversationTreeFragment != null)
+                        conversationTreeFragment.initThread();
+                }
+
                 currentTabIsRootThread = position == 0;
             }
 
@@ -136,6 +145,10 @@ public class ConversationActivity extends AppCompatActivity {
 
         newMsgInRootThreadReceiver = new WebSocketReceiver();
         registerReceiver(newMsgInRootThreadReceiver, new IntentFilter(WebSocketService.WS_NEW_MESSAGE_ACTION));
+
+        // WS Service binding
+        Intent wsServiceIntent = new Intent(this, WebSocketService.class);
+        bindService(wsServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
         // Prevent keyboard from auto-appearing
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
@@ -178,21 +191,18 @@ public class ConversationActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        // WS Service binding
-        Intent wsServiceIntent = new Intent(this, WebSocketService.class);
-        bindService(wsServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    @Override
-    protected void onStop() {
-        unbindService(serviceConnection);
-        super.onStop();
+    protected void onResume() {
+        // Always try to join the thread room
+        if (currentTabIsRootThread && rootThreadIsReady && wsService != null) {
+            wsService.joinThreadRoom(rootThreadId);
+            rootThreadDetailFragment.initThread();
+        }
+        super.onResume();
     }
 
     @Override
     protected void onDestroy() {
+        unbindService(serviceConnection);
         unregisterReceiver(newMsgInRootThreadReceiver);
         unregisterReceiver(dataLoadedReceiver);
         super.onDestroy();
@@ -292,6 +302,7 @@ public class ConversationActivity extends AppCompatActivity {
                     Bundle args2 = new Bundle();
                     args2.putInt(BUNDLE_CONV_ID, convId);
                     args2.putInt(BUNDLE_ROOT_THREAD_ID, rootThreadId);
+                    // TODO: check the line below
                     args2.putString("CONV_TITLE", convTitle);
                     conversationTreeFragment.setArguments(args2);
                     return conversationTreeFragment;

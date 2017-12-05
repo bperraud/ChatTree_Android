@@ -91,7 +91,15 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
             // Don't send an empty message
             if (mMessage.getText().toString().isEmpty()) return;
 
-            WebSocketService wsService = ((ConversationActivity) getActivity()).getWsService();
+            // TODO: implement an interface
+            WebSocketService wsService = null;
+            if (getActivity().getClass() == ConversationActivity.class) {
+                wsService = ((ConversationActivity) getActivity()).getWsService();
+            } else if (getActivity().getClass() == ThreadActivity.class) {
+                wsService = ((ThreadActivity) getActivity()).getWsService();
+            }
+
+            assert wsService != null;
             wsService.sendMessage(mMessage.getText().toString());
             mMessage.setText("");
         }

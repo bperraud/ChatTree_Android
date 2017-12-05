@@ -24,6 +24,9 @@ import org.apache.commons.collections4.Predicate;
 import java.util.Collection;
 import java.util.List;
 
+import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_ID;
+import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_NAME;
+
 public class ConversationTreeFragment extends Fragment {
 
     static final String BUNDLE_CONV_ID        = "com.chattree.chattree.BUNDLE_CONV_ID";
@@ -61,17 +64,12 @@ public class ConversationTreeFragment extends Fragment {
         treeView.setDefaultNodeClickListener(new TreeNode.TreeNodeClickListener() {
             @Override
             public void onClick(TreeNode node, Object value) {
-                Toast.makeText(getContext(), "START NEW ACTIVITY TO SHOW THE THREAD DETAIL!! (DESIR)", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(getContext(), ThreadActivity.class);
 
-
-
-                Log.d("TEST", "onClick: " + value.getClass().getName());
-
-                IconTreeItem item = (IconTreeItem) value;
-                intent.putExtra(EXTRA_NAME_THREAD, item.getText());
+                ThreadTreeItem item = (ThreadTreeItem) value;
+                intent.putExtra(EXTRA_THREAD_ID, item.thread.getId());
+                intent.putExtra(EXTRA_THREAD_NAME, item.thread.getTitle());
                 //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
-
 
                 startActivity(intent);
             }

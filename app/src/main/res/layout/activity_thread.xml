@@ -1,41 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    tools:layout_editor_absoluteY="8dp"
-    tools:layout_editor_absoluteX="8dp"
-    tools:context="com.chattree.chattree.profile.ProfileActivity">
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center_horizontal"
+              android:orientation="vertical"
+              tools:layout_editor_absoluteY="8dp"
+              tools:layout_editor_absoluteX="8dp"
+              tools:context="com.chattree.chattree.profile.ProfileActivity">
 
     <android.support.v7.widget.Toolbar
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
-        android:theme="?attr/actionBarTheme"
-        android:minHeight="?attr/actionBarSize" android:id="@+id/toolbar">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary"
+            android:theme="?attr/actionBarTheme"
+            android:minHeight="?attr/actionBarSize" android:id="@+id/toolbar">
 
         <TextView
-            android:id="@+id/profileTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="30dp"
-            android:layout_marginTop="10dp"
-            android:drawablePadding="4dp"
-            android:gravity="center_vertical"
-            android:text="@string/conversation_name"
-            android:textColor="@android:color/primary_text_dark"
-            android:textSize="20sp" />
-
+                android:id="@+id/profileTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:layout_marginTop="10dp"
+                android:drawablePadding="4dp"
+                android:gravity="center_vertical"
+                android:text="@string/conversation_name"
+                android:textColor="@android:color/primary_text_dark"
+                android:textSize="20sp"/>
 
     </android.support.v7.widget.Toolbar>
 
-    <fragment android:name="com.chattree.chattree.home.conversation.ThreadDetailFragment"
-        android:id="@+id/threadDetail"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent" />
-
-
+    <LinearLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
 
 </LinearLayout>

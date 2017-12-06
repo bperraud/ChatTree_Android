@@ -78,10 +78,22 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.i("SyncAdapter", "SYNCING DATA...");
 
-        /*
-         * Put the data transfer code here.
-         */
-        fullSync();
+        int convId = extras.getInt(EXTRA_SYNC_CONV_ID, -1);
+        int threadId = extras.getInt(EXTRA_SYNC_THREAD_ID, -1);
+        if(threadId != -1 && convId != -1){
+            Log.i("SyncAdapter", "SYNCING A THREAD.");
+            syncThreadWithLocalDB(convId, threadId);
+        }
+        else{
+            if(convId != -1){
+                Log.i("SyncAdapter", "SYNCING A CONV.");
+                syncConvWithLocalDB(convId);
+            }
+            else{
+                Log.i("SyncAdapter", "FULL SYNC.");
+                fullSync();
+            }
+        }
 
     }
 
@@ -100,18 +112,9 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
             for (int convId : convIds) {
                 int[]  threadIds      = syncConvWithLocalDB(convId);
-                Intent convSyncIntent = new Intent();
-                convSyncIntent.setAction(SYNC_CALLBACK_CONV_LOADED_ACTION);
-                convSyncIntent.putExtra(EXTRA_SYNC_CONV_ID, convId);
-                getContext().sendBroadcast(convSyncIntent);
 
                 for (int threadId : threadIds) {
                     syncThreadWithLocalDB(convId, threadId);
-                    Intent threadSyncIntent = new Intent();
-                    threadSyncIntent.setAction(SYNC_CALLBACK_THREAD_LOADED_ACTION);
-                    threadSyncIntent.putExtra(EXTRA_SYNC_CONV_ID, convId);
-                    threadSyncIntent.putExtra(EXTRA_SYNC_THREAD_ID, threadId);
-                    getContext().sendBroadcast(threadSyncIntent);
                 }
             }
 
@@ -353,6 +356,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
                 conversationDao.updateFKRootThreadById(fkrt, convId);
 //                System.out.println("fk_root_thread updated, fk = " + fkrt + ", convId = " + convId);
             }
+
+            Intent convSyncIntent = new Intent();
+            convSyncIntent.setAction(SYNC_CALLBACK_CONV_LOADED_ACTION);
+            convSyncIntent.putExtra(EXTRA_SYNC_CONV_ID, convId);
+            getContext().sendBroadcast(convSyncIntent);
+
             return threadIds;
 
         } catch (Exception e) {
@@ -396,6 +405,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             //INSERTS OR UPDATES
             messageDao.insertAll(messagesToInsertOrUpdate);
 //            System.out.println(messagesToInsertOrUpdate.size() + " messages inserted or updated");
+
+            Intent threadSyncIntent = new Intent();
+            threadSyncIntent.setAction(SYNC_CALLBACK_THREAD_LOADED_ACTION);
+            threadSyncIntent.putExtra(EXTRA_SYNC_CONV_ID, convId);
+            threadSyncIntent.putExtra(EXTRA_SYNC_THREAD_ID, threadId);
+            getContext().sendBroadcast(threadSyncIntent);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

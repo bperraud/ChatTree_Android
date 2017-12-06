@@ -24,6 +24,7 @@ import org.apache.commons.collections4.Predicate;
 import java.util.Collection;
 import java.util.List;
 
+import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_CONV_ID;
 import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_ID;
 import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_NAME;
 
@@ -72,7 +73,7 @@ public class ConversationTreeFragment extends Fragment {
                 intent.putExtra(EXTRA_THREAD_ID, item.thread.getId());
                 intent.putExtra(EXTRA_THREAD_NAME, item.thread.getTitle());
                 //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
-
+                intent.putExtra(EXTRA_CONV_ID, convId);
                 startActivity(intent);
             }
         });

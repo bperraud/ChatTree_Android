@@ -13,7 +13,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.R;
+import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.websocket.WebSocketService;
 
@@ -25,10 +27,12 @@ public class ThreadActivity extends AppCompatActivity {
 
     static final String EXTRA_THREAD_ID   = "com.chattree.chattree.EXTRA_THREAD_ID";
     static final String EXTRA_THREAD_NAME = "com.chattree.chattree.EXTRA_THREAD_NAME";
+    static final String EXTRA_CONV_ID   = "com.chattree.chattree.EXTRA_CONV_ID";
 
     private WebSocketReceiver newMsgInThreadReceiver;
 
     private int                  threadId;
+    private int                  convId;
     private ThreadDetailFragment threadDetailFragment;
     private boolean              threadIsReady;
 
@@ -61,6 +65,7 @@ public class ThreadActivity extends AppCompatActivity {
         Intent intentThread = getIntent();
         String threadName   = intentThread.getStringExtra(EXTRA_THREAD_NAME);
         threadId = intentThread.getIntExtra(EXTRA_THREAD_ID, 0);
+        convId = intentThread.getIntExtra(EXTRA_CONV_ID, 0);
 
         FragmentManager     fragmentManager     = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -93,6 +98,26 @@ public class ThreadActivity extends AppCompatActivity {
 
             threadDetailFragment.addMessageToView(intent.getIntExtra(EXTRA_MESSAGE_ID, 0));
         }
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        //Resync the conv
+        // Pass the settings flags by inserting them in a bundle
+        Bundle settingsBundle = new Bundle();
+        settingsBundle.putBoolean(
+                ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        settingsBundle.putBoolean(
+                ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, this.convId);
+        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_THREAD_ID, this.threadId);
+
+        /*
+         * Signal the framework to run your sync adapter. Assume that
+         * app initialization has already created the account.
+         */
+        ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
     }
 
     @Override

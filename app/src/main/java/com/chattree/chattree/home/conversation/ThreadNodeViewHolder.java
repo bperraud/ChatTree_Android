@@ -1,9 +1,11 @@
 package com.chattree.chattree.home.conversation;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.Thread;
 import com.github.johnkil.print.PrintView;
@@ -12,15 +14,19 @@ import com.unnamed.b.atv.model.TreeNode;
 public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNodeViewHolder.ThreadTreeItem> {
     private static final String DEFAULT_THREAD_EMPTY_TITLE = "<Sans titre>";
 
+    private ConversationActivity conversationActivity;
+
     private TextView  threadNodeTitleTextView;
     private PrintView arrowView;
+    private PrintView createThreadView;
 
     public ThreadNodeViewHolder(Context context) {
         super(context);
+        conversationActivity = (ConversationActivity) context;
     }
 
     @Override
-    public View createNodeView(final TreeNode node, ThreadTreeItem threadItem) {
+    public View createNodeView(final TreeNode node, final ThreadTreeItem threadItem) {
         final Thread         thread   = threadItem.thread;
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View           view     = inflater.inflate(R.layout.layout_thread_node, null, false);
@@ -40,17 +46,32 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
             arrowView.setVisibility(View.INVISIBLE);
         }
 
-
+        // Expand/collapse behaviour
         view.findViewById(R.id.arrow_icon).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!node.isExpanded()) {
                     (node.getViewHolder().getTreeView()).expandNode(node);
                     node.setExpanded(true);
+                    // If we are in thread creation state, show the "+" buttons
+                    if (conversationActivity.getConversationTreeFragment().isOnThreadCreationState()) {
+                        for (TreeNode treeNode : node.getChildren()) {
+                            ((ThreadNodeViewHolder) treeNode.getViewHolder()).toogleCreateThread(true);
+                        }
+                    }
                 } else {
                     (node.getViewHolder().getTreeView()).collapseNode(node);
                     node.setExpanded(false);
                 }
+            }
+        });
+
+        createThreadView = view.findViewById(R.id.create_thread_icon);
+        createThreadView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(conversationActivity, "onClick: thread to create from " + threadItem.thread.getId(), Toast.LENGTH_SHORT).show();
+                Log.d("VIEW HOLDER", "onClick: thread to create from " + threadItem.thread.getId());
             }
         });
 
@@ -70,5 +91,9 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
             this.icon = icon;
             this.thread = thread;
         }
+    }
+
+    public void toogleCreateThread(boolean show) {
+        createThreadView.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 }

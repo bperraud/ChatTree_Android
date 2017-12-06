@@ -44,8 +44,8 @@ public class ConversationActivity extends AppCompatActivity {
     private int    rootThreadId;
     private String convTitle;
 
-    ThreadDetailFragment     rootThreadDetailFragment;
-    ConversationTreeFragment conversationTreeFragment;
+    private ThreadDetailFragment     rootThreadDetailFragment;
+    private ConversationTreeFragment conversationTreeFragment;
 
     private SyncReceiver      dataLoadedReceiver;
     private WebSocketReceiver newMsgInRootThreadReceiver;
@@ -112,7 +112,7 @@ public class ConversationActivity extends AppCompatActivity {
                     Utils.hideKeyboard(thisActivity);
 
                     if (conversationTreeFragment != null)
-                        conversationTreeFragment.initConvTree(1);
+                        conversationTreeFragment.initConvTree();
                 }
 
                 currentTabIsRootThread = position == 0;
@@ -133,7 +133,8 @@ public class ConversationActivity extends AppCompatActivity {
         convTitleTextView.setText(convTitle);
         convId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0);
         rootThreadId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, 0);
-        if (rootThreadId == 0) throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
+        if (rootThreadId == 0)
+            throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
 
         /*
          * Register a broadcast receiver to listen when the data are ready to be read from the local DB
@@ -164,7 +165,7 @@ public class ConversationActivity extends AppCompatActivity {
                         wsService.connectToConvNsp(convId);
                         convIsReady = true;
                         // Load the conv tree in the corresponding fragment
-                        conversationTreeFragment.initConvTree(2);
+                        conversationTreeFragment.initConvTree();
                     }
                     break;
                 case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
@@ -219,12 +220,10 @@ public class ConversationActivity extends AppCompatActivity {
                 convIsReady = true;
                 // Load the conv tree in the corresponding fragment
                 if (conversationTreeFragment != null) {
-                    conversationTreeFragment.initConvTree(3);
+                    conversationTreeFragment.initConvTree();
                 }
             }
 
-            Log.d(TAG, "onServiceConnected: join room ? " + rootThreadId + ", " + rootThreadIsReady + ", " +
-                       currentTabIsRootThread + ", " + rootThreadDetailFragment);
             if (wsService.localThreadIsReady(rootThreadId) && !rootThreadIsReady && currentTabIsRootThread && rootThreadDetailFragment != null) {
                 // Join the root thread room
                 wsService.joinThreadRoom(rootThreadId);
@@ -326,5 +325,19 @@ public class ConversationActivity extends AppCompatActivity {
 
     public WebSocketService getWsService() {
         return wsService;
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Cancel the creation of a new thread
+        if (conversationTreeFragment.isOnThreadCreationState()) {
+            conversationTreeFragment.cancelThreadCreation();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    ConversationTreeFragment getConversationTreeFragment() {
+        return conversationTreeFragment;
     }
 }

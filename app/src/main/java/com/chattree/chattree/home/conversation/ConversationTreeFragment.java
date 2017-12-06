@@ -36,10 +36,12 @@ public class ConversationTreeFragment extends Fragment {
 
     private AndroidTreeView treeView;
     private TreeNode        root;
+    FloatingActionButton enableThreadCreationFAB;
 
     private int     convId;
     private int     rootThreadId;
     private boolean isInit;
+    private boolean onThreadCreationState;
 
     private List<Thread> threads;
 
@@ -54,12 +56,13 @@ public class ConversationTreeFragment extends Fragment {
         if (rootThreadId == 0)
             throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
         isInit = false;
+        onThreadCreationState = false;
 
         root = TreeNode.root();
 
         treeView = new AndroidTreeView(getActivity(), root);
         treeView.setDefaultAnimation(true);
-        treeView.setUse2dScroll(true);
+//        treeView.setUse2dScroll(true);
         treeView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
         treeView.setDefaultViewHolder(ThreadNodeViewHolder.class);
         treeView.setUseAutoToggle(false);
@@ -84,6 +87,13 @@ public class ConversationTreeFragment extends Fragment {
             }
         });
 
+        // TODO: see how to make node views full width
+//        treeView.getView().setLayoutParams(new ViewGroup.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT,
+//                ViewGroup.LayoutParams.WRAP_CONTENT
+//        ));
+//        Log.d(TAG, "onCreateView: " + (treeView.getView().getLayoutParams().width == ViewGroup.LayoutParams.MATCH_PARENT ? "match" : "no match"));
+
         containerView.addView(treeView.getView());
 
         if (savedInstanceState != null) {
@@ -93,12 +103,15 @@ public class ConversationTreeFragment extends Fragment {
             }
         }
 
-        // New contact FAB
-        FloatingActionButton newThreadFAB = rootView.findViewById(R.id.new_thread_fab);
-        newThreadFAB.setOnClickListener(new View.OnClickListener() {
+        // New thread FAB
+        enableThreadCreationFAB = rootView.findViewById(R.id.new_thread_fab);
+        enableThreadCreationFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "NEW THREAD", Toast.LENGTH_SHORT).show();
+                if (!onThreadCreationState)
+                    enableThreadCreation();
+                else
+                    cancelThreadCreation();
             }
         });
 
@@ -111,7 +124,7 @@ public class ConversationTreeFragment extends Fragment {
         outState.putString("tState", treeView.getSaveState());
     }
 
-    public void initConvTree(int i) {
+    public void initConvTree() {
         if (isInit) return;
         isInit = true;
 
@@ -166,5 +179,39 @@ public class ConversationTreeFragment extends Fragment {
         if (threads.size() == 1) {
             getView().findViewById(R.id.emptyThreads).setVisibility(View.VISIBLE);
         }
+    }
+
+    // ----------------------------------------------------------------------- //
+    // --------------------------- THREAD CREATION --------------------------- //
+    // ----------------------------------------------------------------------- //
+
+    private void enableThreadCreation() {
+        for (TreeNode node : root.getChildren()) {
+            toogleCreateThreadForNode(node, true);
+        }
+        onThreadCreationState = true;
+        enableThreadCreationFAB.setImageResource(R.drawable.ic_arrow_back_white_24dp);
+    }
+
+    private void toogleCreateThreadForNode(TreeNode node, boolean show) {
+        ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) node.getViewHolder();
+        if (viewHolder != null) {
+            viewHolder.toogleCreateThread(show);
+        }
+        for (TreeNode child : node.getChildren()) {
+            toogleCreateThreadForNode(child, show);
+        }
+    }
+
+    boolean isOnThreadCreationState() {
+        return onThreadCreationState;
+    }
+
+    void cancelThreadCreation() {
+        for (TreeNode node : root.getChildren()) {
+            toogleCreateThreadForNode(node, false);
+        }
+        onThreadCreationState = false;
+        enableThreadCreationFAB.setImageResource(R.drawable.ic_chat_white_24dp);
     }
 }

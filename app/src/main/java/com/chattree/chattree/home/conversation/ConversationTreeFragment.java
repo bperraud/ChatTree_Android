@@ -82,6 +82,7 @@ public class ConversationTreeFragment extends Fragment {
                 intent.putExtra(EXTRA_THREAD_NAME, item.thread.getTitle());
                 //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
 
+                clearThreadSelection();
                 startActivity(intent);
             }
         });
@@ -91,11 +92,12 @@ public class ConversationTreeFragment extends Fragment {
                 node.setSelected(true);
                 if (lastSelectedNode != null) {
                     lastSelectedNode.setSelected(false);
+                    ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).toggleItemSelectedBackground(false);
                 }
                 lastSelectedNode = node;
 
                 // Node selected: change background
-                ((ThreadNodeViewHolder) node.getViewHolder()).toggleItemSelectedBackground();
+                ((ThreadNodeViewHolder) node.getViewHolder()).toggleItemSelectedBackground(true);
 
                 // If we are already on the selection state, return
                 if (onThreadSelectedState) return true;
@@ -243,6 +245,11 @@ public class ConversationTreeFragment extends Fragment {
     }
 
     void clearThreadSelection() {
+        if (lastSelectedNode != null) {
+            lastSelectedNode.setSelected(false);
+            ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).toggleItemSelectedBackground(false);
+        }
+
         onThreadSelectedState = false;
 
         // Bottom panel slide up animation

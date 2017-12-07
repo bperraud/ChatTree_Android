@@ -1,11 +1,11 @@
 package com.chattree.chattree.home.conversation;
 
 import android.content.Context;
-import android.util.Log;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.Thread;
 import com.github.johnkil.print.PrintView;
@@ -16,9 +16,19 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
 
     private TextView  threadNodeTitleTextView;
     private PrintView arrowView;
+    /**
+     * We need to keep a reference to the nodeView because getView returns a copy of it, calling
+     * createNodeView even if the view already exists
+     *
+     * @see TreeNode.BaseNodeViewHolder#getNodeView()
+     */
+    private View      nodeView;
+
+    private ConversationActivity conversationActivity;
 
     public ThreadNodeViewHolder(Context context) {
         super(context);
+        conversationActivity = (ConversationActivity) context;
     }
 
     @Override
@@ -56,6 +66,7 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
             }
         });
 
+        nodeView = view;
         return view;
     }
 
@@ -74,8 +85,26 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         }
     }
 
-    void toggleItemSelectedBackground() {
-        // TODO: See why it doesn't work
-        getNodeView().setBackgroundResource(R.color.extremeLightGrey);
+    void toggleItemSelectedBackground(boolean selected) {
+        // Create an array of the attributes we want to resolve
+        // using values from a theme
+        int[] attrs = new int[]{ R.attr.selectableItemBackground /* index 0 */ };
+
+        // Obtain the styled attributes. 'themedContext' is a context with a
+        // theme, typically the current Activity (i.e. 'this')
+        TypedArray ta = conversationActivity.obtainStyledAttributes(attrs);
+
+        // To get the value of the 'listItemBackground' attribute that was
+        // set in the theme used in 'themedContext'. The parameter is the index
+        // of the attribute in the 'attrs' array. The returned Drawable
+        // is what you are after
+        Drawable drawableFromTheme = ta.getDrawable(0 /* index */);
+
+        // Finally, free the resources used by TypedArray
+        ta.recycle();
+
+        if (selected)
+            nodeView.setBackgroundResource(R.color.extremeLightGrey);
+        else nodeView.setBackground(drawableFromTheme);
     }
 }

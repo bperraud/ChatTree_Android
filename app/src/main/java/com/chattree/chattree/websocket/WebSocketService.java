@@ -8,9 +8,9 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.datasync.SyncAdapter;
-import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.*;
 import com.chattree.chattree.db.Message;
-import com.chattree.chattree.db.MessageDao;
+import com.chattree.chattree.db.Thread;
 import io.socket.client.IO;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
@@ -42,8 +42,11 @@ public class WebSocketService extends Service {
     private static final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
 
     public static final String WS_NEW_MESSAGE_ACTION = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
-    public static final String EXTRA_THREAD_ID       = "com.chattree.chattree.EXTRA_THREAD_ID";
-    public static final String EXTRA_MESSAGE_ID      = "com.chattree.chattree.EXTRA_MESSAGE_ID";
+    public static final String WS_NEW_THREAD_ACTION  = "com.chattree.chattree.WS_NEW_THREAD_ACTION";
+
+    public static final String EXTRA_CONV_ID    = "com.chattree.chattree.EXTRA_CONV_ID";
+    public static final String EXTRA_THREAD_ID  = "com.chattree.chattree.EXTRA_THREAD_ID";
+    public static final String EXTRA_MESSAGE_ID = "com.chattree.chattree.EXTRA_MESSAGE_ID";
 
     private SyncReceiver dataLoadedReceiver;
     private Set<Integer> localConvIdsLoaded;
@@ -274,6 +277,46 @@ public class WebSocketService extends Service {
         }
     };
 
+    private Listener onCreateThread = new Listener() {
+        @Override
+        public void call(final Object... args) {
+            JSONObject data = (JSONObject) args[0];
+            Thread     newThread;
+
+            try {
+                JSONObject thread     = data.getJSONObject("thread");
+                int        threadId   = thread.getInt("id");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
+                newThread = new Thread(
+                        threadId,
+                        dateFormat.parse(thread.getString("date").replaceAll("Z$", "+0000")),
+                        null,
+                        thread.getInt("author"),
+                        thread.getInt("conversation"),
+                        thread.getInt("thread_parent"),
+                        thread.isNull("message_parent") ? null : thread.getInt("message_parent")
+                );
+
+                // Update the database
+                ThreadDao threadDao = AppDatabase.getInstance(getApplicationContext()).threadDao();
+                threadDao.insertAll(Collections.singletonList(newThread));
+
+                // The Thread is ready to be read because it has just been created
+                localThreadIdsLoaded.add(threadId);
+
+                // Send the event
+                Intent newThreadIntent = new Intent();
+                newThreadIntent.setAction(WS_NEW_THREAD_ACTION);
+                newThreadIntent.putExtra(EXTRA_CONV_ID, thread.getInt("conversation"));
+                newThreadIntent.putExtra(EXTRA_THREAD_ID, threadId);
+                getApplicationContext().sendBroadcast(newThreadIntent);
+
+            } catch (JSONException | ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    };
+
     public void connectToConvNsp(int convId) {
         try {
             IO.Options opts = new IO.Options();
@@ -285,6 +328,7 @@ public class WebSocketService extends Service {
             activeConvSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectErrorForConv);
             activeConvSocket.on(Socket.EVENT_ERROR, onErrorForConv);
             activeConvSocket.on(WS_EVENT_CREATE_MESSAGE, onCreateMessage);
+            activeConvSocket.on(WS_EVENT_CREATE_THREAD, onCreateThread);
 
             // Called upon transport creation.
             activeConvSocket.io().on(Manager.EVENT_TRANSPORT, new Listener() {

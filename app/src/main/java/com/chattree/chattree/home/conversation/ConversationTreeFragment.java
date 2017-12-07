@@ -60,7 +60,7 @@ public class ConversationTreeFragment extends Fragment {
 
     private TreeNode lastSelectedNode;
 
-    private List<Thread> threads;
+    private List<Thread> threadList;
 
     private WebSocketService wsService;
 
@@ -201,7 +201,7 @@ public class ConversationTreeFragment extends Fragment {
         TreeNode threadNode = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, parent));
 
         // Find the children of the parent
-        for (Thread thread : threads) {
+        for (Thread thread : threadList) {
             if (thread.getId() != rootThreadId && thread.getFk_thread_parent() == parent.getId()) {
                 threadNode.addChild(buildNodes(thread));
             }
@@ -216,9 +216,9 @@ public class ConversationTreeFragment extends Fragment {
     }
 
     private void buildConvTree(List<Thread> threadList) {
-        threads = threadList;
+        this.threadList = threadList;
 
-        Collection result = CollectionUtils.select(threads, new Predicate() {
+        Collection result = CollectionUtils.select(this.threadList, new Predicate() {
             @Override
             public boolean evaluate(Object object) {
                 Thread thread = (Thread) object;
@@ -229,8 +229,8 @@ public class ConversationTreeFragment extends Fragment {
         Thread rootThread = (Thread) result.toArray()[0];
         buildNodes(rootThread);
 
-        // No threads except the root one
-        if (threads.size() == 1) {
+        // No threadList except the root one
+        if (this.threadList.size() == 1) {
             getView().findViewById(R.id.emptyThreads).setVisibility(View.VISIBLE);
         }
     }
@@ -248,22 +248,10 @@ public class ConversationTreeFragment extends Fragment {
             ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).cancelTitleEdition();
         }
 
-        // Create the new node
-        Thread   newThread = new Thread(-1, null, null, userId, convId, rootThreadId, null);
-        TreeNode newNode   = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, newThread));
-        treeView.addNode(root, newNode);
-
         // WebSocket call
         wsService = ((ConversationActivity) getActivity()).getWsService();
         assert wsService != null;
         wsService.createThread(rootThreadId, convId);
-
-        // Go to title edition for the new thread
-        lastSelectedNode = newNode;
-        newNode.setSelected(true);
-        onThreadSelectedState = true;
-        ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) newNode.getViewHolder();
-        viewHolder.enableTitleEdition(false);
     }
 
     boolean isOnThreadSelectedState() {
@@ -291,6 +279,71 @@ public class ConversationTreeFragment extends Fragment {
             moveUpBottom.setInterpolator(new DecelerateInterpolator());
             moveUpBottom.start();
         }
+    }
+
+    public void addThread(final int threadId) {
+        // Check first if we already have displayed the thread
+        Collection result = CollectionUtils.select(threadList, new Predicate() {
+            @Override
+            public boolean evaluate(Object object) {
+                Thread thread = (Thread) object;
+                return thread.getId() == threadId;
+            }
+        });
+        if (result.size() > 0) return;
+
+        // Retrieve the thread from db and add it to the tree
+        new AsyncTask<Void, Void, Thread>() {
+            @Override
+            protected Thread doInBackground(Void... params) {
+                ThreadDao threadDao = AppDatabase.getInstance(getContext()).threadDao();
+                return threadDao.findById(threadId);
+            }
+
+            @Override
+            protected void onPostExecute(Thread thread) {
+                threadList.add(thread);
+                addThreadNode(thread);
+            }
+        }.execute();
+    }
+
+    private void addThreadNode(Thread thread) {
+        // Create the new node
+        TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));
+        int      parentThreadId = thread.getFk_thread_parent();
+        if (parentThreadId == rootThreadId) {
+            // Add to root thread
+            treeView.addNode(root, newNode);
+        } else {
+            // Add to another parent thread
+            TreeNode parentNode = findTreeNodeByThreadId(root, parentThreadId);
+            if (parentNode != null) {
+                treeView.addNode(parentNode, newNode);
+            } // TODO: add to pending queue so we resolve the threads to add, in case they would arrive in bad order
+            else throw new RuntimeException("Missing thread parent, can't add new thread to tree");
+        }
+
+        // Go to title edition for the new thread if we just have created it
+        if (thread.getFk_author() == userId) {
+            lastSelectedNode = newNode;
+            newNode.setSelected(true);
+            onThreadSelectedState = true;
+            ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) newNode.getViewHolder();
+            viewHolder.enableTitleEdition(false);
+        }
+    }
+
+    private TreeNode findTreeNodeByThreadId(TreeNode currentNode, int id) {
+        if (((ThreadTreeItem) currentNode.getValue()).thread.getId() == id)
+            return currentNode;
+        if (currentNode.getChildren().size() == 0)
+            return null;
+        for (TreeNode treeNode : currentNode.getChildren()) {
+            TreeNode res = findTreeNodeByThreadId(treeNode, id);
+            if (res != null) return res;
+        }
+        return null;
     }
 
     // -------------------------------------------------------------- //

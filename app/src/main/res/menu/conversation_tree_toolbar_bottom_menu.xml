@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context=".home.conversation.ConversationActivity">
+
+    <item android:id="@+id/action_move"
+          android:icon="@drawable/ic_subdirectory_arrow_right_black_24dp"
+          android:title="@string/move_action"
+          app:showAsAction="always"
+          app:actionLayout="@layout/custom_bottom_menu"/>
+
+    <item android:id="@+id/action_rename"
+          android:icon="@drawable/ic_mode_edit_black_24dp"
+          android:title="@string/rename_action"
+          app:showAsAction="always"
+          app:actionLayout="@layout/custom_bottom_menu"/>
+
+    <item android:id="@+id/action_create"
+          android:title="@string/new_thread_action"
+          android:icon="@drawable/ic_add_black_24dp"
+          app:showAsAction="always"
+          app:actionLayout="@layout/custom_bottom_menu"/>
+</menu>

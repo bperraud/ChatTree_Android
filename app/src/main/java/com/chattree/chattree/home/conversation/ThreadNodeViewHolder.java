@@ -14,15 +14,11 @@ import com.unnamed.b.atv.model.TreeNode;
 public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNodeViewHolder.ThreadTreeItem> {
     private static final String DEFAULT_THREAD_EMPTY_TITLE = "<Sans titre>";
 
-    private ConversationActivity conversationActivity;
-
     private TextView  threadNodeTitleTextView;
     private PrintView arrowView;
-    private PrintView createThreadView;
 
     public ThreadNodeViewHolder(Context context) {
         super(context);
-        conversationActivity = (ConversationActivity) context;
     }
 
     @Override
@@ -53,25 +49,10 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
                 if (!node.isExpanded()) {
                     (node.getViewHolder().getTreeView()).expandNode(node);
                     node.setExpanded(true);
-                    // If we are in thread creation state, show the "+" buttons
-                    if (conversationActivity.getConversationTreeFragment().isOnThreadCreationState()) {
-                        for (TreeNode treeNode : node.getChildren()) {
-                            ((ThreadNodeViewHolder) treeNode.getViewHolder()).toogleCreateThread(true);
-                        }
-                    }
                 } else {
                     (node.getViewHolder().getTreeView()).collapseNode(node);
                     node.setExpanded(false);
                 }
-            }
-        });
-
-        createThreadView = view.findViewById(R.id.create_thread_icon);
-        createThreadView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(conversationActivity, "onClick: thread to create from " + threadItem.thread.getId(), Toast.LENGTH_SHORT).show();
-                Log.d("VIEW HOLDER", "onClick: thread to create from " + threadItem.thread.getId());
             }
         });
 
@@ -93,7 +74,8 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         }
     }
 
-    public void toogleCreateThread(boolean show) {
-        createThreadView.setVisibility(show ? View.VISIBLE : View.GONE);
+    void toggleItemSelectedBackground() {
+        // TODO: See why it doesn't work
+        getNodeView().setBackgroundResource(R.color.extremeLightGrey);
     }
 }

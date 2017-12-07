@@ -3,13 +3,16 @@ package com.chattree.chattree.home.conversation;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
+import android.view.animation.*;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.AppDatabase;
@@ -34,14 +37,15 @@ public class ConversationTreeFragment extends Fragment {
 
     private static final String TAG = "CONVERSATION TREE";
 
-    private AndroidTreeView treeView;
-    private TreeNode        root;
-    FloatingActionButton enableThreadCreationFAB;
+    private AndroidTreeView      treeView;
+    private TreeNode             root;
+    private FloatingActionButton createNewThreadFAB;
 
-    private int     convId;
-    private int     rootThreadId;
-    private boolean isInit;
-    private boolean onThreadCreationState;
+    private int      convId;
+    private int      rootThreadId;
+    private boolean  isInit;
+    private boolean  onThreadSelectedState;
+    private TreeNode lastSelectedNode;
 
     private List<Thread> threads;
 
@@ -56,7 +60,9 @@ public class ConversationTreeFragment extends Fragment {
         if (rootThreadId == 0)
             throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
         isInit = false;
-        onThreadCreationState = false;
+
+        onThreadSelectedState = false;
+        lastSelectedNode = null;
 
         root = TreeNode.root();
 
@@ -81,11 +87,54 @@ public class ConversationTreeFragment extends Fragment {
         });
         treeView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
             @Override
-            public boolean onLongClick(TreeNode node, Object value) {
-                Toast.makeText(getContext(), "long click", Toast.LENGTH_SHORT).show();
+            public boolean onLongClick(final TreeNode node, Object value) {
+                node.setSelected(true);
+                if (lastSelectedNode != null) {
+                    lastSelectedNode.setSelected(false);
+                }
+                lastSelectedNode = node;
+
+                // Node selected: change background
+                ((ThreadNodeViewHolder) node.getViewHolder()).toggleItemSelectedBackground();
+
+                // If we are already on the selection state, return
+                if (onThreadSelectedState) return true;
+                onThreadSelectedState = true;
+
+                // Bottom panel slide up animation
+                Animation bottomUp           = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_up);
+                ViewGroup threadEditionPanel = getView().findViewById(R.id.thread_edition_panel);
+                threadEditionPanel.startAnimation(bottomUp);
+                threadEditionPanel.setVisibility(View.VISIBLE);
+
+                // Thread creation FAB slide up animation
+                TranslateAnimation moveBottomUp = new TranslateAnimation(0, 0, 0, -400);
+                moveBottomUp.setInterpolator(new DecelerateInterpolator());
+                moveBottomUp.setStartOffset(200);
+                moveBottomUp.setDuration(300);
+                moveBottomUp.setFillEnabled(true);
+                moveBottomUp.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) createNewThreadFAB.getLayoutParams();
+                        lp.bottomMargin += 400;
+                        createNewThreadFAB.setLayoutParams(lp);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                    }
+                });
+                createNewThreadFAB.startAnimation(moveBottomUp);
+
                 return true;
             }
         });
+        treeView.setSelectionModeEnabled(true);
 
         // TODO: see how to make node views full width
 //        treeView.getView().setLayoutParams(new ViewGroup.LayoutParams(
@@ -104,16 +153,15 @@ public class ConversationTreeFragment extends Fragment {
         }
 
         // New thread FAB
-        enableThreadCreationFAB = rootView.findViewById(R.id.new_thread_fab);
-        enableThreadCreationFAB.setOnClickListener(new View.OnClickListener() {
+        createNewThreadFAB = rootView.findViewById(R.id.new_thread_fab);
+        createNewThreadFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!onThreadCreationState)
-                    enableThreadCreation();
-                else
-                    cancelThreadCreation();
+                createNewThread();
             }
         });
+
+        initBottomToolbar(rootView);
 
         return rootView;
     }
@@ -185,33 +233,91 @@ public class ConversationTreeFragment extends Fragment {
     // --------------------------- THREAD CREATION --------------------------- //
     // ----------------------------------------------------------------------- //
 
-    private void enableThreadCreation() {
-        for (TreeNode node : root.getChildren()) {
-            toogleCreateThreadForNode(node, true);
-        }
-        onThreadCreationState = true;
-        enableThreadCreationFAB.setImageResource(R.drawable.ic_arrow_back_white_24dp);
+    private void createNewThread() {
+        // TODO: createNewThread
+        Toast.makeText(getContext(), "New thread to create", Toast.LENGTH_SHORT).show();
     }
 
-    private void toogleCreateThreadForNode(TreeNode node, boolean show) {
-        ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) node.getViewHolder();
-        if (viewHolder != null) {
-            viewHolder.toogleCreateThread(show);
-        }
-        for (TreeNode child : node.getChildren()) {
-            toogleCreateThreadForNode(child, show);
-        }
+    boolean isOnThreadSelectedState() {
+        return onThreadSelectedState;
     }
 
-    boolean isOnThreadCreationState() {
-        return onThreadCreationState;
+    void clearThreadSelection() {
+        onThreadSelectedState = false;
+
+        // Bottom panel slide up animation
+        Animation bottomDown         = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
+        ViewGroup threadEditionPanel = getView().findViewById(R.id.thread_edition_panel);
+        threadEditionPanel.startAnimation(bottomDown);
+        threadEditionPanel.setVisibility(View.GONE);
+
+        // Thread creation FAB slide up animation
+        TranslateAnimation moveUpBottom = new TranslateAnimation(0, 0, 0, 400);
+        moveUpBottom.setInterpolator(new DecelerateInterpolator());
+        moveUpBottom.setStartOffset(200);
+        moveUpBottom.setDuration(300);
+        moveUpBottom.setFillEnabled(true);
+        moveUpBottom.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) createNewThreadFAB.getLayoutParams();
+                lp.bottomMargin -= 400;
+                createNewThreadFAB.setLayoutParams(lp);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+            }
+        });
+        createNewThreadFAB.startAnimation(moveUpBottom);
     }
 
-    void cancelThreadCreation() {
-        for (TreeNode node : root.getChildren()) {
-            toogleCreateThreadForNode(node, false);
-        }
-        onThreadCreationState = false;
-        enableThreadCreationFAB.setImageResource(R.drawable.ic_chat_white_24dp);
+    // -------------------------------------------------------------- //
+    // ----------------------- BOTTOM TOOLBAR ----------------------- //
+    // -------------------------------------------------------------- //
+
+    private void initBottomToolbar(View rootView) {
+
+        Toolbar toolbarBottom = rootView.findViewById(R.id.toolbar_bottom);
+        // Inflate a menu to be displayed in the toolbar
+        toolbarBottom.inflateMenu(R.menu.conversation_tree_toolbar_bottom_menu);
+        Menu toolbarBottomMenu = toolbarBottom.getMenu();
+
+        // Move action
+        View moveActionView = toolbarBottomMenu.findItem(R.id.action_move).getActionView();
+        ((ImageView) moveActionView.findViewById(R.id.menu_item_icon)).setImageResource(R.drawable.ic_subdirectory_arrow_right_black_24dp);
+        ((TextView) moveActionView.findViewById(R.id.menu_item_title)).setText(R.string.move_action);
+        moveActionView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "Move thread", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Rename action
+        View renameActionView = toolbarBottomMenu.findItem(R.id.action_rename).getActionView();
+        ((ImageView) renameActionView.findViewById(R.id.menu_item_icon)).setImageResource(R.drawable.ic_mode_edit_black_24dp);
+        ((TextView) renameActionView.findViewById(R.id.menu_item_title)).setText(R.string.rename_action);
+        renameActionView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "Rename thread", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Create thread action
+        View createThreadAction = toolbarBottomMenu.findItem(R.id.action_create).getActionView();
+        ((ImageView) createThreadAction.findViewById(R.id.menu_item_icon)).setImageResource(R.drawable.ic_add_black_24dp);
+        ((TextView) createThreadAction.findViewById(R.id.menu_item_title)).setText(R.string.new_thread_action);
+        createThreadAction.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(getContext(), "Create thread", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

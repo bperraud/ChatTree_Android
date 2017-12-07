@@ -42,28 +42,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-    <com.github.johnkil.print.PrintView
-            android:id="@+id/create_thread_icon"
-            android:layout_alignWithParentIfMissing="true"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentRight="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="4dp"
-            app:iconText="@string/ic_add"
-            app:iconColor="@color/colorPrimary"
-            app:iconFont="fonts/material-icon-font.ttf"
-            app:iconSize="24dp"
-            android:visibility="gone"/>
-
     <LinearLayout
             android:id="@+id/tag_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_toRightOf="@+id/thread_title"
-            android:layout_toLeftOf="@id/create_thread_icon"
+            android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
             android:background="@drawable/rounded_rectangle">

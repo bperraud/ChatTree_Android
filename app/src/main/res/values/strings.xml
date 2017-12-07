@@ -498,5 +498,9 @@
     <string name="votre_message">Votre message…</string>
     <string name="empty_messages">Aucun message pour le moment !</string>
     <string name="empty_threads">Aucun thread pour le moment !</string>
+    <string name="menu_icon">menu icon</string>
+    <string name="move_action">Déplacer</string>
+    <string name="rename_action">Renommer</string>
+    <string name="new_thread_action">Nouveau thème</string>
 
 </resources>

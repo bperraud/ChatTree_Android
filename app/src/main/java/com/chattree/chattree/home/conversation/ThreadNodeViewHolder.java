@@ -61,9 +61,9 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
 
                     // TODO: do an async task to send the title edition to server
 
-                    conversationActivity.getConversationTreeFragment().clearThreadSelection();
+                    conversationActivity.getConversationTreeFragment().clearThreadSelection(true);
 
-                    titleTextView.setText(editTitleView.getText());
+                    titleTextView.setText(editTitleView.getText().toString().isEmpty() ? DEFAULT_THREAD_EMPTY_TITLE : editTitleView.getText());
                     titleSwitcher.showNext();
                     editTitleView.clearFocus();
                     return true;
@@ -141,17 +141,17 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         else nodeView.setBackground(drawableFromTheme);
     }
 
-    void toggleEditTitleMode(boolean edit) {
-        if (edit) {
-            titleSwitcher.showNext();
-            editTitleView.requestFocus();
-            InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.showSoftInput(editTitleView, InputMethodManager.SHOW_IMPLICIT);
-        }
+    void enableTitleEdition(boolean retrieveLastTitle) {
+        titleSwitcher.showNext();
+        editTitleView.setText(retrieveLastTitle ? titleTextView.getText() : "");
+        editTitleView.requestFocus();
+        InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(editTitleView, InputMethodManager.SHOW_IMPLICIT);
     }
 
     void cancelTitleEdition() {
-        conversationActivity.getConversationTreeFragment().clearThreadSelection();
+        ConversationTreeFragment treeFragment = conversationActivity.getConversationTreeFragment();
+        treeFragment.clearThreadSelection(treeFragment.isOnThreadSelectedState());
         editTitleView.setText(titleTextView.getText());
         titleSwitcher.showNext();
         editTitleView.clearFocus();

@@ -46,7 +46,7 @@
                   android:textSize="16sp"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:layout_gravity="center"/>
+                  android:layout_gravity="left|center_vertical"/>
 
         <com.chattree.chattree.home.conversation.CustomEditText
                 android:id="@+id/thread_title_edit"
@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
                 android:hint="@string/thread_title_hint"
-                android:layout_gravity="center"
+                android:layout_gravity="left|center_vertical"
                 android:inputType="text"
                 android:maxLines="1"
                 android:imeActionId="@+id/thread_edit_validate"

@@ -2,8 +2,10 @@ package com.chattree.chattree.home.conversation;
 
 import android.animation.ObjectAnimator;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
@@ -24,6 +26,7 @@ import com.chattree.chattree.db.AppDatabase;
 import com.chattree.chattree.db.Thread;
 import com.chattree.chattree.db.ThreadDao;
 import com.chattree.chattree.home.conversation.ThreadNodeViewHolder.ThreadTreeItem;
+import com.chattree.chattree.websocket.WebSocketService;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,14 +52,17 @@ public class ConversationTreeFragment extends Fragment {
     private FloatingActionButton createNewThreadFAB;
     private ViewGroup            threadEditionPanel;
 
-    private int      convId;
-    private int      rootThreadId;
-    private boolean  isInit;
-    private boolean  onThreadSelectedState;
+    private int     userId;
+    private int     convId;
+    private int     rootThreadId;
+    private boolean isInit;
+    private boolean onThreadSelectedState;
 
     private TreeNode lastSelectedNode;
 
     private List<Thread> threads;
+
+    private WebSocketService wsService;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -91,7 +97,7 @@ public class ConversationTreeFragment extends Fragment {
                 intent.putExtra(EXTRA_THREAD_NAME, item.thread.getTitle());
                 //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
 
-                clearThreadSelection();
+                clearThreadSelection(onThreadSelectedState);
                 startActivity(intent);
             }
         });
@@ -151,13 +157,17 @@ public class ConversationTreeFragment extends Fragment {
         createNewThreadFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createNewThread();
+                createNewThreadToRoot();
             }
         });
 
         initBottomToolbar(rootView);
 
         threadEditionPanel = rootView.findViewById(R.id.thread_edition_panel);
+
+        // Retrieve the user id
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        userId = pref.getInt("user_id", 0);
 
         return rootView;
     }
@@ -229,16 +239,38 @@ public class ConversationTreeFragment extends Fragment {
     // --------------------------- THREAD CREATION --------------------------- //
     // ----------------------------------------------------------------------- //
 
-    private void createNewThread() {
-        // TODO: createNewThread
+    private void createNewThreadToRoot() {
+        // TODO: createNewThreadToRoot
         Toast.makeText(getContext(), "New thread to create", Toast.LENGTH_SHORT).show();
+
+        // If we were editing a thread, cancel
+        if (onThreadSelectedState) {
+            ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).cancelTitleEdition();
+        }
+
+        // Create the new node
+        Thread   newThread = new Thread(-1, null, null, userId, convId, rootThreadId, null);
+        TreeNode newNode   = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, newThread));
+        treeView.addNode(root, newNode);
+
+        // WebSocket call
+        wsService = ((ConversationActivity) getActivity()).getWsService();
+        assert wsService != null;
+        wsService.createThread(rootThreadId, convId);
+
+        // Go to title edition for the new thread
+        lastSelectedNode = newNode;
+        newNode.setSelected(true);
+        onThreadSelectedState = true;
+        ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) newNode.getViewHolder();
+        viewHolder.enableTitleEdition(false);
     }
 
     boolean isOnThreadSelectedState() {
         return onThreadSelectedState;
     }
 
-    void clearThreadSelection() {
+    void clearThreadSelection(boolean animate) {
         if (lastSelectedNode != null) {
             lastSelectedNode.setSelected(false);
             ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).toggleItemSelectedBackground(false);
@@ -246,17 +278,19 @@ public class ConversationTreeFragment extends Fragment {
 
         onThreadSelectedState = false;
 
-        // Bottom panel slide down animation
-        Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
-        threadEditionPanel.startAnimation(bottomDown);
-        threadEditionPanel.setVisibility(View.GONE);
+        if (animate) {
+            // Bottom panel slide down animation
+            Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
+            threadEditionPanel.startAnimation(bottomDown);
+            threadEditionPanel.setVisibility(View.GONE);
 
-        // Thread creation FAB slide down animation
-        ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
-        moveUpBottom.setStartDelay(200);
-        moveUpBottom.setDuration(300);
-        moveUpBottom.setInterpolator(new DecelerateInterpolator());
-        moveUpBottom.start();
+            // Thread creation FAB slide down animation
+            ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
+            moveUpBottom.setStartDelay(200);
+            moveUpBottom.setDuration(300);
+            moveUpBottom.setInterpolator(new DecelerateInterpolator());
+            moveUpBottom.start();
+        }
     }
 
     // -------------------------------------------------------------- //
@@ -291,7 +325,7 @@ public class ConversationTreeFragment extends Fragment {
                 Toast.makeText(getContext(), "Rename thread", Toast.LENGTH_SHORT).show();
                 TreeNode             nodeSelected = lastSelectedNode;
                 ThreadNodeViewHolder viewHolder   = (ThreadNodeViewHolder) nodeSelected.getViewHolder();
-                viewHolder.toggleEditTitleMode(true);
+                viewHolder.enableTitleEdition(true);
 
                 // Bottom panel slide down animation
                 Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);

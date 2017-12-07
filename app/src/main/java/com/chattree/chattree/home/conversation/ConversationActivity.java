@@ -331,7 +331,7 @@ public class ConversationActivity extends AppCompatActivity {
     public void onBackPressed() {
         // Cancel the creation of a new thread
         if (conversationTreeFragment.isOnThreadSelectedState()) {
-            conversationTreeFragment.clearThreadSelection();
+            conversationTreeFragment.clearThreadSelection(true);
         } else {
             super.onBackPressed();
         }

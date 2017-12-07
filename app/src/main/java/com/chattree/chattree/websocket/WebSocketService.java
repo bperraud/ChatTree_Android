@@ -15,6 +15,7 @@ import io.socket.client.IO;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
 import io.socket.engineio.client.Transport;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -29,6 +30,7 @@ import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
 import static io.socket.emitter.Emitter.*;
+import static org.json.JSONObject.NULL;
 
 public class WebSocketService extends Service {
 
@@ -36,6 +38,7 @@ public class WebSocketService extends Service {
 
     @SuppressWarnings("FieldCanBeLocal")
     private static final String WS_EVENT_CREATE_MESSAGE   = "create-message";
+    private static final String WS_EVENT_CREATE_THREAD    = "create-thread";
     private static final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
 
     public static final String WS_NEW_MESSAGE_ACTION = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
@@ -330,7 +333,23 @@ public class WebSocketService extends Service {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
 
+    public void createThread(int parentThreadId, int convId) {
+        JSONObject newThread = new JSONObject();
+        try {
+            JSONObject threadData = new JSONObject();
+            threadData.put("title", NULL)
+                    .put("messages", new JSONArray())
+                    .put("message_parent", NULL)
+                    .put("thread_parent", parentThreadId)
+                    .put("conversation", convId);
+
+            newThread.put("thread", threadData);
+            activeConvSocket.emit(WS_EVENT_CREATE_THREAD, newThread);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
 }

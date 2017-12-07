@@ -1,5 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -96,6 +97,7 @@ public class ConversationTreeFragment extends Fragment {
                 }
                 lastSelectedNode = node;
 
+                // TODO: see how to handle the blur (focus lost) event so any selected item is not selected anymore
                 // Node selected: change background
                 ((ThreadNodeViewHolder) node.getViewHolder()).toggleItemSelectedBackground(true);
 
@@ -110,28 +112,11 @@ public class ConversationTreeFragment extends Fragment {
                 threadEditionPanel.setVisibility(View.VISIBLE);
 
                 // Thread creation FAB slide up animation
-                TranslateAnimation moveBottomUp = new TranslateAnimation(0, 0, 0, -400);
-                moveBottomUp.setInterpolator(new DecelerateInterpolator());
-                moveBottomUp.setStartOffset(200);
+                ObjectAnimator moveBottomUp = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", 0, -400);
+                moveBottomUp.setStartDelay(200);
                 moveBottomUp.setDuration(300);
-                moveBottomUp.setFillEnabled(true);
-                moveBottomUp.setAnimationListener(new Animation.AnimationListener() {
-                    @Override
-                    public void onAnimationStart(Animation animation) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animation animation) {
-                        CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) createNewThreadFAB.getLayoutParams();
-                        lp.bottomMargin += 400;
-                        createNewThreadFAB.setLayoutParams(lp);
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animation animation) {
-                    }
-                });
-                createNewThreadFAB.startAnimation(moveBottomUp);
+                moveBottomUp.setInterpolator(new DecelerateInterpolator());
+                moveBottomUp.start();
 
                 return true;
             }
@@ -258,29 +243,12 @@ public class ConversationTreeFragment extends Fragment {
         threadEditionPanel.startAnimation(bottomDown);
         threadEditionPanel.setVisibility(View.GONE);
 
-        // Thread creation FAB slide up animation
-        TranslateAnimation moveUpBottom = new TranslateAnimation(0, 0, 0, 400);
-        moveUpBottom.setInterpolator(new DecelerateInterpolator());
-        moveUpBottom.setStartOffset(200);
+        // Thread creation FAB slide down animation
+        ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -400, 0);
+        moveUpBottom.setStartDelay(200);
         moveUpBottom.setDuration(300);
-        moveUpBottom.setFillEnabled(true);
-        moveUpBottom.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) createNewThreadFAB.getLayoutParams();
-                lp.bottomMargin -= 400;
-                createNewThreadFAB.setLayoutParams(lp);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-            }
-        });
-        createNewThreadFAB.startAnimation(moveUpBottom);
+        moveUpBottom.setInterpolator(new DecelerateInterpolator());
+        moveUpBottom.start();
     }
 
     // -------------------------------------------------------------- //

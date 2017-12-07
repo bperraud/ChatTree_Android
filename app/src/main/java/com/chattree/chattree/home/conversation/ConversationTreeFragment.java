@@ -4,14 +4,18 @@ import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.*;
-import android.view.animation.*;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,14 +42,18 @@ public class ConversationTreeFragment extends Fragment {
 
     private static final String TAG = "CONVERSATION TREE";
 
+    private static final int FABAnimationY = 500;
+
     private AndroidTreeView      treeView;
     private TreeNode             root;
     private FloatingActionButton createNewThreadFAB;
+    private ViewGroup            threadEditionPanel;
 
     private int      convId;
     private int      rootThreadId;
     private boolean  isInit;
     private boolean  onThreadSelectedState;
+
     private TreeNode lastSelectedNode;
 
     private List<Thread> threads;
@@ -106,13 +114,12 @@ public class ConversationTreeFragment extends Fragment {
                 onThreadSelectedState = true;
 
                 // Bottom panel slide up animation
-                Animation bottomUp           = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_up);
-                ViewGroup threadEditionPanel = getView().findViewById(R.id.thread_edition_panel);
+                Animation bottomUp = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_up);
                 threadEditionPanel.startAnimation(bottomUp);
                 threadEditionPanel.setVisibility(View.VISIBLE);
 
                 // Thread creation FAB slide up animation
-                ObjectAnimator moveBottomUp = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", 0, -400);
+                ObjectAnimator moveBottomUp = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", 0, -FABAnimationY);
                 moveBottomUp.setStartDelay(200);
                 moveBottomUp.setDuration(300);
                 moveBottomUp.setInterpolator(new DecelerateInterpolator());
@@ -149,6 +156,8 @@ public class ConversationTreeFragment extends Fragment {
         });
 
         initBottomToolbar(rootView);
+
+        threadEditionPanel = rootView.findViewById(R.id.thread_edition_panel);
 
         return rootView;
     }
@@ -237,14 +246,13 @@ public class ConversationTreeFragment extends Fragment {
 
         onThreadSelectedState = false;
 
-        // Bottom panel slide up animation
-        Animation bottomDown         = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
-        ViewGroup threadEditionPanel = getView().findViewById(R.id.thread_edition_panel);
+        // Bottom panel slide down animation
+        Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
         threadEditionPanel.startAnimation(bottomDown);
         threadEditionPanel.setVisibility(View.GONE);
 
         // Thread creation FAB slide down animation
-        ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -400, 0);
+        ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
         moveUpBottom.setStartDelay(200);
         moveUpBottom.setDuration(300);
         moveUpBottom.setInterpolator(new DecelerateInterpolator());
@@ -281,6 +289,21 @@ public class ConversationTreeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 Toast.makeText(getContext(), "Rename thread", Toast.LENGTH_SHORT).show();
+                TreeNode             nodeSelected = lastSelectedNode;
+                ThreadNodeViewHolder viewHolder   = (ThreadNodeViewHolder) nodeSelected.getViewHolder();
+                viewHolder.toggleEditTitleMode(true);
+
+                // Bottom panel slide down animation
+                Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
+                threadEditionPanel.startAnimation(bottomDown);
+                threadEditionPanel.setVisibility(View.GONE);
+
+                // Thread creation FAB slide down animation
+                ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
+                moveUpBottom.setStartDelay(200);
+                moveUpBottom.setDuration(300);
+                moveUpBottom.setInterpolator(new DecelerateInterpolator());
+                moveUpBottom.start();
             }
         });
 
@@ -294,5 +317,9 @@ public class ConversationTreeFragment extends Fragment {
                 Toast.makeText(getContext(), "Create thread", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public TreeNode getLastSelectedNode() {
+        return lastSelectedNode;
     }
 }

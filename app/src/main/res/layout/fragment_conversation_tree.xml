@@ -51,8 +51,6 @@
                 android:id="@+id/toolbar_bottom"
                 android:layout_width="match_parent"
                 android:layout_height="130dp"
-                android:paddingStart="30dp"
-                android:paddingEnd="30dp"
                 android:paddingTop="40dp"
                 android:minHeight="?attr/actionBarSize"
                 android:background="@android:color/background_light">

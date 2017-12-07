@@ -32,22 +32,42 @@
             app:iconFont="fonts/material-icon-font.ttf"
             app:iconSize="24dp"/>
 
-    <TextView
-            android:id="@+id/thread_title"
+    <ViewSwitcher
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/thread_title_switcher"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:textSize="16sp"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="32dp"
-            android:layout_toRightOf="@+id/icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_toRightOf="@+id/icon">
+
+        <TextView android:id="@+id/thread_title"
+                  android:textSize="16sp"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_gravity="center"/>
+
+        <com.chattree.chattree.home.conversation.CustomEditText
+                android:id="@+id/thread_title_edit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:hint="@string/thread_title_hint"
+                android:layout_gravity="center"
+                android:inputType="text"
+                android:maxLines="1"
+                android:imeActionId="@+id/thread_edit_validate"
+                android:imeActionLabel="OK"
+                android:imeOptions="actionDone"/>
+    </ViewSwitcher>
 
     <LinearLayout
             android:id="@+id/tag_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_toRightOf="@+id/thread_title"
+            android:layout_toRightOf="@+id/thread_title_switcher"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"

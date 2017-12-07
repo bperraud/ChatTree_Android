@@ -3,9 +3,14 @@ package com.chattree.chattree.home.conversation;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 import com.chattree.chattree.R;
 import com.chattree.chattree.db.Thread;
 import com.github.johnkil.print.PrintView;
@@ -14,15 +19,17 @@ import com.unnamed.b.atv.model.TreeNode;
 public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNodeViewHolder.ThreadTreeItem> {
     private static final String DEFAULT_THREAD_EMPTY_TITLE = "<Sans titre>";
 
-    private TextView  threadNodeTitleTextView;
-    private PrintView arrowView;
+    private ViewSwitcher   titleSwitcher;
+    private TextView       titleTextView;
+    private CustomEditText editTitleView;
+    private PrintView      arrowView;
     /**
      * We need to keep a reference to the nodeView because getView returns a copy of it, calling
      * createNodeView even if the view already exists
      *
      * @see TreeNode.BaseNodeViewHolder#getNodeView()
      */
-    private View      nodeView;
+    private View           nodeView;
 
     private ConversationActivity conversationActivity;
 
@@ -36,8 +43,34 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         final Thread         thread   = threadItem.thread;
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View           view     = inflater.inflate(R.layout.layout_thread_node, null, false);
-        threadNodeTitleTextView = view.findViewById(R.id.thread_title);
-        threadNodeTitleTextView.setText(thread.getTitle() == null ? DEFAULT_THREAD_EMPTY_TITLE : thread.getTitle());
+
+        titleSwitcher = view.findViewById(R.id.thread_title_switcher);
+
+        titleTextView = view.findViewById(R.id.thread_title);
+        titleTextView.setText(thread.getTitle() == null ? DEFAULT_THREAD_EMPTY_TITLE : thread.getTitle());
+
+        editTitleView = view.findViewById(R.id.thread_title_edit);
+        editTitleView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
+                if (id == R.id.thread_edit_validate || id == EditorInfo.IME_NULL) {
+                    Log.d("ViewHolder", "Title edited");
+                    // Close the keyboard
+                    InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(editTitleView.getWindowToken(), 0);
+
+                    // TODO: do an async task to send the title edition to server
+
+                    conversationActivity.getConversationTreeFragment().clearThreadSelection();
+
+                    titleTextView.setText(editTitleView.getText());
+                    titleSwitcher.showNext();
+                    editTitleView.clearFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
 
         // Tags
 //        ((TextView) view.findViewById(R.id.tag_labels)).setText("Tag1, Tag2");
@@ -106,5 +139,21 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         if (selected)
             nodeView.setBackgroundResource(R.color.extremeLightGrey);
         else nodeView.setBackground(drawableFromTheme);
+    }
+
+    void toggleEditTitleMode(boolean edit) {
+        if (edit) {
+            titleSwitcher.showNext();
+            editTitleView.requestFocus();
+            InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(editTitleView, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    void cancelTitleEdition() {
+        conversationActivity.getConversationTreeFragment().clearThreadSelection();
+        editTitleView.setText(titleTextView.getText());
+        titleSwitcher.showNext();
+        editTitleView.clearFocus();
     }
 }

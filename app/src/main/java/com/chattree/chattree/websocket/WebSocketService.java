@@ -2,14 +2,14 @@ package com.chattree.chattree.websocket;
 
 import android.app.Service;
 import android.content.*;
-import android.os.*;
+import android.os.Binder;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.*;
-import com.chattree.chattree.db.Message;
 import com.chattree.chattree.db.Thread;
 import io.socket.client.IO;
 import io.socket.client.Manager;
@@ -29,7 +29,7 @@ import java.util.*;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
-import static io.socket.emitter.Emitter.*;
+import static io.socket.emitter.Emitter.Listener;
 import static org.json.JSONObject.NULL;
 
 public class WebSocketService extends Service {

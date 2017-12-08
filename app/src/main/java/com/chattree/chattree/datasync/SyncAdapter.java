@@ -16,8 +16,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
-import java.net.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -78,18 +80,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.i("SyncAdapter", "SYNCING DATA...");
 
-        int convId = extras.getInt(EXTRA_SYNC_CONV_ID, -1);
+        int convId   = extras.getInt(EXTRA_SYNC_CONV_ID, -1);
         int threadId = extras.getInt(EXTRA_SYNC_THREAD_ID, -1);
-        if(threadId != -1 && convId != -1){
+        if (threadId != -1 && convId != -1) {
             Log.i("SyncAdapter", "SYNCING A THREAD.");
             syncThreadWithLocalDB(convId, threadId);
-        }
-        else{
-            if(convId != -1){
+        } else {
+            if (convId != -1) {
                 Log.i("SyncAdapter", "SYNCING A CONV.");
                 syncConvWithLocalDB(convId);
-            }
-            else{
+            } else {
                 Log.i("SyncAdapter", "FULL SYNC.");
                 fullSync();
             }
@@ -111,7 +111,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
             getContext().sendBroadcast(globalSyncIntent);
 
             for (int convId : convIds) {
-                int[]  threadIds      = syncConvWithLocalDB(convId);
+                int[] threadIds = syncConvWithLocalDB(convId);
 
                 for (int threadId : threadIds) {
                     syncThreadWithLocalDB(convId, threadId);

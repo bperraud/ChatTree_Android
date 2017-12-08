@@ -10,19 +10,14 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
-import com.chattree.chattree.ChatTreeApplication;
-import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.login.LoginActivity;
 import com.chattree.chattree.tools.Utils;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.*;
-import java.net.CookieManager;
-import java.net.HttpCookie;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Implementation of headless Fragment that runs an AsyncTask to fetch data from the network.

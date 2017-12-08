@@ -1,25 +1,14 @@
 package com.chattree.chattree.login;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.arch.persistence.room.Room;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import com.chattree.chattree.R;
-import com.chattree.chattree.db.AppDatabase;
-import com.chattree.chattree.db.User;
-import com.chattree.chattree.db.UserDao;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
-import java.net.CookieHandler;
-import java.net.CookieManager;
 import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {

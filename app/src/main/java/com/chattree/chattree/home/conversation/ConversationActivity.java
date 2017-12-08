@@ -1,6 +1,5 @@
 package com.chattree.chattree.home.conversation;
 
-import android.accounts.Account;
 import android.app.Activity;
 import android.content.*;
 import android.os.Bundle;
@@ -21,7 +20,6 @@ import android.widget.TextView;
 import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.R;
 import com.chattree.chattree.datasync.SyncAdapter;
-import com.chattree.chattree.home.HomeActivity;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.Utils;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
@@ -29,10 +27,9 @@ import com.chattree.chattree.websocket.WebSocketService;
 
 import java.util.Locale;
 
-import static com.chattree.chattree.datasync.SyncAdapter.*;
-import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ID;
-import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_ROOT_THREAD_ID;
-import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERSATION_TITLE;
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
+import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
+import static com.chattree.chattree.home.ConversationsListFragment.*;
 import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_CONV_ID;
 import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_ROOT_THREAD_ID;
 import static com.chattree.chattree.home.conversation.ThreadDetailFragment.BUNDLE_THREAD_ID;
@@ -204,13 +201,11 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        //Resync the conv
+        // Resync the conv
         // Pass the settings flags by inserting them in a bundle
         Bundle settingsBundle = new Bundle();
-        settingsBundle.putBoolean(
-                ContentResolver.SYNC_EXTRAS_MANUAL, true);
-        settingsBundle.putBoolean(
-                ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
         settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, this.convId);
 
         /*

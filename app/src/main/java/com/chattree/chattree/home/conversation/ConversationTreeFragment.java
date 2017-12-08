@@ -35,12 +35,8 @@ import org.apache.commons.collections4.Predicate;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
-import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_CONV_ID;
-import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_ID;
-import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_NAME;
+import static com.chattree.chattree.home.conversation.ThreadActivity.*;
 
 public class ConversationTreeFragment extends Fragment {
 

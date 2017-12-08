@@ -2,10 +2,8 @@ package com.chattree.chattree.datasync;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
-import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
-import com.chattree.chattree.db.DbHelper;
 
 /*
  * We don't really need a content provider for now, but keep it because mandatory for the SyncAdapter.

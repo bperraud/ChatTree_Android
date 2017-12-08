@@ -6,14 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
-
 import com.chattree.chattree.R;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.chattree.chattree.home.conversation.MessageItem.*;
+import static com.chattree.chattree.home.conversation.MessageItem.OwnerValues;
 
 /**
  * Created by steveamadodias on 19/11/2017.

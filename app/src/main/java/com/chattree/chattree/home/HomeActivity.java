@@ -1,18 +1,16 @@
 package com.chattree.chattree.home;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.content.*;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -23,27 +21,26 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.R;
-import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.AppDatabase;
 import com.chattree.chattree.db.Conversation;
 import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
+import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.Toaster;
+import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 import com.chattree.chattree.websocket.WebSocketService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import com.chattree.chattree.profile.ProfileActivity;
-import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-import java.util.*;
-
-import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
-import static com.chattree.chattree.datasync.SyncAdapter.SYNC_CALLBACK_ALL_CONV_LOADED_ACTION;
-import static com.chattree.chattree.datasync.SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION;
+import static com.chattree.chattree.datasync.SyncAdapter.*;
 import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
 import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 

@@ -177,11 +177,7 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
          * app initialization has already created the account.
          */
         ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
         Toaster.showCustomToast(this, getString(R.string.login_successful_toast), null);
     }
 

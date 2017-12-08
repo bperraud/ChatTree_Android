@@ -53,7 +53,7 @@ public class ConversationsListFragment extends Fragment {
         // List of conversations
         conversationsList = new ArrayList<>();
 
-        ListView conversationsListView = rootView.findViewById(R.id.list_view);
+        final ListView conversationsListView = rootView.findViewById(R.id.list_view);
         adapter = new ConversationListAdapter(getContext(), R.layout.row_conversation, conversationsList);
         conversationsListView.setAdapter(adapter);
         conversationsListView.setEmptyView(rootView.findViewById(android.R.id.empty));
@@ -67,6 +67,14 @@ public class ConversationsListFragment extends Fragment {
                 intent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, convItem.getRootThreadId());
                 if (convItem.getRootThreadId() == 0) {
                     startConvActivityLastIntent = intent;
+                    int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+                    mProgressBar.animate().setDuration(shortAnimTime).alpha(1).setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            mProgressBar.setVisibility(View.VISIBLE);
+                        }
+                    });
+                    conversationsListView.animate().setDuration(shortAnimTime).alpha(0.5f);
                 } else {
                     startActivity(intent);
                 }
@@ -155,6 +163,7 @@ public class ConversationsListFragment extends Fragment {
             startConvActivityLastIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0) == conversation.getId()) {
             startConvActivityLastIntent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, conversation.getFk_root_thread());
             startActivity(startConvActivityLastIntent);
+            startConvActivityLastIntent = null;
         }
     }
 }

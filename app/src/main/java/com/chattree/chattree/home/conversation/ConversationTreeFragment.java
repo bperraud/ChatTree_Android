@@ -34,6 +34,8 @@ import org.apache.commons.collections4.Predicate;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_ID;
 import static com.chattree.chattree.home.conversation.ThreadActivity.EXTRA_THREAD_NAME;
@@ -240,9 +242,6 @@ public class ConversationTreeFragment extends Fragment {
     // ----------------------------------------------------------------------- //
 
     private void createNewThreadToRoot() {
-        // TODO: createNewThreadToRoot
-        Toast.makeText(getContext(), "New thread to create", Toast.LENGTH_SHORT).show();
-
         // If we were editing a thread, cancel
         if (onThreadSelectedState) {
             ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).cancelTitleEdition();
@@ -267,17 +266,7 @@ public class ConversationTreeFragment extends Fragment {
         onThreadSelectedState = false;
 
         if (animate) {
-            // Bottom panel slide down animation
-            Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
-            threadEditionPanel.startAnimation(bottomDown);
-            threadEditionPanel.setVisibility(View.GONE);
-
-            // Thread creation FAB slide down animation
-            ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
-            moveUpBottom.setStartDelay(200);
-            moveUpBottom.setDuration(300);
-            moveUpBottom.setInterpolator(new DecelerateInterpolator());
-            moveUpBottom.start();
+            slidePanelDown();
         }
     }
 
@@ -310,14 +299,16 @@ public class ConversationTreeFragment extends Fragment {
 
     private void addThreadNode(Thread thread) {
         // Create the new node
-        TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));
-        int      parentThreadId = thread.getFk_thread_parent();
+        final TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));
+        TreeNode       parentNode;
+        int            parentThreadId = thread.getFk_thread_parent();
         if (parentThreadId == rootThreadId) {
             // Add to root thread
+            parentNode = root;
             treeView.addNode(root, newNode);
         } else {
             // Add to another parent thread
-            TreeNode parentNode = findTreeNodeByThreadId(root, parentThreadId);
+            parentNode = findTreeNodeByThreadId(root, parentThreadId);
             if (parentNode != null) {
                 treeView.addNode(parentNode, newNode);
             } // TODO: add to pending queue so we resolve the threads to add, in case they would arrive in bad order
@@ -329,16 +320,20 @@ public class ConversationTreeFragment extends Fragment {
             lastSelectedNode = newNode;
             newNode.setSelected(true);
             onThreadSelectedState = true;
+            treeView.expandNode(parentNode);
             ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) newNode.getViewHolder();
             viewHolder.enableTitleEdition(false);
         }
     }
 
     private TreeNode findTreeNodeByThreadId(TreeNode currentNode, int id) {
-        if (((ThreadTreeItem) currentNode.getValue()).thread.getId() == id)
-            return currentNode;
-        if (currentNode.getChildren().size() == 0)
-            return null;
+        // If we are considering the root node, skip these lines as we only want to explore the children
+        if (currentNode != root) {
+            if (((ThreadTreeItem) currentNode.getValue()).thread.getId() == id)
+                return currentNode;
+            if (currentNode.getChildren().size() == 0)
+                return null;
+        }
         for (TreeNode treeNode : currentNode.getChildren()) {
             TreeNode res = findTreeNodeByThreadId(treeNode, id);
             if (res != null) return res;
@@ -375,22 +370,11 @@ public class ConversationTreeFragment extends Fragment {
         renameActionView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "Rename thread", Toast.LENGTH_SHORT).show();
                 TreeNode             nodeSelected = lastSelectedNode;
                 ThreadNodeViewHolder viewHolder   = (ThreadNodeViewHolder) nodeSelected.getViewHolder();
                 viewHolder.enableTitleEdition(true);
 
-                // Bottom panel slide down animation
-                Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
-                threadEditionPanel.startAnimation(bottomDown);
-                threadEditionPanel.setVisibility(View.GONE);
-
-                // Thread creation FAB slide down animation
-                ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
-                moveUpBottom.setStartDelay(200);
-                moveUpBottom.setDuration(300);
-                moveUpBottom.setInterpolator(new DecelerateInterpolator());
-                moveUpBottom.start();
+                slidePanelDown();
             }
         });
 
@@ -401,10 +385,39 @@ public class ConversationTreeFragment extends Fragment {
         createThreadAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "Create thread", Toast.LENGTH_SHORT).show();
+                // If a thread was selected, cancel (should be true in theory)
+                if (onThreadSelectedState) {
+                    clearThreadSelection(true);
+                } else
+                    throw new RuntimeException("Trying to create a thread from a non-root parent but onThreadSelectedState = false");
+
+                // WebSocket call
+                wsService = ((ConversationActivity) getActivity()).getWsService();
+                assert wsService != null;
+                wsService.createThread(((ThreadTreeItem) lastSelectedNode.getValue()).thread.getId(), convId);
+
+                slidePanelDown();
             }
         });
     }
+
+    private void slidePanelDown() {
+        // Bottom panel slide down animation
+        Animation bottomDown = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_down);
+        threadEditionPanel.startAnimation(bottomDown);
+        threadEditionPanel.setVisibility(View.GONE);
+
+        // Thread creation FAB slide down animation
+        ObjectAnimator moveUpBottom = ObjectAnimator.ofFloat(createNewThreadFAB, "translationY", -FABAnimationY, 0);
+        moveUpBottom.setStartDelay(200);
+        moveUpBottom.setDuration(300);
+        moveUpBottom.setInterpolator(new DecelerateInterpolator());
+        moveUpBottom.start();
+    }
+
+    // --------------------------------------------------------------- //
+    // ----------------------- GETTERS/SETTERS ----------------------- //
+    // --------------------------------------------------------------- //
 
     public TreeNode getLastSelectedNode() {
         return lastSelectedNode;

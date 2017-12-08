@@ -16,7 +16,7 @@ public interface MessageDao {
     /**
      * @param threadId  The thread we want the messages of
      * @param msgOffset The message id from which we recover the next ones. Exclusive.
-     * @return
+     * @return The list of the messages with embedded user
      */
     @Query("SELECT " +
            "t_message.id m_id, " +

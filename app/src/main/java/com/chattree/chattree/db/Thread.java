@@ -9,24 +9,24 @@ import java.util.Date;
 
 @Entity(tableName = "t_thread",
         foreignKeys = {
-        @ForeignKey(entity = User.class,
-                parentColumns = "id",
-                childColumns = "fk_author",
-                deferred = true),
-        @ForeignKey(entity = Conversation.class,
-                parentColumns = "id",
-                childColumns = "fk_conversation",
-                deferred = true),
-        @ForeignKey(entity = Thread.class,
-                parentColumns = "id",
-                childColumns = "fk_thread_parent",
-                deferred = true),
-        @ForeignKey(entity = Message.class,
-                parentColumns = "id",
-                childColumns = "fk_message_parent",
-                deferred = true)
-})
-public class Thread {
+                @ForeignKey(entity = User.class,
+                        parentColumns = "id",
+                        childColumns = "fk_author",
+                        deferred = true),
+                @ForeignKey(entity = Conversation.class,
+                        parentColumns = "id",
+                        childColumns = "fk_conversation",
+                        deferred = true),
+                @ForeignKey(entity = Thread.class,
+                        parentColumns = "id",
+                        childColumns = "fk_thread_parent",
+                        deferred = true),
+                @ForeignKey(entity = Message.class,
+                        parentColumns = "id",
+                        childColumns = "fk_message_parent",
+                        deferred = true)
+        })
+public class Thread implements Comparable<Thread> {
     @PrimaryKey
     private int id;
 
@@ -48,7 +48,7 @@ public class Thread {
     @ColumnInfo(name = "fk_message_parent")
     private Integer fk_message_parent;
 
-    public Thread(int id, Date creation_date, String title, Integer fk_author, Integer fk_conversation, Integer fk_thread_parent, Integer fk_message_parent){
+    public Thread(int id, Date creation_date, String title, Integer fk_author, Integer fk_conversation, Integer fk_thread_parent, Integer fk_message_parent) {
         this.id = id;
         this.creation_date = creation_date;
         this.title = title;
@@ -60,14 +60,14 @@ public class Thread {
 
     @Override
     public boolean equals(Object obj) {
-        Thread t = (Thread) obj;
-        boolean ret = this.id == t.id && this.fk_author==t.fk_author && this.fk_conversation==t.fk_conversation && this.fk_thread_parent==t.fk_thread_parent && this.fk_message_parent==t.fk_message_parent;
-        if(creation_date==null)
-            ret = ret && t.creation_date==null;
+        Thread  t   = (Thread) obj;
+        boolean ret = this.id == t.id && this.fk_author == t.fk_author && this.fk_conversation == t.fk_conversation && this.fk_thread_parent == t.fk_thread_parent && this.fk_message_parent == t.fk_message_parent;
+        if (creation_date == null)
+            ret = ret && t.creation_date == null;
         else
             ret = ret && this.creation_date.equals(t.creation_date);
-        if(title==null)
-            ret = ret && t.title==null;
+        if (title == null)
+            ret = ret && t.title == null;
         else
             ret = ret && this.title.equals(t.title);
         return ret;
@@ -127,5 +127,10 @@ public class Thread {
 
     public void setFk_message_parent(Integer fk_message_parent) {
         this.fk_message_parent = fk_message_parent;
+    }
+
+    @Override
+    public int compareTo(Thread o) {
+        return id - o.id;
     }
 }

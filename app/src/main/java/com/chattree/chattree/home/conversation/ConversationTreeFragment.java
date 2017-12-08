@@ -34,6 +34,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.chattree.chattree.home.conversation.ThreadActivity.*;
@@ -51,11 +52,16 @@ public class ConversationTreeFragment extends Fragment {
     private TreeNode             root;
     private FloatingActionButton createNewThreadFAB;
     private ViewGroup            threadEditionPanel;
+    private View                 emptyThreads;
 
     private int     userId;
     private int     convId;
     private int     rootThreadId;
     private boolean isInit;
+    /**
+     * True if a sync process has finished and we need to refresh the view
+     */
+    private boolean pendingRefresh;
     private boolean onThreadSelectedState;
 
     private TreeNode lastSelectedNode;
@@ -66,24 +72,29 @@ public class ConversationTreeFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "ON CREATE VIEW");
         View      rootView      = inflater.inflate(R.layout.fragment_conversation_tree, null, false);
         ViewGroup containerView = rootView.findViewById(R.id.container);
+        emptyThreads = rootView.findViewById(R.id.emptyThreads);
 
         convId = getArguments().getInt(BUNDLE_CONV_ID);
         rootThreadId = getArguments().getInt(BUNDLE_ROOT_THREAD_ID);
         if (rootThreadId == 0)
             throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
         isInit = false;
+        pendingRefresh = false;
 
         onThreadSelectedState = false;
         lastSelectedNode = null;
+
+        // Retrieve the user id
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        userId = pref.getInt("user_id", 0);
 
         root = TreeNode.root();
 
         treeView = new AndroidTreeView(getActivity(), root);
         treeView.setDefaultAnimation(true);
-//        treeView.setUse2dScroll(true);
+//        treeView.setUse2dScroll(true); TODO: if we activate 2dScroll, we need to think about tags positioning
         treeView.setDefaultContainerStyle(R.style.TreeNodeStyleCustom);
         treeView.setDefaultViewHolder(ThreadNodeViewHolder.class);
         treeView.setUseAutoToggle(false);
@@ -95,7 +106,6 @@ public class ConversationTreeFragment extends Fragment {
                 ThreadTreeItem item = (ThreadTreeItem) value;
                 intent.putExtra(EXTRA_THREAD_ID, item.thread.getId());
                 intent.putExtra(EXTRA_THREAD_NAME, item.thread.getTitle());
-                //intent.putExtra(EXTRA_NAME_CONV, getArguments().getString("CONV_TITLE"));
                 intent.putExtra(EXTRA_CONV_ID, convId);
 
                 clearThreadSelection(onThreadSelectedState);
@@ -104,7 +114,7 @@ public class ConversationTreeFragment extends Fragment {
         });
         treeView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
             @Override
-            public boolean onLongClick(final TreeNode node, Object value) {
+            public boolean onLongClick(final TreeNode node, Object threadTreeItem) {
                 node.setSelected(true);
                 if (lastSelectedNode != null) {
                     lastSelectedNode.setSelected(false);
@@ -166,9 +176,7 @@ public class ConversationTreeFragment extends Fragment {
 
         threadEditionPanel = rootView.findViewById(R.id.thread_edition_panel);
 
-        // Retrieve the user id
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        userId = pref.getInt("user_id", 0);
+        initConvTree();
 
         return rootView;
     }
@@ -179,10 +187,7 @@ public class ConversationTreeFragment extends Fragment {
         outState.putString("tState", treeView.getSaveState());
     }
 
-    public void initConvTree() {
-        if (isInit) return;
-        isInit = true;
-
+    private void initConvTree() {
         new AsyncTask<Void, Void, List<Thread>>() {
             @Override
             protected List<Thread> doInBackground(Void... params) {
@@ -195,6 +200,31 @@ public class ConversationTreeFragment extends Fragment {
                 buildConvTree(threads);
             }
         }.execute();
+    }
+
+    private void buildConvTree(List<Thread> threadList) {
+        this.threadList = threadList;
+
+        Collection result = CollectionUtils.select(this.threadList, new Predicate() {
+            @Override
+            public boolean evaluate(Object object) {
+                Thread thread = (Thread) object;
+                return thread.getId() == rootThreadId;
+            }
+        });
+
+        Thread rootThread = (Thread) result.toArray()[0];
+        buildNodes(rootThread);
+
+        // No threadList except the root one
+        if (this.threadList.size() == 1) {
+            emptyThreads.setVisibility(View.VISIBLE);
+        }
+
+        isInit = true;
+        if (pendingRefresh) {
+            refreshConvTree();
+        }
     }
 
     private TreeNode buildNodes(Thread parent) {
@@ -216,23 +246,31 @@ public class ConversationTreeFragment extends Fragment {
         return threadNode;
     }
 
-    private void buildConvTree(List<Thread> threadList) {
-        this.threadList = threadList;
+    public void refreshConvTree() {
+        if (!isInit) {
+            pendingRefresh = true;
+            return;
+        }
 
-        Collection result = CollectionUtils.select(this.threadList, new Predicate() {
+        new AsyncTask<Void, Void, List<Thread>>() {
             @Override
-            public boolean evaluate(Object object) {
-                Thread thread = (Thread) object;
-                return thread.getId() == rootThreadId;
+            protected List<Thread> doInBackground(Void... params) {
+                int       maxThreadId = Collections.max(threadList).getId();
+                ThreadDao threadDao   = AppDatabase.getInstance(getContext()).threadDao();
+                return threadDao.findByConvIdAndOffset(convId, maxThreadId);
             }
-        });
 
-        Thread rootThread = (Thread) result.toArray()[0];
-        buildNodes(rootThread);
+            @Override
+            protected void onPostExecute(List<Thread> threads) {
+                refreshTreeNodes(threads);
+            }
+        }.execute();
+    }
 
-        // No threadList except the root one
-        if (this.threadList.size() == 1) {
-            getView().findViewById(R.id.emptyThreads).setVisibility(View.VISIBLE);
+    private void refreshTreeNodes(List<Thread> threadList) {
+        this.threadList.addAll(threadList);
+        for (Thread thread : threadList) {
+            addThreadNode(thread, false);
         }
     }
 
@@ -291,16 +329,17 @@ public class ConversationTreeFragment extends Fragment {
             @Override
             protected void onPostExecute(Thread thread) {
                 threadList.add(thread);
-                addThreadNode(thread);
+                addThreadNode(thread, true);
             }
         }.execute();
     }
 
-    private void addThreadNode(final Thread thread) {
+    private void addThreadNode(final Thread thread, boolean notifyUser) {
         // Create the new node
         final TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));
         TreeNode       parentNode;
         int            parentThreadId = thread.getFk_thread_parent();
+
         if (parentThreadId == rootThreadId) {
             // Add to root thread
             parentNode = root;
@@ -310,6 +349,10 @@ public class ConversationTreeFragment extends Fragment {
             parentNode = findTreeNodeByThreadId(root, parentThreadId);
             if (parentNode != null) {
                 treeView.addNode(parentNode, newNode);
+                // If the view has been generated, display the arrow
+                if (parentNode.getViewHolder() != null) {
+                    ((ThreadNodeViewHolder) parentNode.getViewHolder()).displayArrow();
+                }
             } // TODO: add to pending queue so we resolve the threads to add, in case they would arrive in bad order
             else throw new RuntimeException("Missing thread parent, can't add new thread to tree");
         }
@@ -324,7 +367,8 @@ public class ConversationTreeFragment extends Fragment {
             viewHolder.enableTitleEdition(false);
         }
         // Notify with a toast the thread creation
-        else {
+        else if (notifyUser) {
+            treeView.expandNode(parentNode);
             new AsyncTask<Void, Void, User>() {
                 @Override
                 protected User doInBackground(Void... voids) {
@@ -340,6 +384,8 @@ public class ConversationTreeFragment extends Fragment {
                 }
             }.execute();
         }
+
+        emptyThreads.setVisibility(View.GONE);
     }
 
     private TreeNode findTreeNodeByThreadId(TreeNode currentNode, int id) {

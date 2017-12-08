@@ -19,6 +19,8 @@ import com.unnamed.b.atv.model.TreeNode;
 public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNodeViewHolder.ThreadTreeItem> {
     private static final String DEFAULT_THREAD_EMPTY_TITLE = "<Sans titre>";
 
+    private TreeNode node;
+
     private ViewSwitcher   titleSwitcher;
     private TextView       titleTextView;
     private CustomEditText editTitleView;
@@ -43,6 +45,8 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         final Thread         thread   = threadItem.thread;
         final LayoutInflater inflater = LayoutInflater.from(context);
         final View           view     = inflater.inflate(R.layout.layout_thread_node, null, false);
+
+        this.node = node;
 
         titleSwitcher = view.findViewById(R.id.thread_title_switcher);
 
@@ -155,5 +159,11 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         editTitleView.setText(titleTextView.getText());
         titleSwitcher.showNext();
         editTitleView.clearFocus();
+    }
+
+    public void displayArrow() {
+        if (node.getChildren().size() > 0) {
+            arrowView.setVisibility(View.VISIBLE);
+        }
     }
 }

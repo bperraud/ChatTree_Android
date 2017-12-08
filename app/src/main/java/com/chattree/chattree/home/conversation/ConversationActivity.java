@@ -50,7 +50,6 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
 
     private SyncReceiver      dataLoadedReceiver;
     private WebSocketReceiver objectReceivedFromWSReceiver;
-    private boolean           convIsReady;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
@@ -67,8 +66,6 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
         setContentView(R.layout.activity_conversation);
 
         final Activity thisActivity = this;
-
-        convIsReady = false;
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -101,16 +98,9 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
             // This method will be invoked when a new page becomes selected.
             @Override
             public void onPageSelected(int position) {
-                // If we return to the main thread, we need to join the corresponding ws room
-                if (position == 0 && wsService != null) {
-//                    wsService.joinThreadRoom(rootThreadId);
-                }
-                // Load the conv tree in the corresponding fragment
-                else if (position == 1) {
+                // Hide keyboard if we go to the conversation tree
+                if (position == 1) {
                     Utils.hideKeyboard(thisActivity);
-
-                    if (conversationTreeFragment != null)
-                        conversationTreeFragment.initConvTree();
                 }
 
             }
@@ -157,19 +147,16 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
+    // TODO: handle more precisely the broadcast receiver behaviour
+    // Consider adding/removing it in onResume/onPause methods
+    // (see https://stackoverflow.com/questions/2314969/how-to-determine-if-one-of-my-activities-is-in-the-foreground)
     public class SyncReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0) != convId) return; // Skip if we are not concerned
             switch (intent.getAction()) {
                 case SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION:
-                    if (!convIsReady) {
-                        // Connect to the conversation namespace because the conversation is ready
-                        wsService.connectToConvNsp(convId);
-                        convIsReady = true;
-                        // Load the conv tree in the corresponding fragment
-                        conversationTreeFragment.initConvTree();
-                    }
+                    conversationTreeFragment.refreshConvTree();
                     break;
                 case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
                     rootThreadDetailFragment.refreshThread();
@@ -197,23 +184,17 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
     @Override
     protected void onResume() {
         super.onResume();
-        // Sync the conv
+        // Sync the conversation
         Bundle settingsBundle = new Bundle();
-//        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-//        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-//        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, this.convId);
-//
-//        /*
-//         * Signal the framework to run your sync adapter. Assume that
-//         * app initialization has already created the account.
-//         */
-//        ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
-//
-//
-//        if (currentTabIsRootThread && rootThreadIsReady && wsService != null) {
-//            wsService.joinThreadRoom(rootThreadId);
-//            rootThreadDetailFragment.refreshThread();
-//        }
+        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, this.convId);
+
+        /*
+         * Signal the framework to run your sync adapter. Assume that
+         * app initialization has already created the account.
+         */
+        ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
 
         // Always try to join the thread room
         attemptToJoinThreadRoom(rootThreadId);
@@ -246,15 +227,8 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
             Log.d(TAG, "onServiceConnected: SERVICE IS BOUND");
             wsService = ((WebSocketService.LocalBinder) service).getService();
 
-            if (wsService.localConvIsReady(convId) && !convIsReady) {
-                // Connect to the conversation namespace
-                wsService.connectToConvNsp(convId);
-                convIsReady = true;
-                // Load the conv tree in the corresponding fragment
-                if (conversationTreeFragment != null) {
-                    conversationTreeFragment.initConvTree();
-                }
-            }
+            // Connect to the conversation namespace
+            wsService.connectToConvNsp(convId);
 
             // Join the root thread room
             wsService.joinThreadRoom(rootThreadId);

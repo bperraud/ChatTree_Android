@@ -78,17 +78,6 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
         messagesListAdapter = new MessagesListAdapter(getContext(), messagesList);
         messagesListView.setAdapter(messagesListAdapter);
 
-//        if (getActivity().getClass() == ConversationActivity.class) {
-//            ConversationActivity activity = (ConversationActivity) getActivity();
-//            activity.attemptJoinThreadRoom();
-//
-//            // Attempt to init the thread if possible
-//            if (activity.getWebSocketService() != null && activity.getWebSocketService().localThreadIsReady(threadId)) {
-//                refreshThread();
-//            }
-//        } else if (getActivity().getClass() == ThreadActivity.class) {
-//            initThread();
-//        }
         initThread();
 
         return rootView;
@@ -104,12 +93,8 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
             // Don't send an empty message
             if (msgContent.isEmpty()) return;
 
-//            WebSocketService wsService = ((WebSocketCaller) getActivity()).getWebSocketService();
             ((WebSocketCaller) getActivity()).attemptToSendMessage(msgContent);
-
-//            assert wsService != null;
-//            wsService.sendMessage(msgContent);
-//            mMessage.setText("");
+            mMessage.setText("");
         }
     }
 
@@ -168,7 +153,8 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
         new AsyncTask<Void, Void, List<CustomMessageWithUser>>() {
             @Override
             protected List<CustomMessageWithUser> doInBackground(Void... params) {
-                int        maxMsgId   = Collections.max(messagesListAdapter.messageIds);
+                int maxMsgId = messagesListAdapter.messageIds.size() > 0 ?
+                        Collections.max(messagesListAdapter.messageIds) : -1;
                 MessageDao messageDao = AppDatabase.getInstance(getContext()).messageDao();
                 return messageDao.getMessageWithUserByThreadIdAndOffset(threadId, maxMsgId);
             }

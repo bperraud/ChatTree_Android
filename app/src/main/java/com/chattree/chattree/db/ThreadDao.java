@@ -19,6 +19,14 @@ public interface ThreadDao {
     @Query("SELECT * FROM t_thread WHERE fk_conversation = :convId")
     List<Thread> findByConvId(int convId);
 
+    /**
+     * @param convId       The conversation we want the threads of
+     * @param threadOffset The thread id from which we recover the next ones. Exclusive.
+     * @return The list of the threads
+     */
+    @Query("SELECT * FROM t_thread WHERE fk_conversation = :convId AND id > :threadOffset")
+    List<Thread> findByConvIdAndOffset(int convId, int threadOffset);
+
     @Delete
     void deleteAll(List<Thread> threads);
 }

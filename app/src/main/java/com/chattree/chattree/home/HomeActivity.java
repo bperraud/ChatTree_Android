@@ -30,6 +30,7 @@ import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.network.NetConnectCallback;
 import com.chattree.chattree.network.NetworkFragment;
+import com.chattree.chattree.tools.Toaster;
 import com.chattree.chattree.websocket.WebSocketService;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -179,6 +180,12 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
          * app initialization has already created the account.
          */
         ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Toaster.showCustomToast(this, getString(R.string.login_successful_toast), null);
     }
 
     public class SyncReceiver extends BroadcastReceiver {

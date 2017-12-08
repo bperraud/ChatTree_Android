@@ -272,7 +272,6 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
 
-
     private void handleLoginFail(JSONMessageParser jsonParser) throws JSONException {
         String errorType = jsonParser.getData().getString("type");
 
@@ -356,7 +355,6 @@ public class LoginFragment extends Fragment implements LoaderManager.LoaderCallb
                 else {
                     Intent intent = new Intent(getContext(), HomeActivity.class);
                     intent.putExtra(EXTRA_LOGIN_DATA, jsonParser.getJSONString());
-                    Toaster.showCustomToast(getActivity(), getString(R.string.login_successful_toast), null);
                     startActivity(intent);
                 }
 

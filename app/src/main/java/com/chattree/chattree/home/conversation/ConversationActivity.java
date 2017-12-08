@@ -36,8 +36,7 @@ import static com.chattree.chattree.home.ConversationsListFragment.EXTRA_CONVERS
 import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_CONV_ID;
 import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_ROOT_THREAD_ID;
 import static com.chattree.chattree.home.conversation.ThreadDetailFragment.BUNDLE_THREAD_ID;
-import static com.chattree.chattree.websocket.WebSocketService.EXTRA_MESSAGE_ID;
-import static com.chattree.chattree.websocket.WebSocketService.EXTRA_THREAD_ID;
+import static com.chattree.chattree.websocket.WebSocketService.*;
 
 public class ConversationActivity extends AppCompatActivity {
 
@@ -46,11 +45,11 @@ public class ConversationActivity extends AppCompatActivity {
     private int    rootThreadId;
     private String convTitle;
 
-    ThreadDetailFragment     rootThreadDetailFragment;
-    ConversationTreeFragment conversationTreeFragment;
+    private ThreadDetailFragment     rootThreadDetailFragment;
+    private ConversationTreeFragment conversationTreeFragment;
 
     private SyncReceiver      dataLoadedReceiver;
-    private WebSocketReceiver newMsgInRootThreadReceiver;
+    private WebSocketReceiver objectReceivedFromWSReceiver;
     private boolean           convIsReady;
     private boolean           rootThreadIsReady;
     private boolean           currentTabIsRootThread;
@@ -114,7 +113,7 @@ public class ConversationActivity extends AppCompatActivity {
                     Utils.hideKeyboard(thisActivity);
 
                     if (conversationTreeFragment != null)
-                        conversationTreeFragment.initConvTree(1);
+                        conversationTreeFragment.initConvTree();
                 }
 
                 currentTabIsRootThread = position == 0;
@@ -135,7 +134,8 @@ public class ConversationActivity extends AppCompatActivity {
         convTitleTextView.setText(convTitle);
         convId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0);
         rootThreadId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, 0);
-        if (rootThreadId == 0) throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
+        if (rootThreadId == 0)
+            throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
 
         /*
          * Register a broadcast receiver to listen when the data are ready to be read from the local DB
@@ -144,8 +144,12 @@ public class ConversationActivity extends AppCompatActivity {
         registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION));
         registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION));
 
-        newMsgInRootThreadReceiver = new WebSocketReceiver();
-        registerReceiver(newMsgInRootThreadReceiver, new IntentFilter(WebSocketService.WS_NEW_MESSAGE_ACTION));
+        /*
+         * Register a receiver to listen when new entities have been created (WS)
+         */
+        objectReceivedFromWSReceiver = new WebSocketReceiver();
+        registerReceiver(objectReceivedFromWSReceiver, new IntentFilter(WebSocketService.WS_NEW_MESSAGE_ACTION));
+        registerReceiver(objectReceivedFromWSReceiver, new IntentFilter(WebSocketService.WS_NEW_THREAD_ACTION));
 
         // WS Service binding
         Intent wsServiceIntent = new Intent(this, WebSocketService.class);
@@ -166,7 +170,7 @@ public class ConversationActivity extends AppCompatActivity {
                         wsService.connectToConvNsp(convId);
                         convIsReady = true;
                         // Load the conv tree in the corresponding fragment
-                        conversationTreeFragment.initConvTree(2);
+                        conversationTreeFragment.initConvTree();
                     }
                     break;
                 case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
@@ -185,9 +189,16 @@ public class ConversationActivity extends AppCompatActivity {
     public class WebSocketReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getIntExtra(EXTRA_THREAD_ID, 0) != rootThreadId) return; // Skip if we are not concerned
-
-            rootThreadDetailFragment.addMessageToView(intent.getIntExtra(EXTRA_MESSAGE_ID, 0));
+            switch (intent.getAction()) {
+                case WS_NEW_MESSAGE_ACTION:
+                    if (intent.getIntExtra(EXTRA_THREAD_ID, 0) != rootThreadId) return; // Skip if we are not concerned
+                    rootThreadDetailFragment.addMessageToView(intent.getIntExtra(EXTRA_MESSAGE_ID, 0));
+                    break;
+                case WS_NEW_THREAD_ACTION:
+                    if (intent.getIntExtra(EXTRA_CONV_ID, 0) != convId) return; // Skip if we are not concerned
+                    conversationTreeFragment.addThread(intent.getIntExtra(EXTRA_THREAD_ID, 0));
+                    break;
+            }
         }
     }
 
@@ -219,7 +230,7 @@ public class ConversationActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         unbindService(serviceConnection);
-        unregisterReceiver(newMsgInRootThreadReceiver);
+        unregisterReceiver(objectReceivedFromWSReceiver);
         unregisterReceiver(dataLoadedReceiver);
         super.onDestroy();
     }
@@ -236,12 +247,10 @@ public class ConversationActivity extends AppCompatActivity {
                 convIsReady = true;
                 // Load the conv tree in the corresponding fragment
                 if (conversationTreeFragment != null) {
-                    conversationTreeFragment.initConvTree(3);
+                    conversationTreeFragment.initConvTree();
                 }
             }
 
-            Log.d(TAG, "onServiceConnected: join room ? " + rootThreadId + ", " + rootThreadIsReady + ", " +
-                       currentTabIsRootThread + ", " + rootThreadDetailFragment);
             if (wsService.localThreadIsReady(rootThreadId) && !rootThreadIsReady && currentTabIsRootThread && rootThreadDetailFragment != null) {
                 // Join the root thread room
                 wsService.joinThreadRoom(rootThreadId);
@@ -343,5 +352,19 @@ public class ConversationActivity extends AppCompatActivity {
 
     public WebSocketService getWsService() {
         return wsService;
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Cancel the creation of a new thread
+        if (conversationTreeFragment.isOnThreadSelectedState()) {
+            conversationTreeFragment.clearThreadSelection(true);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    ConversationTreeFragment getConversationTreeFragment() {
+        return conversationTreeFragment;
     }
 }

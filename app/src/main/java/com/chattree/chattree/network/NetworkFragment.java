@@ -38,7 +38,7 @@ public class NetworkFragment extends Fragment {
     private static final String URL_KEY         = "UrlKey";
     private static final String HTTP_METHOD_KEY = "HttpMethodKey";
 
-    public static final String BASE_URL = "https://0e883776.ngrok.io/";
+    public static final String BASE_URL = "https://feb8d425.ngrok.io/";
 
     private NetConnectCallback<String> mCallback;
     private RequestTask                mRequestTask;
@@ -82,9 +82,6 @@ public class NetworkFragment extends Fragment {
                 break;
             case "signup":
                 caller = ((LoginActivity) context).getSignupFragment();
-                break;
-            case "api/get-conversations":
-                caller = context;
                 break;
         }
         //noinspection unchecked

@@ -190,6 +190,5 @@ public class ThreadDetailFragment extends Fragment implements View.OnClickListen
                 }
             }
         }.execute();
-
     }
 }

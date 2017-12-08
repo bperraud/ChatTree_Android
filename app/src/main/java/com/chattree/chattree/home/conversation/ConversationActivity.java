@@ -23,9 +23,12 @@ import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.Utils;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
+import com.chattree.chattree.websocket.WebSocketCaller;
 import com.chattree.chattree.websocket.WebSocketService;
 
+import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Queue;
 
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
@@ -35,12 +38,12 @@ import static com.chattree.chattree.home.conversation.ConversationTreeFragment.B
 import static com.chattree.chattree.home.conversation.ThreadDetailFragment.BUNDLE_THREAD_ID;
 import static com.chattree.chattree.websocket.WebSocketService.*;
 
-public class ConversationActivity extends AppCompatActivity {
+public class ConversationActivity extends AppCompatActivity implements WebSocketCaller {
 
-    private final String TAG = "CONVERSATION ACTIVITY";
-    private int    convId;
-    private int    rootThreadId;
-    private String convTitle;
+    private static final String TAG = "CONVERSATION ACTIVITY";
+
+    private int convId;
+    private int rootThreadId;
 
     private ThreadDetailFragment     rootThreadDetailFragment;
     private ConversationTreeFragment conversationTreeFragment;
@@ -48,12 +51,12 @@ public class ConversationActivity extends AppCompatActivity {
     private SyncReceiver      dataLoadedReceiver;
     private WebSocketReceiver objectReceivedFromWSReceiver;
     private boolean           convIsReady;
-    private boolean           rootThreadIsReady;
-    private boolean           currentTabIsRootThread;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
     private ViewPager             mViewPager;
+
+    private Queue<String> pendingNewMessages;
 
     private WebSocketService wsService;
 
@@ -66,8 +69,6 @@ public class ConversationActivity extends AppCompatActivity {
         final Activity thisActivity = this;
 
         convIsReady = false;
-        rootThreadIsReady = false;
-        currentTabIsRootThread = true;
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -102,8 +103,7 @@ public class ConversationActivity extends AppCompatActivity {
             public void onPageSelected(int position) {
                 // If we return to the main thread, we need to join the corresponding ws room
                 if (position == 0 && wsService != null) {
-                    wsService.joinThreadRoom(rootThreadId);
-                    rootThreadDetailFragment.initThread();
+//                    wsService.joinThreadRoom(rootThreadId);
                 }
                 // Load the conv tree in the corresponding fragment
                 else if (position == 1) {
@@ -113,7 +113,6 @@ public class ConversationActivity extends AppCompatActivity {
                         conversationTreeFragment.initConvTree();
                 }
 
-                currentTabIsRootThread = position == 0;
             }
 
             @Override
@@ -133,6 +132,8 @@ public class ConversationActivity extends AppCompatActivity {
         rootThreadId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, 0);
         if (rootThreadId == 0)
             throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);
+
+        pendingNewMessages = new LinkedList<>();
 
         /*
          * Register a broadcast receiver to listen when the data are ready to be read from the local DB
@@ -171,13 +172,7 @@ public class ConversationActivity extends AppCompatActivity {
                     }
                     break;
                 case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
-                    if (intent.getIntExtra(EXTRA_SYNC_THREAD_ID, 0) == rootThreadId) {
-                        rootThreadIsReady = true;
-                    }
-                    if (currentTabIsRootThread && rootThreadIsReady && wsService != null) {
-                        wsService.joinThreadRoom(rootThreadId);
-                        rootThreadDetailFragment.initThread();
-                    }
+                    rootThreadDetailFragment.refreshThread();
                     break;
             }
         }
@@ -201,25 +196,40 @@ public class ConversationActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        // Resync the conv
-        // Pass the settings flags by inserting them in a bundle
+        super.onResume();
+        // Sync the conv
         Bundle settingsBundle = new Bundle();
+//        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+//        settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+//        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, this.convId);
+//
+//        /*
+//         * Signal the framework to run your sync adapter. Assume that
+//         * app initialization has already created the account.
+//         */
+//        ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
+//
+//
+//        if (currentTabIsRootThread && rootThreadIsReady && wsService != null) {
+//            wsService.joinThreadRoom(rootThreadId);
+//            rootThreadDetailFragment.refreshThread();
+//        }
+
+        // Always try to join the thread room
+        attemptToJoinThreadRoom(rootThreadId);
+
+        // Sync the root thread
+        settingsBundle = new Bundle();
         settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
         settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, this.convId);
+        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, convId);
+        settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_THREAD_ID, rootThreadId);
 
         /*
          * Signal the framework to run your sync adapter. Assume that
          * app initialization has already created the account.
          */
         ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
-
-        // Always try to join the thread room
-        if (currentTabIsRootThread && rootThreadIsReady && wsService != null) {
-            wsService.joinThreadRoom(rootThreadId);
-            rootThreadDetailFragment.initThread();
-        }
-        super.onResume();
     }
 
     @Override
@@ -246,11 +256,12 @@ public class ConversationActivity extends AppCompatActivity {
                 }
             }
 
-            if (wsService.localThreadIsReady(rootThreadId) && !rootThreadIsReady && currentTabIsRootThread && rootThreadDetailFragment != null) {
-                // Join the root thread room
-                wsService.joinThreadRoom(rootThreadId);
-                rootThreadDetailFragment.initThread();
-                rootThreadIsReady = true;
+            // Join the root thread room
+            wsService.joinThreadRoom(rootThreadId);
+
+            String msgToSend;
+            while ((msgToSend = pendingNewMessages.peek()) != null) {
+                wsService.sendMessage(msgToSend);
             }
         }
 
@@ -259,13 +270,6 @@ public class ConversationActivity extends AppCompatActivity {
             wsService = null;
         }
     };
-
-    public void attemptJoinThreadRoom() {
-        if (wsService != null) {
-            wsService.joinThreadRoom(rootThreadId);
-            rootThreadIsReady = true;
-        }
-    }
 
     @Override
     public boolean onSupportNavigateUp() {
@@ -311,21 +315,20 @@ public class ConversationActivity extends AppCompatActivity {
 
         @Override
         public Fragment getItem(int position) {
+            Bundle args;
             switch (position) {
                 case 0:
                     rootThreadDetailFragment = new ThreadDetailFragment();
-                    Bundle args1 = new Bundle();
-                    args1.putInt(BUNDLE_THREAD_ID, rootThreadId);
-                    rootThreadDetailFragment.setArguments(args1);
+                    args = new Bundle();
+                    args.putInt(BUNDLE_THREAD_ID, rootThreadId);
+                    rootThreadDetailFragment.setArguments(args);
                     return rootThreadDetailFragment;
                 case 1:
                     conversationTreeFragment = new ConversationTreeFragment();
-                    Bundle args2 = new Bundle();
-                    args2.putInt(BUNDLE_CONV_ID, convId);
-                    args2.putInt(BUNDLE_ROOT_THREAD_ID, rootThreadId);
-                    // TODO: check the line below (useful ?)
-                    args2.putString("CONV_TITLE", convTitle);
-                    conversationTreeFragment.setArguments(args2);
+                    args = new Bundle();
+                    args.putInt(BUNDLE_CONV_ID, convId);
+                    args.putInt(BUNDLE_ROOT_THREAD_ID, rootThreadId);
+                    conversationTreeFragment.setArguments(args);
                     return conversationTreeFragment;
                 default:
                     return null;
@@ -345,10 +348,6 @@ public class ConversationActivity extends AppCompatActivity {
         }
     }
 
-    public WebSocketService getWsService() {
-        return wsService;
-    }
-
     @Override
     public void onBackPressed() {
         // Cancel the creation of a new thread
@@ -361,5 +360,25 @@ public class ConversationActivity extends AppCompatActivity {
 
     ConversationTreeFragment getConversationTreeFragment() {
         return conversationTreeFragment;
+    }
+
+    @Override
+    public WebSocketService getWebSocketService() {
+        return wsService;
+    }
+
+    @Override
+    public void attemptToSendMessage(String messageContent) {
+        if (wsService != null)
+            wsService.sendMessage(messageContent);
+        else
+            pendingNewMessages.add(messageContent);
+    }
+
+    @Override
+    public void attemptToJoinThreadRoom(int threadId) {
+        if (wsService != null) {
+            wsService.joinThreadRoom(threadId);
+        }
     }
 }

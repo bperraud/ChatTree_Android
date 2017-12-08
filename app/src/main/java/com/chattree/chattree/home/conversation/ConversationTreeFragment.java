@@ -247,7 +247,7 @@ public class ConversationTreeFragment extends Fragment {
         }
 
         // WebSocket call
-        wsService = ((ConversationActivity) getActivity()).getWsService();
+        wsService = ((ConversationActivity) getActivity()).getWebSocketService();
         assert wsService != null;
         wsService.createThread(rootThreadId, convId);
     }
@@ -408,7 +408,7 @@ public class ConversationTreeFragment extends Fragment {
                     throw new RuntimeException("Trying to create a thread from a non-root parent but onThreadSelectedState = false");
 
                 // WebSocket call
-                wsService = ((ConversationActivity) getActivity()).getWsService();
+                wsService = ((ConversationActivity) getActivity()).getWebSocketService();
                 assert wsService != null;
                 wsService.createThread(((ThreadTreeItem) lastSelectedNode.getValue()).thread.getId(), convId);
 

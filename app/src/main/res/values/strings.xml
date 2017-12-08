@@ -503,5 +503,6 @@
     <string name="rename_action">Renommer</string>
     <string name="new_thread_action">Nouveau thème</string>
     <string name="thread_title_hint">Titre</string>
+    <string name="thread_created">Un nouveau thème vient d\'être créé par $user !</string>
 
 </resources>

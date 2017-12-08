@@ -22,10 +22,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.chattree.chattree.R;
-import com.chattree.chattree.db.AppDatabase;
+import com.chattree.chattree.db.*;
 import com.chattree.chattree.db.Thread;
-import com.chattree.chattree.db.ThreadDao;
 import com.chattree.chattree.home.conversation.ThreadNodeViewHolder.ThreadTreeItem;
+import com.chattree.chattree.tools.Toaster;
+import com.chattree.chattree.tools.Utils;
 import com.chattree.chattree.websocket.WebSocketService;
 import com.unnamed.b.atv.model.TreeNode;
 import com.unnamed.b.atv.view.AndroidTreeView;
@@ -297,7 +298,7 @@ public class ConversationTreeFragment extends Fragment {
         }.execute();
     }
 
-    private void addThreadNode(Thread thread) {
+    private void addThreadNode(final Thread thread) {
         // Create the new node
         final TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));
         TreeNode       parentNode;
@@ -323,6 +324,23 @@ public class ConversationTreeFragment extends Fragment {
             treeView.expandNode(parentNode);
             ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) newNode.getViewHolder();
             viewHolder.enableTitleEdition(false);
+        }
+        // Notify with a toast the thread creation
+        else {
+            new AsyncTask<Void, Void, User>() {
+                @Override
+                protected User doInBackground(Void... voids) {
+                    UserDao userDao = AppDatabase.getInstance(getContext()).userDao();
+                    return userDao.findById(thread.getFk_author());
+                }
+
+                @Override
+                protected void onPostExecute(User user) {
+                    Toaster.showCustomToast(getActivity(), getString(R.string.thread_created).replace(
+                            "$user", Utils.getLabelFromUser(user)
+                    ), null);
+                }
+            }.execute();
         }
     }
 

@@ -1,6 +1,7 @@
 package com.chattree.chattree.home.conversation;
 
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -10,7 +11,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +30,7 @@ import com.chattree.chattree.tools.Toaster;
 import com.chattree.chattree.tools.Utils;
 import com.chattree.chattree.websocket.WebSocketService;
 import com.unnamed.b.atv.model.TreeNode;
+import com.unnamed.b.atv.model.TreeNode.TreeNodeLongClickListener;
 import com.unnamed.b.atv.view.AndroidTreeView;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
@@ -43,6 +45,11 @@ public class ConversationTreeFragment extends Fragment {
 
     static final String BUNDLE_CONV_ID        = "com.chattree.chattree.BUNDLE_CONV_ID";
     static final String BUNDLE_ROOT_THREAD_ID = "com.chattree.chattree.BUNDLE_ROOT_THREAD_ID";
+
+    static final int STATE_DEFAULT                 = 0;
+    static final int STATE_THREAD_SELECTED         = 1;
+    static final int STATE_THREAD_TITLE_ON_EDITION = 2;
+    private int currentState;
 
     private static final String TAG = "CONVERSATION TREE";
 
@@ -62,7 +69,6 @@ public class ConversationTreeFragment extends Fragment {
      * True if a sync process has finished and we need to refresh the view
      */
     private boolean pendingRefresh;
-    private boolean onThreadSelectedState;
 
     private TreeNode lastSelectedNode;
 
@@ -83,7 +89,7 @@ public class ConversationTreeFragment extends Fragment {
         isInit = false;
         pendingRefresh = false;
 
-        onThreadSelectedState = false;
+        currentState = STATE_DEFAULT;
         lastSelectedNode = null;
 
         // Retrieve the user id
@@ -108,11 +114,13 @@ public class ConversationTreeFragment extends Fragment {
                 intent.putExtra(EXTRA_THREAD_NAME, item.thread.getTitle());
                 intent.putExtra(EXTRA_CONV_ID, convId);
 
-                clearThreadSelection(onThreadSelectedState);
+                if (currentState == STATE_THREAD_SELECTED) {
+                    clearThreadSelection();
+                }
                 startActivity(intent);
             }
         });
-        treeView.setDefaultNodeLongClickListener(new TreeNode.TreeNodeLongClickListener() {
+        treeView.setDefaultNodeLongClickListener(new TreeNodeLongClickListener() {
             @Override
             public boolean onLongClick(final TreeNode node, Object threadTreeItem) {
                 node.setSelected(true);
@@ -127,8 +135,13 @@ public class ConversationTreeFragment extends Fragment {
                 ((ThreadNodeViewHolder) node.getViewHolder()).toggleItemSelectedBackground(true);
 
                 // If we are already on the selection state, return
-                if (onThreadSelectedState) return true;
-                onThreadSelectedState = true;
+                if (currentState == STATE_THREAD_SELECTED) return true;
+                currentState = STATE_THREAD_SELECTED;
+
+                // Change the FAB icon
+                createNewThreadFAB.setImageDrawable(
+                        getResources().getDrawable(R.drawable.ic_arrow_back_white_24dp, getContext().getTheme())
+                );
 
                 // Bottom panel slide up animation
                 Animation bottomUp = AnimationUtils.loadAnimation(getContext(), R.anim.bottom_up);
@@ -168,7 +181,17 @@ public class ConversationTreeFragment extends Fragment {
         createNewThreadFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createNewThreadToRoot();
+                switch (currentState) {
+                    case STATE_DEFAULT:
+                        createNewThreadToRoot();
+                        break;
+                    case STATE_THREAD_SELECTED:
+                        clearThreadSelection();
+                        break;
+                    case STATE_THREAD_TITLE_ON_EDITION:
+                        ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).validateTitleEdition();
+                        break;
+                }
             }
         });
 
@@ -279,32 +302,37 @@ public class ConversationTreeFragment extends Fragment {
     // ----------------------------------------------------------------------- //
 
     private void createNewThreadToRoot() {
-        // If we were editing a thread, cancel
-        if (onThreadSelectedState) {
-            ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).cancelTitleEdition();
-        }
-
         // WebSocket call
         wsService = ((ConversationActivity) getActivity()).getWebSocketService();
         assert wsService != null;
         wsService.createThread(rootThreadId, convId);
     }
 
-    boolean isOnThreadSelectedState() {
-        return onThreadSelectedState;
-    }
-
-    void clearThreadSelection(boolean animate) {
+    void clearThreadSelection() {
         if (lastSelectedNode != null) {
             lastSelectedNode.setSelected(false);
             ((ThreadNodeViewHolder) lastSelectedNode.getViewHolder()).toggleItemSelectedBackground(false);
         }
 
-        onThreadSelectedState = false;
+        createNewThreadFAB.setImageDrawable(
+                getResources().getDrawable(R.drawable.ic_chat_white_24dp, getContext().getTheme())
+        );
 
-        if (animate) {
-            slidePanelDown();
-        }
+        currentState = STATE_DEFAULT;
+        slidePanelDown();
+    }
+
+    void clearThreadTitleBeingEdited() {
+        createNewThreadFAB.setImageDrawable(
+                getResources().getDrawable(R.drawable.ic_chat_white_24dp, getContext().getTheme())
+        );
+
+        currentState = STATE_DEFAULT;
+    }
+
+    void cancelTitleEdition() {
+        ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) lastSelectedNode.getViewHolder();
+        viewHolder.cancelTitleEdition();
     }
 
     public void addThread(final int threadId) {
@@ -359,12 +387,16 @@ public class ConversationTreeFragment extends Fragment {
 
         // Go to title edition for the new thread if we just have created it
         if (thread.getFk_author() == userId) {
+
             lastSelectedNode = newNode;
-            newNode.setSelected(true);
-            onThreadSelectedState = true;
+            currentState = STATE_THREAD_TITLE_ON_EDITION;
+
             treeView.expandNode(parentNode);
             ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) newNode.getViewHolder();
             viewHolder.enableTitleEdition(false);
+            createNewThreadFAB.setImageDrawable(
+                    getResources().getDrawable(R.drawable.ic_check_white_24dp, getContext().getTheme())
+            );
         }
         // Notify with a toast the thread creation
         else if (notifyUser) {
@@ -432,11 +464,15 @@ public class ConversationTreeFragment extends Fragment {
         renameActionView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TreeNode             nodeSelected = lastSelectedNode;
-                ThreadNodeViewHolder viewHolder   = (ThreadNodeViewHolder) nodeSelected.getViewHolder();
-                viewHolder.enableTitleEdition(true);
+                clearThreadSelection();
 
-                slidePanelDown();
+                createNewThreadFAB.setImageDrawable(
+                        getResources().getDrawable(R.drawable.ic_check_white_24dp, getContext().getTheme())
+                );
+
+                ThreadNodeViewHolder viewHolder = (ThreadNodeViewHolder) lastSelectedNode.getViewHolder();
+                viewHolder.enableTitleEdition(true);
+                currentState = STATE_THREAD_TITLE_ON_EDITION;
             }
         });
 
@@ -447,11 +483,7 @@ public class ConversationTreeFragment extends Fragment {
         createThreadAction.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // If a thread was selected, cancel (should be true in theory)
-                if (onThreadSelectedState) {
-                    clearThreadSelection(true);
-                } else
-                    throw new RuntimeException("Trying to create a thread from a non-root parent but onThreadSelectedState = false");
+                clearThreadSelection();
 
                 // WebSocket call
                 wsService = ((ConversationActivity) getActivity()).getWebSocketService();
@@ -483,5 +515,9 @@ public class ConversationTreeFragment extends Fragment {
 
     public TreeNode getLastSelectedNode() {
         return lastSelectedNode;
+    }
+
+    int getCurrentState() {
+        return currentState;
     }
 }

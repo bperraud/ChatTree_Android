@@ -54,27 +54,14 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         titleTextView.setText(thread.getTitle() == null ? DEFAULT_THREAD_EMPTY_TITLE : thread.getTitle());
 
         editTitleView = view.findViewById(R.id.thread_title_edit);
+
+        // On title validation
         editTitleView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-
-                Log.d("TEST", "onEditorAction: " + textView);
-                Log.d("TEST", "onEditorAction: " + id);
-                Log.d("TEST", "onEditorAction: " + keyEvent);
-
                 if (id == R.id.thread_edit_validate || id == EditorInfo.IME_NULL || id == EditorInfo.IME_ACTION_DONE) {
                     Log.d("ViewHolder", "Title edited");
-                    // Close the keyboard
-                    InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(editTitleView.getWindowToken(), 0);
-
-                    // TODO: do an async task to send the title edition to server
-
-                    conversationActivity.getConversationTreeFragment().clearThreadSelection(true);
-
-                    titleTextView.setText(editTitleView.getText().toString().isEmpty() ? DEFAULT_THREAD_EMPTY_TITLE : editTitleView.getText());
-                    titleSwitcher.showNext();
-                    editTitleView.clearFocus();
+                    validateTitleEdition();
                     return true;
                 }
                 return false;
@@ -152,18 +139,36 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
 
     void enableTitleEdition(boolean retrieveLastTitle) {
         titleSwitcher.showNext();
-        editTitleView.setText(retrieveLastTitle ? titleTextView.getText() : "");
+        editTitleView.setText(
+                !retrieveLastTitle || titleTextView.getText().toString().equals(DEFAULT_THREAD_EMPTY_TITLE) ?
+                        "" :
+                        titleTextView.getText()
+        );
         editTitleView.requestFocus();
         InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.showSoftInput(editTitleView, InputMethodManager.SHOW_IMPLICIT);
     }
 
     void cancelTitleEdition() {
-        ConversationTreeFragment treeFragment = conversationActivity.getConversationTreeFragment();
-        treeFragment.clearThreadSelection(treeFragment.isOnThreadSelectedState());
         editTitleView.setText(titleTextView.getText());
         titleSwitcher.showNext();
         editTitleView.clearFocus();
+
+        conversationActivity.getConversationTreeFragment().clearThreadTitleBeingEdited();
+    }
+
+    void validateTitleEdition() {
+        // Close the keyboard
+        InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(editTitleView.getWindowToken(), 0);
+
+        // TODO: do an async task to send the title edition to server
+
+        titleTextView.setText(editTitleView.getText().toString().isEmpty() ? DEFAULT_THREAD_EMPTY_TITLE : editTitleView.getText());
+        titleSwitcher.showNext();
+        editTitleView.clearFocus();
+
+        conversationActivity.getConversationTreeFragment().clearThreadTitleBeingEdited();
     }
 
     public void displayArrow() {

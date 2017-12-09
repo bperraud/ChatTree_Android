@@ -33,7 +33,7 @@ public class NetworkFragment extends Fragment {
     private static final String URL_KEY         = "UrlKey";
     private static final String HTTP_METHOD_KEY = "HttpMethodKey";
 
-    public static final String BASE_URL = "https://feb8d425.ngrok.io/";
+    public static final String BASE_URL = "https://756bc7de.ngrok.io/";
 
     private NetConnectCallback<String> mCallback;
     private RequestTask                mRequestTask;

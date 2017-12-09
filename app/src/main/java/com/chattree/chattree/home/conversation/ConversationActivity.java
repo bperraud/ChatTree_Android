@@ -31,10 +31,8 @@ import java.util.Locale;
 import java.util.Queue;
 
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
-import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
 import static com.chattree.chattree.home.ConversationsListFragment.*;
-import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_CONV_ID;
-import static com.chattree.chattree.home.conversation.ConversationTreeFragment.BUNDLE_ROOT_THREAD_ID;
+import static com.chattree.chattree.home.conversation.ConversationTreeFragment.*;
 import static com.chattree.chattree.home.conversation.ThreadDetailFragment.BUNDLE_THREAD_ID;
 import static com.chattree.chattree.websocket.WebSocketService.*;
 
@@ -324,11 +322,17 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
 
     @Override
     public void onBackPressed() {
-        // Cancel the creation of a new thread
-        if (conversationTreeFragment.isOnThreadSelectedState()) {
-            conversationTreeFragment.clearThreadSelection(true);
-        } else {
-            super.onBackPressed();
+        int state = conversationTreeFragment.getCurrentState();
+        switch (state) {
+            case STATE_THREAD_SELECTED:
+                conversationTreeFragment.clearThreadSelection();
+                break;
+            case STATE_THREAD_TITLE_ON_EDITION:
+                conversationTreeFragment.cancelTitleEdition();
+                break;
+            default:
+                super.onBackPressed();
+                break;
         }
     }
 

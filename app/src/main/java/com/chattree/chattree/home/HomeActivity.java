@@ -1,8 +1,6 @@
 package com.chattree.chattree.home;
 
 import android.content.*;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -25,8 +23,6 @@ import com.chattree.chattree.db.AppDatabase;
 import com.chattree.chattree.db.Conversation;
 import com.chattree.chattree.db.ConversationDao;
 import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
-import com.chattree.chattree.network.NetConnectCallback;
-import com.chattree.chattree.network.NetworkFragment;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.Toaster;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
@@ -42,9 +38,8 @@ import java.util.Set;
 
 import static com.chattree.chattree.datasync.SyncAdapter.*;
 import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
-import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 
-public class HomeActivity extends AppCompatActivity implements NetConnectCallback {
+public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HOME ACTIVITY";
 
@@ -77,10 +72,6 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
             }
         });
 
-        // Create the headless fragment which encapsulates the AsyncTask for the login op
-        final NetworkFragment mNetworkFragment = NetworkFragment.getInstance(getSupportFragmentManager(), "api/get-conversations", HTTP_METHOD_GET);
-
-
         Toolbar toolbarBottom = findViewById(R.id.toolbar_bottom);
         toolbarBottom.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
@@ -88,7 +79,6 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
                 switch (item.getItemId()) {
                     case R.id.action_home:
                         Toast.makeText(getApplicationContext(), "GO HOME", Toast.LENGTH_SHORT).show();
-                        mNetworkFragment.startRequest(null);
                         return true;
                     case R.id.action_group_conversations:
                         Toast.makeText(getApplicationContext(), "GO TO GROUP CONVERSATIONS", Toast.LENGTH_SHORT).show();
@@ -275,28 +265,6 @@ public class HomeActivity extends AppCompatActivity implements NetConnectCallbac
                 return super.onOptionsItemSelected(item);
 
         }
-    }
-
-    @Override
-    public void updateFromRequest(Object result) {
-        Log.d(TAG, "updateFromRequest: " + result);
-    }
-
-    @Override
-    public NetworkInfo getActiveNetworkInfo() {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        return connectivityManager.getActiveNetworkInfo();
-    }
-
-    @Override
-    public void onProgressUpdate(int progressCode, int percentComplete) {
-
-    }
-
-    @Override
-    public void finishRequesting() {
-
     }
 
     class FixedTabsPagerAdapter extends FragmentPagerAdapter {

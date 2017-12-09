@@ -34,6 +34,7 @@ public class ConversationsListFragment extends Fragment {
     private ConversationListAdapter adapter;
 
     private ProgressBar mProgressBar;
+    private ListView    conversationsListView;
 
     public static final String EXTRA_CONVERSATION_TITLE          = "com.chattree.chattree.CONVERSATION_TITLE";
     public static final String EXTRA_CONVERSATION_ID             = "com.chattree.chattree.CONVERSATION_ID";
@@ -53,7 +54,7 @@ public class ConversationsListFragment extends Fragment {
         // List of conversations
         conversationsList = new ArrayList<>();
 
-        final ListView conversationsListView = rootView.findViewById(R.id.list_view);
+        conversationsListView = rootView.findViewById(R.id.list_view);
         adapter = new ConversationListAdapter(getContext(), R.layout.row_conversation, conversationsList);
         conversationsListView.setAdapter(adapter);
         conversationsListView.setEmptyView(rootView.findViewById(android.R.id.empty));
@@ -161,6 +162,16 @@ public class ConversationsListFragment extends Fragment {
 
         if (startConvActivityLastIntent != null &&
             startConvActivityLastIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0) == conversation.getId()) {
+
+            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+            mProgressBar.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mProgressBar.setVisibility(View.GONE);
+                }
+            });
+            conversationsListView.animate().setDuration(shortAnimTime).alpha(1f);
+
             startConvActivityLastIntent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, conversation.getFk_root_thread());
             startActivity(startConvActivityLastIntent);
             startConvActivityLastIntent = null;

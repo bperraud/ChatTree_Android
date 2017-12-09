@@ -6,6 +6,7 @@ import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.PrimaryKey;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Entity(tableName = "t_thread",
         foreignKeys = {
@@ -60,17 +61,18 @@ public class Thread implements Comparable<Thread> {
 
     @Override
     public boolean equals(Object obj) {
-        Thread  t   = (Thread) obj;
-        boolean ret = this.id == t.id && this.fk_author == t.fk_author && this.fk_conversation == t.fk_conversation && this.fk_thread_parent == t.fk_thread_parent && this.fk_message_parent == t.fk_message_parent;
-        if (creation_date == null)
-            ret = ret && t.creation_date == null;
-        else
-            ret = ret && this.creation_date.equals(t.creation_date);
-        if (title == null)
-            ret = ret && t.title == null;
-        else
-            ret = ret && this.title.equals(t.title);
-        return ret;
+        if (obj == null) return false;
+        else if (!(obj instanceof Thread)) return false;
+
+        Thread t = (Thread) obj;
+
+        return this.id == t.id &&
+               Objects.equals(this.fk_author, t.fk_author) &&
+               Objects.equals(this.fk_conversation, t.fk_conversation) &&
+               Objects.equals(this.fk_thread_parent, t.fk_thread_parent) &&
+               Objects.equals(this.fk_message_parent, t.fk_message_parent) &&
+               Objects.equals(this.creation_date, t.creation_date) &&
+               Objects.equals(this.title, t.title);
     }
 
     public int getId() {

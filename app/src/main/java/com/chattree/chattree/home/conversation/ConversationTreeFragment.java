@@ -1,7 +1,6 @@
 package com.chattree.chattree.home.conversation;
 
 import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -18,7 +17,6 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,8 +34,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static com.chattree.chattree.home.conversation.ThreadActivity.*;
 
@@ -278,9 +276,8 @@ public class ConversationTreeFragment extends Fragment {
         new AsyncTask<Void, Void, List<Thread>>() {
             @Override
             protected List<Thread> doInBackground(Void... params) {
-                int       maxThreadId = Collections.max(threadList).getId();
-                ThreadDao threadDao   = AppDatabase.getInstance(getContext()).threadDao();
-                return threadDao.findByConvIdAndOffset(convId, maxThreadId);
+                ThreadDao threadDao = AppDatabase.getInstance(getContext()).threadDao();
+                return threadDao.findByConvId(convId);
             }
 
             @Override
@@ -292,8 +289,28 @@ public class ConversationTreeFragment extends Fragment {
 
     private void refreshTreeNodes(List<Thread> threadList) {
         this.threadList.addAll(threadList);
-        for (Thread thread : threadList) {
-            addThreadNode(thread, false);
+        for (final Thread thread : threadList) {
+            Collection result = CollectionUtils.select(this.threadList, new Predicate() {
+                @Override
+                public boolean evaluate(Object object) {
+                    Thread t = (Thread) object;
+                    return thread.getId() == t.getId();
+                }
+            });
+            // Thread not found in list, we need to add it
+            if (result.size() == 0) {
+                addThreadNode(thread, false);
+            }
+            // Otherwise, if titles differ, we need to update the thread title in view
+            else {
+                Thread threadInList = (Thread) result.toArray()[0];
+                if (!Objects.equals((threadInList).getTitle(), thread.getTitle())) {
+                    threadInList.setTitle(thread.getTitle());
+                    TreeNode node = findTreeNodeByThreadId(root, threadInList.getId());
+                    assert node != null;
+                    ((ThreadNodeViewHolder) node.getViewHolder()).refreshTitle(thread.getTitle());
+                }
+            }
         }
     }
 

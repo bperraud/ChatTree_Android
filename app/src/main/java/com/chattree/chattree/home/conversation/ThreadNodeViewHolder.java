@@ -57,7 +57,12 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         editTitleView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.thread_edit_validate || id == EditorInfo.IME_NULL) {
+
+                Log.d("TEST", "onEditorAction: " + textView);
+                Log.d("TEST", "onEditorAction: " + id);
+                Log.d("TEST", "onEditorAction: " + keyEvent);
+
+                if (id == R.id.thread_edit_validate || id == EditorInfo.IME_NULL || id == EditorInfo.IME_ACTION_DONE) {
                     Log.d("ViewHolder", "Title edited");
                     // Close the keyboard
                     InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);

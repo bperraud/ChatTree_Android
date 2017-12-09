@@ -39,18 +39,16 @@ public class WebSocketService extends Service {
     @SuppressWarnings("FieldCanBeLocal")
     private static final String WS_EVENT_CREATE_MESSAGE   = "create-message";
     private static final String WS_EVENT_CREATE_THREAD    = "create-thread";
+    private static final String WS_EVENT_EDIT_THREAD      = "edit-thread";
     private static final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
 
-    public static final String WS_NEW_MESSAGE_ACTION = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
-    public static final String WS_NEW_THREAD_ACTION  = "com.chattree.chattree.WS_NEW_THREAD_ACTION";
+    public static final String WS_NEW_MESSAGE_ACTION   = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
+    public static final String WS_NEW_THREAD_ACTION    = "com.chattree.chattree.WS_NEW_THREAD_ACTION";
+    public static final String WS_THREAD_EDITED_ACTION = "com.chattree.chattree.WS_THREAD_EDITED_ACTION";
 
     public static final String EXTRA_CONV_ID    = "com.chattree.chattree.EXTRA_CONV_ID";
     public static final String EXTRA_THREAD_ID  = "com.chattree.chattree.EXTRA_THREAD_ID";
     public static final String EXTRA_MESSAGE_ID = "com.chattree.chattree.EXTRA_MESSAGE_ID";
-
-    private SyncReceiver dataLoadedReceiver;
-    private Set<Integer> localConvIdsLoaded;
-    private Set<Integer> localThreadIdsLoaded;
 
     private String token;
     private Socket mainSocket;
@@ -148,6 +146,109 @@ public class WebSocketService extends Service {
         }
     };
 
+    class onCreateMessageListener implements Listener {
+
+        @Override
+        public void call(final Object... args) {
+            JSONObject data = (JSONObject) args[0];
+            Message    newMessage;
+            try {
+                JSONObject message    = data.getJSONObject("message");
+                int        messageId  = message.getInt("id");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
+                newMessage = new Message(
+                        messageId,
+                        message.getInt("author"),
+                        dateFormat.parse(message.getString("date").replaceAll("Z$", "+0000")),
+                        message.getString("content"),
+                        message.getInt("thread")
+                );
+
+                // Update the database
+                MessageDao messageDao = AppDatabase.getInstance(getApplicationContext()).messageDao();
+                messageDao.insertAll(Collections.singletonList(newMessage));
+
+                // Send the event
+                Intent newMessageIntent = new Intent();
+                newMessageIntent.setAction(WS_NEW_MESSAGE_ACTION);
+                newMessageIntent.putExtra(EXTRA_THREAD_ID, message.getInt("thread"));
+                newMessageIntent.putExtra(EXTRA_MESSAGE_ID, messageId);
+                getApplicationContext().sendBroadcast(newMessageIntent);
+
+            } catch (JSONException | ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class onCreateThreadListener implements Listener {
+
+        @Override
+        public void call(Object... args) {
+            JSONObject data = (JSONObject) args[0];
+            Thread     newThread;
+
+            try {
+                JSONObject thread     = data.getJSONObject("thread");
+                int        threadId   = thread.getInt("id");
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
+                newThread = new Thread(
+                        threadId,
+                        dateFormat.parse(thread.getString("date").replaceAll("Z$", "+0000")),
+                        null,
+                        thread.getInt("author"),
+                        thread.getInt("conversation"),
+                        thread.getInt("thread_parent"),
+                        thread.isNull("message_parent") ? null : thread.getInt("message_parent")
+                );
+
+                // Update the database
+                ThreadDao threadDao = AppDatabase.getInstance(getApplicationContext()).threadDao();
+                threadDao.insertAll(Collections.singletonList(newThread));
+
+                // Send the event
+                Intent newThreadIntent = new Intent();
+                newThreadIntent.setAction(WS_NEW_THREAD_ACTION);
+                newThreadIntent.putExtra(EXTRA_CONV_ID, thread.getInt("conversation"));
+                newThreadIntent.putExtra(EXTRA_THREAD_ID, threadId);
+                getApplicationContext().sendBroadcast(newThreadIntent);
+
+            } catch (JSONException | ParseException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Only for thread title edition
+     */
+    class onEditThreadListener implements Listener {
+
+        @Override
+        public void call(Object... args) {
+            JSONObject data = (JSONObject) args[0];
+
+            try {
+                JSONObject thread   = data.getJSONObject("thread");
+                int        threadId = thread.getInt("id");
+                String     title    = thread.getString("title");
+
+                // Update the database
+                ThreadDao threadDao = AppDatabase.getInstance(getApplicationContext()).threadDao();
+                threadDao.updateTitleById(title, threadId);
+
+                // Send the event
+                Intent threadEditedIntent = new Intent();
+                threadEditedIntent.setAction(WS_THREAD_EDITED_ACTION);
+                threadEditedIntent.putExtra(EXTRA_CONV_ID, thread.getInt("conversation"));
+                threadEditedIntent.putExtra(EXTRA_THREAD_ID, threadId);
+                getApplicationContext().sendBroadcast(threadEditedIntent);
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     @Nullable
     @Override
@@ -164,23 +265,10 @@ public class WebSocketService extends Service {
         return true;
     }
 
-    public void setParams(double d) {
-//        arg0=d;
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "Service created");
-
-        /*
-         * Register a broadcast receiver to listen when the data are ready to be read from the local DB
-         */
-        localConvIdsLoaded = new HashSet<>();
-        localThreadIdsLoaded = new HashSet<>();
-        dataLoadedReceiver = new SyncReceiver();
-        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION));
-        registerReceiver(dataLoadedReceiver, new IntentFilter(SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION));
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         token = pref.getString("token", null);
@@ -235,88 +323,6 @@ public class WebSocketService extends Service {
         return START_NOT_STICKY;
     }
 
-    public boolean localConvIsReady(int convId) {
-        return localConvIdsLoaded.contains(convId);
-    }
-
-    public boolean localThreadIsReady(int threadId) {
-        return localThreadIdsLoaded.contains(threadId);
-    }
-
-    private Listener onCreateMessage = new Listener() {
-        @Override
-        public void call(final Object... args) {
-            JSONObject data = (JSONObject) args[0];
-            Message    newMessage;
-            try {
-                JSONObject message    = data.getJSONObject("message");
-                int        messageId  = message.getInt("id");
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
-                newMessage = new Message(
-                        messageId,
-                        message.getInt("author"),
-                        dateFormat.parse(message.getString("date").replaceAll("Z$", "+0000")),
-                        message.getString("content"),
-                        message.getInt("thread")
-                );
-
-                // Update the database
-                MessageDao messageDao = AppDatabase.getInstance(getApplicationContext()).messageDao();
-                messageDao.insertAll(Collections.singletonList(newMessage));
-
-                // Send the event
-                Intent newMessageIntent = new Intent();
-                newMessageIntent.setAction(WS_NEW_MESSAGE_ACTION);
-                newMessageIntent.putExtra(EXTRA_THREAD_ID, message.getInt("thread"));
-                newMessageIntent.putExtra(EXTRA_MESSAGE_ID, messageId);
-                getApplicationContext().sendBroadcast(newMessageIntent);
-
-            } catch (JSONException | ParseException e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
-    private Listener onCreateThread = new Listener() {
-        @Override
-        public void call(final Object... args) {
-            JSONObject data = (JSONObject) args[0];
-            Thread     newThread;
-
-            try {
-                JSONObject thread     = data.getJSONObject("thread");
-                int        threadId   = thread.getInt("id");
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.CANADA_FRENCH);
-                newThread = new Thread(
-                        threadId,
-                        dateFormat.parse(thread.getString("date").replaceAll("Z$", "+0000")),
-                        null,
-                        thread.getInt("author"),
-                        thread.getInt("conversation"),
-                        thread.getInt("thread_parent"),
-                        thread.isNull("message_parent") ? null : thread.getInt("message_parent")
-                );
-
-                // Update the database
-                ThreadDao threadDao = AppDatabase.getInstance(getApplicationContext()).threadDao();
-                threadDao.insertAll(Collections.singletonList(newThread));
-
-                // The Thread is ready to be read because it has just been created
-                localThreadIdsLoaded.add(threadId);
-
-                // Send the event
-                Intent newThreadIntent = new Intent();
-                newThreadIntent.setAction(WS_NEW_THREAD_ACTION);
-                newThreadIntent.putExtra(EXTRA_CONV_ID, thread.getInt("conversation"));
-                newThreadIntent.putExtra(EXTRA_THREAD_ID, threadId);
-                getApplicationContext().sendBroadcast(newThreadIntent);
-
-            } catch (JSONException | ParseException e) {
-                e.printStackTrace();
-            }
-        }
-    };
-
     public void connectToConvNsp(int convId) {
         try {
             IO.Options opts = new IO.Options();
@@ -327,8 +333,9 @@ public class WebSocketService extends Service {
             activeConvSocket.on(Socket.EVENT_CONNECT, onConnectionForConv);
             activeConvSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectErrorForConv);
             activeConvSocket.on(Socket.EVENT_ERROR, onErrorForConv);
-            activeConvSocket.on(WS_EVENT_CREATE_MESSAGE, onCreateMessage);
-            activeConvSocket.on(WS_EVENT_CREATE_THREAD, onCreateThread);
+            activeConvSocket.on(WS_EVENT_CREATE_MESSAGE, new onCreateMessageListener());
+            activeConvSocket.on(WS_EVENT_CREATE_THREAD, new onCreateThreadListener());
+            activeConvSocket.on(WS_EVENT_EDIT_THREAD, new onEditThreadListener());
 
             // Called upon transport creation.
             activeConvSocket.io().on(Manager.EVENT_TRANSPORT, new Listener() {
@@ -349,20 +356,6 @@ public class WebSocketService extends Service {
 
     public void joinThreadRoom(int threadId) {
         activeConvSocket.emit(WS_EVENT_JOIN_THREAD_ROOM, threadId);
-    }
-
-    public class SyncReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case SyncAdapter.SYNC_CALLBACK_CONV_LOADED_ACTION:
-                    localConvIdsLoaded.add(intent.getIntExtra(EXTRA_SYNC_CONV_ID, 0));
-                    break;
-                case SyncAdapter.SYNC_CALLBACK_THREAD_LOADED_ACTION:
-                    localThreadIdsLoaded.add(intent.getIntExtra(EXTRA_SYNC_THREAD_ID, 0));
-                    break;
-            }
-        }
     }
 
     // ------------------------------------------------------------ //
@@ -396,4 +389,18 @@ public class WebSocketService extends Service {
         }
     }
 
+    public void editThreadTitle(int threadId, int convId, String newTitle) {
+        JSONObject thread = new JSONObject();
+        try {
+            JSONObject threadData = new JSONObject();
+            threadData.put("id", threadId)
+                    .put("conversation", convId)
+                    .put("title", newTitle);
+
+            thread.put("thread", threadData);
+            activeConvSocket.emit(WS_EVENT_EDIT_THREAD, thread);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 }

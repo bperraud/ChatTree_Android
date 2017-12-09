@@ -10,6 +10,9 @@ public interface ThreadDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(List<Thread> threads);
 
+    @Query("UPDATE t_thread SET title = :title WHERE id = :threadId")
+    void updateTitleById(String title, int threadId);
+
     @Query("SELECT * FROM t_thread")
     List<Thread> findAll();
 

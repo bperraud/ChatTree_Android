@@ -162,13 +162,25 @@ public class ThreadNodeViewHolder extends TreeNode.BaseNodeViewHolder<ThreadNode
         InputMethodManager imm = (InputMethodManager) conversationActivity.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(editTitleView.getWindowToken(), 0);
 
-        // TODO: do an async task to send the title edition to server
+        CharSequence newTitle = editTitleView.getText();
+        CharSequence oldTitle = titleTextView.getText();
+        Thread       thread   = ((ThreadTreeItem) node.getValue()).thread;
 
-        titleTextView.setText(editTitleView.getText().toString().isEmpty() ? DEFAULT_THREAD_EMPTY_TITLE : editTitleView.getText());
+        // If title isn't empty and it is different from the old one
+        if (!newTitle.toString().isEmpty() && !newTitle.equals(oldTitle))
+            conversationActivity.getWebSocketService().editThreadTitle(
+                    thread.getId(), thread.getFk_conversation(), newTitle.toString()
+            );
+
+        titleTextView.setText(newTitle.toString().isEmpty() ? DEFAULT_THREAD_EMPTY_TITLE : newTitle);
         titleSwitcher.showNext();
         editTitleView.clearFocus();
 
         conversationActivity.getConversationTreeFragment().clearThreadTitleBeingEdited();
+    }
+
+    void refreshTitle(String newTitle) {
+        titleTextView.setText(newTitle);
     }
 
     public void displayArrow() {

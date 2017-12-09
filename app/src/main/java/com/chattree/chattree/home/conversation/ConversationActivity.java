@@ -136,6 +136,7 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
         objectReceivedFromWSReceiver = new WebSocketReceiver();
         registerReceiver(objectReceivedFromWSReceiver, new IntentFilter(WebSocketService.WS_NEW_MESSAGE_ACTION));
         registerReceiver(objectReceivedFromWSReceiver, new IntentFilter(WebSocketService.WS_NEW_THREAD_ACTION));
+        registerReceiver(objectReceivedFromWSReceiver, new IntentFilter(WebSocketService.WS_THREAD_EDITED_ACTION));
 
         // WS Service binding
         Intent wsServiceIntent = new Intent(this, WebSocketService.class);
@@ -174,6 +175,10 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
                 case WS_NEW_THREAD_ACTION:
                     if (intent.getIntExtra(EXTRA_CONV_ID, 0) != convId) return; // Skip if we are not concerned
                     conversationTreeFragment.addThread(intent.getIntExtra(EXTRA_THREAD_ID, 0));
+                    break;
+                case WS_THREAD_EDITED_ACTION:
+                    if (intent.getIntExtra(EXTRA_CONV_ID, 0) != convId) return; // Skip if we are not concerned
+                    conversationTreeFragment.renameThread(intent.getIntExtra(EXTRA_THREAD_ID, 0));
                     break;
             }
         }

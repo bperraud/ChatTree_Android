@@ -362,6 +362,36 @@ public class ConversationTreeFragment extends Fragment {
         }.execute();
     }
 
+    public void renameThread(final int threadId) {
+        new AsyncTask<Void, Void, Thread>() {
+            @Override
+            protected Thread doInBackground(Void... params) {
+                ThreadDao threadDao = AppDatabase.getInstance(getContext()).threadDao();
+                return threadDao.findById(threadId);
+            }
+
+            @Override
+            protected void onPostExecute(Thread thread) {
+
+                Collection result = CollectionUtils.select(threadList, new Predicate() {
+                    @Override
+                    public boolean evaluate(Object object) {
+                        Thread thread = (Thread) object;
+                        return thread.getId() == threadId;
+                    }
+                });
+
+                Thread threadInList = (Thread) result.toArray()[0];
+                threadInList.setTitle(thread.getTitle());
+                TreeNode node = findTreeNodeByThreadId(root, threadId);
+                // TODO: if a thread creation event would arrive after the title edition (weird)
+                // we should handle this
+                assert node != null;
+                ((ThreadNodeViewHolder) node.getViewHolder()).refreshTitle(thread.getTitle());
+            }
+        }.execute();
+    }
+
     private void addThreadNode(final Thread thread, boolean notifyUser) {
         // Create the new node
         final TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));

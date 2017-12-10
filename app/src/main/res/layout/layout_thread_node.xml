@@ -59,7 +59,8 @@
                 android:maxLines="1"
                 android:imeActionId="@+id/thread_edit_validate"
                 android:imeActionLabel="OK"
-                android:imeOptions="actionDone"/>
+                android:imeOptions="actionDone"
+                android:selectAllOnFocus="true"/>
     </ViewSwitcher>
 
     <LinearLayout

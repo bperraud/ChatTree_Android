@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,16 +17,16 @@ import com.chattree.chattree.tools.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContactListAdapterCheck extends ArrayAdapter<User> {
+public class ContactsListCheckAdapter extends ArrayAdapter<User> {
 
     private List<User> contactsList;
     ArrayList<Boolean> positionArray;
-    private Context ctx;
+    private ContactsListCheckActivity contactsListCheckActivity;
 
-    ContactListAdapterCheck(Context context, int resource, List<User> contacts) {
+    ContactsListCheckAdapter(Context context, int resource, List<User> contacts) {
         super(context, resource, contacts);
         contactsList = contacts;
-        ctx = context;
+        contactsListCheckActivity = (ContactsListCheckActivity) context;
 
         positionArray = new ArrayList<>(contacts.size());
         for (int i = 0; i < contacts.size(); i++) {
@@ -73,10 +74,12 @@ public class ContactListAdapterCheck extends ArrayAdapter<User> {
         holder.checkBox.setChecked(positionArray.get(position));
         holder.checkBox.setTag(contact);
         holder.checkBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 positionArray.set(position, isChecked);
+                ((ContactsListCheckFragment) contactsListCheckActivity.getSupportFragmentManager()
+                        .findFragmentById(R.id.checkbox_contact_fragment))
+                        .updateValidateContactsFAB();
             }
         });
 

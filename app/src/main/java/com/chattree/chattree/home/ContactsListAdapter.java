@@ -10,9 +10,9 @@ import com.chattree.chattree.R;
 
 import java.util.List;
 
-public class ContactListAdapter extends ArrayAdapter<String> {
+public class ContactsListAdapter extends ArrayAdapter<String> {
 
-    ContactListAdapter(Context context, int resource, List<String> conversations) {
+    ContactsListAdapter(Context context, int resource, List<String> conversations) {
         super(context, resource, conversations);
     }
 

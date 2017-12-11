@@ -59,7 +59,7 @@
                 android:windowSoftInputMode="adjustResize"/>
 
         <!-- CONTACT LIST CHECK ACTIVITY -->
-        <activity android:name=".home.ContactListCheckActivity"/>
+        <activity android:name=".home.ContactsListCheckActivity"/>
 
         <!-- THREAD ACTIVITY -->
         <activity

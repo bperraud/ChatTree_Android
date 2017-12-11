@@ -4,7 +4,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        tools:context="com.chattree.chattree.home.ContactCheckFragment">
+        tools:context="com.chattree.chattree.home.ContactsListCheckFragment">
 
     <ProgressBar
             android:id="@+id/list_contacts_progress"
@@ -18,12 +18,12 @@
               android:layout_height="match_parent"/>
 
     <android.support.design.widget.FloatingActionButton
-            android:id="@+id/new_contact_fab"
+            android:id="@+id/contacts_fab"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:layout_anchorGravity="bottom|right"
             app:layout_anchor="@id/list_view"
             android:layout_margin="20dp"
-            android:src="@drawable/ic_person_add_white_24dp"/>
+            android:src="@drawable/ic_arrow_back_white_24dp"/>
 
 </android.support.design.widget.CoordinatorLayout>

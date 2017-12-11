@@ -50,6 +50,7 @@ public class ThreadActivity extends AppCompatActivity implements WebSocketCaller
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_thread);
 
+        // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -57,6 +58,7 @@ public class ThreadActivity extends AppCompatActivity implements WebSocketCaller
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayShowTitleEnabled(false);
+        // ---------------------------------------------------------
 
         TextView profileTextView = findViewById(R.id.profileTextView);
         profileTextView.setOnClickListener(new View.OnClickListener() {

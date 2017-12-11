@@ -2,6 +2,7 @@ package com.chattree.chattree.home;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -32,12 +33,15 @@ import java.util.List;
 import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 
 
-public class ContactCheckFragment extends Fragment {
-    private static final String GET_USERS_URL_PATH = "api/get-users";
+public class ContactsListCheckFragment extends Fragment {
+    private static final String GET_USERS_URL_PATH      = "api/get-users";
+    static final         String EXTRA_CONTACTS_IDS_LIST = "com.chattree.chattree.EXTRA_CONTACTS_IDS_LIST";
 
-    private List<User>              contactsList;
-    private ContactListAdapterCheck adapter;
-    private ListView                contactsListView;
+    private FloatingActionButton validateContactsFAB;
+
+    private List<User>               contactsList;
+    private ContactsListCheckAdapter adapter;
+    private ListView                 contactsListView;
 
     private ProgressBar mProgressBar;
 
@@ -51,19 +55,24 @@ public class ContactCheckFragment extends Fragment {
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View view, int position, long id) {
-                TextView contactName = view.findViewById(R.id.contactPseudoTextView);
-                CheckBox checkBox    = view.findViewById(R.id.checkbox_contact_fragment);
-
+                CheckBox checkBox = view.findViewById(R.id.checkbox_contact_fragment);
                 checkBox.setChecked(!checkBox.isChecked());
+//                updateValidateContactsFAB();
             }
         });
 
-        FloatingActionButton newContactFAB = rootView.findViewById(R.id.new_contact_fab);
-        newContactFAB.setOnClickListener(new View.OnClickListener() {
+        validateContactsFAB = rootView.findViewById(R.id.contacts_fab);
+        validateContactsFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (adapter == null || adapter.positionArray.indexOf(true) == -1) {
+                    getActivity().setResult(Activity.RESULT_CANCELED, new Intent());
+                    getActivity().finish();
+                    return;
+                }
 
-                StringBuilder result = new StringBuilder("Check (user ids) : ");
+                ArrayList<Integer> contactsIds = new ArrayList<>();
+
                 for (int i = 0; i < adapter.positionArray.size(); i++) {
                     // Skip if user isn't checked
                     if (!adapter.positionArray.get(i)) continue;
@@ -71,17 +80,15 @@ public class ContactCheckFragment extends Fragment {
                     View     viewRow  = getViewByPosition(i, contactsListView);
                     CheckBox checkBox = viewRow.findViewById(R.id.checkbox_contact_fragment);
 
-
                     User user = (User) checkBox.getTag();
-                    result.append(user.getId()).append("|");
-
-
+                    contactsIds.add(user.getId());
                 }
-                Toast.makeText(getContext(), result.toString(), Toast.LENGTH_SHORT).show();
-                // On envoie la liste vers la home activity
-                Intent intent = new Intent(getActivity(), HomeActivity.class);
-                intent.putExtra("list", result.toString());
 
+                // Return the contacts ids list
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra(EXTRA_CONTACTS_IDS_LIST, contactsIds);
+                getActivity().setResult(Activity.RESULT_OK, returnIntent);
+                getActivity().finish();
             }
         });
 
@@ -91,6 +98,15 @@ public class ContactCheckFragment extends Fragment {
         return rootView;
     }
 
+    void updateValidateContactsFAB() {
+        validateContactsFAB.setImageDrawable(
+                getResources().getDrawable(
+                        (adapter.positionArray.indexOf(true) != -1 ?
+                                 R.drawable.ic_check_white_24dp :
+                                 R.drawable.ic_arrow_back_white_24dp),
+                        getContext().getTheme())
+        );
+    }
 
     private View getViewByPosition(int pos, ListView listView) {
         final int firstListItemPosition = listView.getFirstVisiblePosition();
@@ -180,7 +196,7 @@ public class ContactCheckFragment extends Fragment {
                         }
 
                         contactsListView = getView().findViewById(R.id.list_view);
-                        adapter = new ContactListAdapterCheck(getContext(), R.id.checkbox_contact_fragment, contactsList);
+                        adapter = new ContactsListCheckAdapter(getContext(), R.id.checkbox_contact_fragment, contactsList);
                         contactsListView.setAdapter(adapter);
                         contactsListView.setEmptyView(getView().findViewById(android.R.id.empty));
 

@@ -2,6 +2,7 @@ package com.chattree.chattree.home;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +34,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.chattree.chattree.home.ContactsListCheckFragment.EXTRA_CONTACTS_IDS_LIST;
+
 public class ConversationsListFragment extends Fragment {
+    public static final int REQUEST_CODE_CONTACTS_RETURNED = 1;
+
+    public static final String EXTRA_CONVERSATION_TITLE          = "com.chattree.chattree.CONVERSATION_TITLE";
+    public static final String EXTRA_CONVERSATION_ID             = "com.chattree.chattree.CONVERSATION_ID";
+    public static final String EXTRA_CONVERSATION_ROOT_THREAD_ID = "com.chattree.chattree.CONVERSATION_ROOT_THREAD_ID";
 
     private List<ConversationItem>  conversationsList;
     private ConversationListAdapter conversationListAdapter;
@@ -41,9 +50,6 @@ public class ConversationsListFragment extends Fragment {
     private View        emptyConversations;
     private ListView    conversationsListView;
 
-    public static final String EXTRA_CONVERSATION_TITLE          = "com.chattree.chattree.CONVERSATION_TITLE";
-    public static final String EXTRA_CONVERSATION_ID             = "com.chattree.chattree.CONVERSATION_ID";
-    public static final String EXTRA_CONVERSATION_ROOT_THREAD_ID = "com.chattree.chattree.CONVERSATION_ROOT_THREAD_ID";
 
     private Intent startConvActivityLastIntent;
 
@@ -107,8 +113,8 @@ public class ConversationsListFragment extends Fragment {
         newConvFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getContext(), ContactListCheckActivity.class);
-                startActivity(intent);
+                Intent intent = new Intent(getContext(), ContactsListCheckActivity.class);
+                startActivityForResult(intent, REQUEST_CODE_CONTACTS_RETURNED);
             }
         });
 
@@ -248,6 +254,24 @@ public class ConversationsListFragment extends Fragment {
             startConvActivityLastIntent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, conversation.getFk_root_thread());
             startActivity(startConvActivityLastIntent);
             startConvActivityLastIntent = null;
+        }
+    }
+
+    // ------------------------------------------------------------------- //
+    // ----------------------- CREATE CONVERSATION ----------------------- //
+    // ------------------------------------------------------------------- //
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_CONTACTS_RETURNED) {
+            if (resultCode == Activity.RESULT_OK) {
+                ArrayList<Integer> contactIds = data.getIntegerArrayListExtra(EXTRA_CONTACTS_IDS_LIST);
+                Log.d("CONV LIST FRAG", "onActivityResult: ok, " + contactIds);
+
+                
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                Log.d("CONV LIST FRAG", "onActivityResult: canceled");
+            }
         }
     }
 }

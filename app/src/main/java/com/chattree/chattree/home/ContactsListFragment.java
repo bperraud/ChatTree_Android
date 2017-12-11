@@ -18,8 +18,8 @@ import java.util.List;
 
 public class ContactsListFragment extends Fragment {
 
-    private List<String>       contactsList;
-    private ContactListAdapter adapter;
+    private List<String>        contactsList;
+    private ContactsListAdapter adapter;
 
 
     @Override
@@ -40,7 +40,7 @@ public class ContactsListFragment extends Fragment {
         contactsList.add("CONTACT 9");
 
         ListView conversationsListView = rootView.findViewById(R.id.list_view);
-        adapter = new ContactListAdapter(getContext(), R.layout.row_contact, contactsList);
+        adapter = new ContactsListAdapter(getContext(), R.layout.row_contact, contactsList);
         conversationsListView.setAdapter(adapter);
         conversationsListView.setEmptyView(rootView.findViewById(android.R.id.empty));
 

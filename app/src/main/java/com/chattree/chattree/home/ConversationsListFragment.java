@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
@@ -15,8 +16,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import com.chattree.chattree.R;
+import com.chattree.chattree.db.AppDatabase;
 import com.chattree.chattree.db.Conversation;
 import com.chattree.chattree.db.ConversationDao;
+import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.db.User;
 import com.chattree.chattree.home.conversation.ConversationActivity;
 import com.chattree.chattree.home.conversation.ConversationItem;
@@ -26,14 +29,16 @@ import org.apache.commons.collections4.Predicate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ConversationsListFragment extends Fragment {
 
     private List<ConversationItem>  conversationsList;
-    private ConversationListAdapter adapter;
+    private ConversationListAdapter conversationListAdapter;
 
     private ProgressBar mProgressBar;
+    private View        emptyConversations;
     private ListView    conversationsListView;
 
     public static final String EXTRA_CONVERSATION_TITLE          = "com.chattree.chattree.CONVERSATION_TITLE";
@@ -42,21 +47,36 @@ public class ConversationsListFragment extends Fragment {
 
     private Intent startConvActivityLastIntent;
 
+    private int userId;
+
+    private boolean isInit;
+    /**
+     * True if a sync process has finished and we need to refresh the view
+     */
+    private boolean pendingRefresh;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout resource that'll be returned
         View rootView = inflater.inflate(R.layout.fragment_conversations_list, container, false);
 
         mProgressBar = rootView.findViewById(R.id.list_convs_progress);
+        emptyConversations = rootView.findViewById(R.id.emptyConversations);
 
         startConvActivityLastIntent = null;
+
+        isInit = false;
+        pendingRefresh = false;
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        userId = pref.getInt("user_id", 0);
 
         // List of conversations
         conversationsList = new ArrayList<>();
 
         conversationsListView = rootView.findViewById(R.id.list_view);
-        adapter = new ConversationListAdapter(getContext(), R.layout.row_conversation, conversationsList);
-        conversationsListView.setAdapter(adapter);
+        conversationListAdapter = new ConversationListAdapter(getContext(), R.layout.row_conversation, conversationsList);
+        conversationsListView.setAdapter(conversationListAdapter);
         conversationsListView.setEmptyView(rootView.findViewById(android.R.id.empty));
 
         conversationsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -92,18 +112,80 @@ public class ConversationsListFragment extends Fragment {
             }
         });
 
+        initConvs();
+
         return rootView;
     }
 
-    void initConvsList(List<ConversationDao.CustomConversationUser> customConversationUsers) {
+    private void initConvs() {
+        new AsyncTask<Void, Void, List<CustomConversationUser>>() {
+            @Override
+            protected List<CustomConversationUser> doInBackground(Void... params) {
+                ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
+                return conversationDao.getCustomConversationUsers();
+            }
+
+            @Override
+            protected void onPostExecute(List<CustomConversationUser> messages) {
+                initConvsList(messages);
+            }
+        }.execute();
+    }
+
+    private void initConvsList(List<CustomConversationUser> customConversationUsers) {
+        parseCustomConversationUserAndAddToConvList(customConversationUsers);
+
+        conversationListAdapter.notifyDataSetChanged();
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        mProgressBar.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mProgressBar.setVisibility(View.GONE);
+            }
+        });
+
+        conversationsListView.setEmptyView(emptyConversations);
+
+        isInit = true;
+        if (pendingRefresh) {
+            refreshConvs();
+        }
+    }
+
+    public void refreshConvs() {
+        if (!isInit) {
+            pendingRefresh = true;
+            return;
+        }
+
+        new AsyncTask<Void, Void, List<CustomConversationUser>>() {
+            @Override
+            protected List<CustomConversationUser> doInBackground(Void... params) {
+                int maxConvId = conversationListAdapter.conversationsIds.size() > 0 ?
+                        Collections.max(conversationListAdapter.conversationsIds) : -1;
+                ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
+                return conversationDao.getCustomConversationUsersByOffset(maxConvId);
+            }
+
+            @Override
+            protected void onPostExecute(List<CustomConversationUser> conversations) {
+                refreshConvsList(conversations);
+            }
+        }.execute();
+    }
+
+    private void refreshConvsList(List<CustomConversationUser> conversations) {
+        parseCustomConversationUserAndAddToConvList(conversations);
+        conversationListAdapter.notifyDataSetChanged();
+        pendingRefresh = false;
+    }
+
+    private void parseCustomConversationUserAndAddToConvList(List<CustomConversationUser> conversations) {
         int              lastConvId = 0;
         ConversationItem convItem   = null;
         User             member;
 
-        SharedPreferences pref   = PreferenceManager.getDefaultSharedPreferences(getContext());
-        int               userId = pref.getInt("user_id", 0);
-
-        for (ConversationDao.CustomConversationUser convData : customConversationUsers) {
+        for (CustomConversationUser convData : conversations) {
             // New conversation found
             if (convData.c_id != lastConvId) {
 
@@ -138,15 +220,6 @@ public class ConversationsListFragment extends Fragment {
                 convItem.addMemberLabel(Utils.getLabelFromUser(member));
             }
         }
-
-        adapter.notifyDataSetChanged();
-        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
-        mProgressBar.animate().setDuration(shortAnimTime).alpha(0).setListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                mProgressBar.setVisibility(View.GONE);
-            }
-        });
     }
 
     void updateRootThreadOfConv(final Conversation conversation) {

@@ -177,18 +177,7 @@ public class HomeActivity extends AppCompatActivity {
         public void onReceive(Context context, final Intent intent) {
             switch (intent.getAction()) {
                 case SYNC_CALLBACK_ALL_CONV_LOADED_ACTION:
-                    new AsyncTask<Void, Void, List<CustomConversationUser>>() {
-                        @Override
-                        protected List<CustomConversationUser> doInBackground(Void... params) {
-                            ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
-                            return conversationDao.getCustomConversationUsers();
-                        }
-
-                        @Override
-                        protected void onPostExecute(List<CustomConversationUser> customConversationUsers) {
-                            conversationsListFragment.initConvsList(customConversationUsers);
-                        }
-                    }.execute();
+                    conversationsListFragment.refreshConvs();
                     break;
                 case SYNC_CALLBACK_CONV_LOADED_ACTION:
                     new AsyncTask<Void, Void, Conversation>() {

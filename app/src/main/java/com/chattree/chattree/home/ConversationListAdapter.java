@@ -10,12 +10,17 @@ import android.widget.TextView;
 import com.chattree.chattree.R;
 import com.chattree.chattree.home.conversation.ConversationItem;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ConversationListAdapter extends ArrayAdapter<ConversationItem> {
 
+    Set<Integer> conversationsIds;
+
     ConversationListAdapter(Context context, int resource, List<ConversationItem> conversations) {
         super(context, resource, conversations);
+        conversationsIds = new HashSet<>();
     }
 
     @Override
@@ -29,22 +34,25 @@ public class ConversationListAdapter extends ArrayAdapter<ConversationItem> {
             v = vi.inflate(R.layout.row_conversation, parent, false);
         }
 
-        ConversationItem conv             = getItem(position);
+        ConversationItem convItem         = getItem(position);
         TextView         convName         = v.findViewById(R.id.contactPseudoTextView);
         TextView         convMembersLabel = v.findViewById(R.id.overviewTextView);
         ImageView        convPicture      = v.findViewById(R.id.picture);
-        if (conv.getTitle() != null) {
-            convName.setText(conv.getTitle());
-            convMembersLabel.setText(conv.getMemberLabelsFormated());
+        if (convItem.getTitle() != null) {
+            convName.setText(convItem.getTitle());
+            convMembersLabel.setText(convItem.getMemberLabelsFormated());
         } else {
-            convName.setText("Conversation avec " + conv.getMemberLabelsFormated());
+            convName.setText("Conversation avec " + convItem.getMemberLabelsFormated());
             convMembersLabel.setText("");
         }
 
         // Set default picture
-        if (conv.getPicture() == null) {
+        if (convItem.getPicture() == null) {
             convPicture.setImageResource(R.drawable.cat_avatar);
         }
+
+        // Add the msg id to the set
+        conversationsIds.add(convItem.getId());
 
         return v;
     }

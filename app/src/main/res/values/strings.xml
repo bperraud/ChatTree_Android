@@ -504,5 +504,6 @@
     <string name="new_thread_action">Nouveau thème</string>
     <string name="thread_title_hint">Titre</string>
     <string name="thread_created">Un nouveau thème vient d\'être créé par $user !</string>
+    <string name="empty_conversations">Aucune conversation pour le moment !</string>
 
 </resources>

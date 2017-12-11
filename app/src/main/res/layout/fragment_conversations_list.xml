@@ -14,12 +14,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="visible" android:layout_gravity="center"/>
+
     <ListView xmlns:android="http://schemas.android.com/apk/res/android"
               android:id="@+id/list_view"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
-
     </ListView>
+
+    <TextView
+            android:id="@+id/emptyConversations"
+            android:text="@string/empty_conversations"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:visibility="gone"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textAppearance="@android:style/TextAppearance.Material.Large"
+            android:textColor="@color/extremeLightGrey"/>
+
     <android.support.design.widget.FloatingActionButton
             android:id="@+id/new_conv_fab"
             android:layout_width="wrap_content"

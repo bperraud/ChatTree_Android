@@ -12,10 +12,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="visible" android:layout_gravity="center"/>
-    <ListView xmlns:android="http://schemas.android.com/apk/res/android"
-              android:id="@+id/list_view"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="8dp">
+        <EditText
+                android:id="@+id/new_conv_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textShortMessage"
+                android:maxLines="1"
+                android:hint="@string/conversation_title"
+                android:layout_marginBottom="12dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"/>
+
+        <ListView xmlns:android="http://schemas.android.com/apk/res/android"
+                  android:id="@+id/list_view"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"/>
+    </LinearLayout>
+
 
     <android.support.design.widget.FloatingActionButton
             android:id="@+id/contacts_fab"

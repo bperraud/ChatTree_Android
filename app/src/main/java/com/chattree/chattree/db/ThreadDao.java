@@ -8,6 +8,9 @@ import java.util.List;
 public interface ThreadDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAll(Thread... threads);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(List<Thread> threads);
 
     @Query("UPDATE t_thread SET title = :title WHERE id = :threadId")

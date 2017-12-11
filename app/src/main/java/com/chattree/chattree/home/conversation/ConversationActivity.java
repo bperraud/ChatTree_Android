@@ -38,7 +38,8 @@ import static com.chattree.chattree.websocket.WebSocketService.*;
 
 public class ConversationActivity extends AppCompatActivity implements WebSocketCaller {
 
-    private static final String TAG = "CONVERSATION ACTIVITY";
+    private static final String TAG                           = "CONVERSATION ACTIVITY";
+    private static final String CONVERSATION_UNTITLED_DEFAULT = "Conversation sans titre";
 
     private int convId;
     private int rootThreadId;
@@ -115,8 +116,10 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
         Intent   activityIntent    = getIntent();
         String   convTitle         = activityIntent.getStringExtra(EXTRA_CONVERSATION_TITLE);
         TextView convTitleTextView = findViewById(R.id.conversationTitleTextView);
-        convTitleTextView.setText(convTitle);
+        convTitleTextView.setText(convTitle == null ? CONVERSATION_UNTITLED_DEFAULT : convTitle);
         convId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ID, 0);
+        if (convId == 0)
+            throw new RuntimeException("convId not found, 0 given as default");
         rootThreadId = activityIntent.getIntExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, 0);
         if (rootThreadId == 0)
             throw new RuntimeException("rootThreadId not found, 0 given as default, convId: " + convId);

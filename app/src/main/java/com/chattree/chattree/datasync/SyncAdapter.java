@@ -19,6 +19,7 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -88,7 +89,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
         } else {
             if (convId != -1) {
                 Log.i("SyncAdapter", "SYNCING A CONV.");
-                syncConvWithLocalDB(convId);
+                if (extras.getInt("IGNORE_RESULT", -1) != -1) {
+                    Log.i("SyncAdapter", "IGNORE THE RESULT.");
+                    try {
+                        URL url = new URL(NetworkFragment.BASE_URL + "api/get-conv/" + convId);
+                        requestUrl(url, NetworkFragment.HTTP_METHOD_GET, null);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else
+                    syncConvWithLocalDB(convId);
             } else {
                 Log.i("SyncAdapter", "FULL SYNC.");
                 fullSync();

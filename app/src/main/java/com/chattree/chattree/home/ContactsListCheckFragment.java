@@ -35,9 +35,11 @@ import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 
 public class ContactsListCheckFragment extends Fragment {
     private static final String GET_USERS_URL_PATH      = "api/get-users";
+    static final         String EXTRA_CONV_TITLE        = "com.chattree.chattree.EXTRA_CONV_TITLE";
     static final         String EXTRA_CONTACTS_IDS_LIST = "com.chattree.chattree.EXTRA_CONTACTS_IDS_LIST";
 
     private FloatingActionButton validateContactsFAB;
+    private EditText             titleEditText;
 
     private List<User>               contactsList;
     private ContactsListCheckAdapter adapter;
@@ -52,12 +54,12 @@ public class ContactsListCheckFragment extends Fragment {
         mProgressBar = rootView.findViewById(R.id.list_contacts_progress);
 
         contactsListView = rootView.findViewById(R.id.list_view);
+        titleEditText = rootView.findViewById(R.id.new_conv_title);
 
         contactsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView parent, View view, int position, long id) {
                 CheckBox checkBox = view.findViewById(R.id.checkbox_contact_fragment);
                 checkBox.setChecked(!checkBox.isChecked());
-//                updateValidateContactsFAB();
             }
         });
 
@@ -65,6 +67,7 @@ public class ContactsListCheckFragment extends Fragment {
         validateContactsFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // If no contact is selected, cancel the conversation creation
                 if (adapter == null || adapter.positionArray.indexOf(true) == -1) {
                     getActivity().setResult(Activity.RESULT_CANCELED, new Intent());
                     getActivity().finish();
@@ -84,8 +87,9 @@ public class ContactsListCheckFragment extends Fragment {
                     contactsIds.add(user.getId());
                 }
 
-                // Return the contacts ids list
+                // Return the contacts ids list and the title
                 Intent returnIntent = new Intent();
+                returnIntent.putExtra(EXTRA_CONV_TITLE, titleEditText.getText());
                 returnIntent.putExtra(EXTRA_CONTACTS_IDS_LIST, contactsIds);
                 getActivity().setResult(Activity.RESULT_OK, returnIntent);
                 getActivity().finish();

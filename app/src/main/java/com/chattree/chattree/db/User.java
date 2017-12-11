@@ -5,6 +5,8 @@ import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 
+import java.util.Objects;
+
 @Entity(tableName = "t_user")
 public class User {
     @PrimaryKey
@@ -36,30 +38,17 @@ public class User {
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == null) return false;
+        else if (!(obj instanceof User)) return false;
+
         User u = (User) obj;
-        boolean ret = true;
-        ret = ret && this.id==u.id;
-        if(this.login==null)
-            ret = ret && u.login==null;
-        else
-            ret = ret && this.login.equals(u.login);
-        if(this.email==null)
-            ret = ret && u.email==null;
-        else
-            ret = ret && this.email.equals(u.email);
-        if(this.firstname==null)
-            ret = ret && u.firstname==null;
-        else
-            ret = ret && this.firstname.equals(u.firstname);
-        if(this.lastname==null)
-            ret = ret && u.lastname==null;
-        else
-            ret = ret && this.lastname.equals(u.lastname);
-        if(this.profile_picture==null)
-            ret = ret && u.profile_picture==null;
-        else
-            ret = ret && this.profile_picture.equals(u.profile_picture);
-        return ret;
+
+        return this.id == u.id &&
+               Objects.equals(this.login, u.login) &&
+               this.email.equals(u.email) &&
+               Objects.equals(this.firstname, u.firstname) &&
+               Objects.equals(this.lastname, u.lastname) &&
+               Objects.equals(this.profile_picture, u.profile_picture);
     }
 
     public int getId() {

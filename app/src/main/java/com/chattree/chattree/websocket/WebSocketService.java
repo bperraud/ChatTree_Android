@@ -3,6 +3,7 @@ package com.chattree.chattree.websocket;
 import android.app.Service;
 import android.content.*;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -37,19 +38,24 @@ public class WebSocketService extends Service {
     private final String TAG = "WEBSOCKET SERVICE";
 
     @SuppressWarnings("FieldCanBeLocal")
-    private static final String WS_EVENT_CREATE_MESSAGE   = "create-message";
-    private static final String WS_EVENT_CREATE_THREAD    = "create-thread";
-    private static final String WS_EVENT_EDIT_THREAD      = "edit-thread";
-    private static final String WS_EVENT_JOIN_THREAD_ROOM = "join-thread-room";
+    private static final String WS_EVENT_CREATE_MESSAGE      = "create-message";
+    private static final String WS_EVENT_CREATE_THREAD       = "create-thread";
+    private static final String WS_EVENT_CREATE_CONVERSATION = "create-conversation";
+    private static final String WS_EVENT_NEW_CONVERSATION    = "new-conversation";
+    private static final String WS_EVENT_EDIT_THREAD         = "edit-thread";
+    private static final String WS_EVENT_JOIN_THREAD_ROOM    = "join-thread-room";
 
-    public static final String WS_NEW_MESSAGE_ACTION   = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
-    public static final String WS_NEW_THREAD_ACTION    = "com.chattree.chattree.WS_NEW_THREAD_ACTION";
-    public static final String WS_THREAD_EDITED_ACTION = "com.chattree.chattree.WS_THREAD_EDITED_ACTION";
+    public static final String WS_NEW_MESSAGE_ACTION      = "com.chattree.chattree.WS_NEW_MESSAGE_ACTION";
+    public static final String WS_NEW_THREAD_ACTION       = "com.chattree.chattree.WS_NEW_THREAD_ACTION";
+    public static final String WS_NEW_CONVERSATION_ACTION = "com.chattree.chattree.WS_NEW_CONVERSATION_ACTION";
+    public static final String WS_THREAD_EDITED_ACTION    = "com.chattree.chattree.WS_THREAD_EDITED_ACTION";
 
     public static final String EXTRA_CONV_ID    = "com.chattree.chattree.EXTRA_CONV_ID";
     public static final String EXTRA_THREAD_ID  = "com.chattree.chattree.EXTRA_THREAD_ID";
     public static final String EXTRA_MESSAGE_ID = "com.chattree.chattree.EXTRA_MESSAGE_ID";
+    public static final String EXTRA_FROM_SELF  = "com.chattree.chattree.EXTRA_FROM_SELF";
 
+    private int    userId;
     private String token;
     private Socket mainSocket;
     private Socket activeConvSocket;
@@ -204,7 +210,7 @@ public class WebSocketService extends Service {
 
                 // Update the database
                 ThreadDao threadDao = AppDatabase.getInstance(getApplicationContext()).threadDao();
-                threadDao.insertAll(Collections.singletonList(newThread));
+                threadDao.insertAll(newThread);
 
                 // Send the event
                 Intent newThreadIntent = new Intent();
@@ -250,6 +256,111 @@ public class WebSocketService extends Service {
         }
     }
 
+    class onCreateConversationListener implements Listener {
+
+        boolean fromSelf;
+
+        onCreateConversationListener(boolean fromSelf) {
+            this.fromSelf = fromSelf;
+        }
+
+        @Override
+        public void call(final Object... args) {
+            JSONObject   data = (JSONObject) args[0];
+            Conversation newConversation;
+            try {
+                JSONObject conversation = data.getJSONObject("conversation");
+                int        convId       = conversation.getInt("id");
+                int        rootThreadId = conversation.getInt("root");
+
+                // TODO: fix the server (it should auto. create the conv nsp without a get request from the client,
+                // for now, it can't because of a circularly dependency between io-server and conversation.io)
+                // Sync the conversation
+                Bundle settingsBundle = new Bundle();
+                settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+                settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+                settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, convId);
+                settingsBundle.putInt("IGNORE_RESULT", 1);
+                ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(getApplicationContext()), ChatTreeApplication.AUTHORITY, settingsBundle);
+
+                // Save the new conv id in SharedPreferences
+                SharedPreferences        pref    = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                SharedPreferences.Editor edit    = pref.edit();
+                Set<String>              convIds = pref.getStringSet("conversations_ids", new HashSet<String>());
+                convIds.add(String.valueOf(convId));
+                edit.putStringSet("conversations_ids", convIds);
+                edit.apply();
+
+                newConversation = new Conversation(
+                        convId,
+                        null,
+                        conversation.isNull("title") ? null : conversation.getString("title"),
+                        null
+                );
+                JSONArray members = conversation.getJSONArray("members");
+
+                // Update the database
+                ConversationDao conversationDao = AppDatabase.getInstance(getApplicationContext()).conversationDao();
+                ThreadDao       threadDao       = AppDatabase.getInstance(getApplicationContext()).threadDao();
+                UserDao         userDao         = AppDatabase.getInstance(getApplicationContext()).userDao();
+
+                // Insert the conversation
+                conversationDao.insertAll(newConversation);
+
+                // Insert the root thread
+                Thread rootThread = new Thread(
+                        rootThreadId,
+                        null,
+                        null,
+                        null,
+                        convId,
+                        null,
+                        null
+                );
+                threadDao.insertAll(rootThread);
+
+                // Update the fk_root_thread of the conversation
+                conversationDao.updateFKRootThreadById(rootThreadId, convId);
+
+                // Insert the members
+                int convUserIndex = conversationDao.getConversationUserMaxId();
+
+                for (int i = 0, membersSize = members.length(); i < membersSize; ++i) {
+                    JSONObject memberJsonObj = members.getJSONObject(i);
+                    final int  memberId      = memberJsonObj.getInt("id");
+
+                    User receivedMember = new User(
+                            memberId,
+                            memberJsonObj.isNull("login") ? null : memberJsonObj.getString("login"),
+                            memberJsonObj.isNull("email") ? null : memberJsonObj.getString("email"),
+                            memberJsonObj.isNull("firstname") ? null : memberJsonObj.getString("firstname"),
+                            memberJsonObj.isNull("lastname") ? null : memberJsonObj.getString("lastname"),
+                            memberJsonObj.isNull("profile_picture") ? null : memberJsonObj.getString("profile_picture")
+                    );
+
+                    User existingUser = userDao.findById(memberId);
+                    // If member doesn't exist or is different from the received received one, insert
+                    if (existingUser == null || !existingUser.equals(receivedMember)) {
+                        userDao.insertAll(receivedMember);
+                    }
+
+                    ConversationUser conversationUser = new ConversationUser(++convUserIndex, convId, memberId);
+                    conversationDao.insertConversationUsers(conversationUser);
+                }
+
+                // Send the event
+                Intent newConversationIntent = new Intent();
+                newConversationIntent.setAction(WS_NEW_CONVERSATION_ACTION);
+                newConversationIntent.putExtra(EXTRA_CONV_ID, convId);
+                newConversationIntent.putExtra(EXTRA_FROM_SELF, fromSelf);
+                getApplicationContext().sendBroadcast(newConversationIntent);
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -271,6 +382,7 @@ public class WebSocketService extends Service {
         Log.d(TAG, "Service created");
 
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        userId = pref.getInt("user_id", -1);
         token = pref.getString("token", null);
 
         try {
@@ -282,6 +394,10 @@ public class WebSocketService extends Service {
             mainSocket.on(Socket.EVENT_CONNECT, onConnection);
             mainSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
             mainSocket.on(Socket.EVENT_ERROR, onError);
+            // TODO: uniform the calls from server for [create/new] conversation
+            // (we need to add a conversation author to do that)
+            mainSocket.on(WS_EVENT_CREATE_CONVERSATION, new onCreateConversationListener(true));
+            mainSocket.on(WS_EVENT_NEW_CONVERSATION, new onCreateConversationListener(false));
 
             // Called upon transport creation.
             mainSocket.io().on(Manager.EVENT_TRANSPORT, new Listener() {
@@ -362,11 +478,22 @@ public class WebSocketService extends Service {
     // ---------------------- WS USER EVENTS ---------------------- //
     // ------------------------------------------------------------ //
 
-    public void sendMessage(String content) {
-        JSONObject newMessage = new JSONObject();
+    public void createConversation(List<Integer> members, String title) {
+        JSONObject newConv = new JSONObject();
         try {
-            newMessage.put("message", new JSONObject().put("content", content));
-            activeConvSocket.emit(WS_EVENT_CREATE_MESSAGE, newMessage);
+            JSONArray membersJSON = new JSONArray();
+            for (Integer id : members) {
+                membersJSON.put(new JSONObject().put("id", id));
+            }
+            // Add user itself
+            membersJSON.put(new JSONObject().put("id", userId));
+
+            JSONObject convData = new JSONObject();
+            convData.put("title", title == null ? NULL : title)
+                    .put("members", membersJSON);
+
+            newConv.put("conv", convData);
+            mainSocket.emit(WS_EVENT_CREATE_CONVERSATION, newConv);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -399,6 +526,16 @@ public class WebSocketService extends Service {
 
             thread.put("thread", threadData);
             activeConvSocket.emit(WS_EVENT_EDIT_THREAD, thread);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendMessage(String content) {
+        JSONObject newMessage = new JSONObject();
+        try {
+            newMessage.put("message", new JSONObject().put("content", content));
+            activeConvSocket.emit(WS_EVENT_CREATE_MESSAGE, newMessage);
         } catch (JSONException e) {
             e.printStackTrace();
         }

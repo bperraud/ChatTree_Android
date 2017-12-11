@@ -3,6 +3,7 @@ package com.chattree.chattree.home;
 import android.content.*;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -26,6 +27,7 @@ import com.chattree.chattree.db.ConversationDao.CustomConversationUser;
 import com.chattree.chattree.profile.ProfileActivity;
 import com.chattree.chattree.tools.Toaster;
 import com.chattree.chattree.tools.sliding_tab_basic.SlidingTabLayout;
+import com.chattree.chattree.websocket.WebSocketCaller;
 import com.chattree.chattree.websocket.WebSocketService;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,12 +40,12 @@ import java.util.Set;
 
 import static com.chattree.chattree.datasync.SyncAdapter.*;
 import static com.chattree.chattree.login.LoginActivity.EXTRA_LOGIN_DATA;
+import static com.chattree.chattree.websocket.WebSocketService.EXTRA_CONV_ID;
+import static com.chattree.chattree.websocket.WebSocketService.EXTRA_FROM_SELF;
 
 public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HOME ACTIVITY";
-
-    private SyncReceiver dataLoadedReceiver;
 
     private FixedTabsPagerAdapter mFixedTabsPagerAdapter;
     private SlidingTabLayout      mSlidingTabLayout;
@@ -52,8 +54,14 @@ public class HomeActivity extends AppCompatActivity {
     private ConversationsListFragment conversationsListFragment;
     private ContactsListFragment      contactsListFragment;
 
+    private SyncReceiver      dataLoadedReceiver;
+    private WebSocketReceiver newConversationReceiver;
+
+    private WebSocketService wsService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: ON CREATE");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
@@ -163,12 +171,26 @@ public class HomeActivity extends AppCompatActivity {
         registerReceiver(dataLoadedReceiver, new IntentFilter(SYNC_CALLBACK_CONV_LOADED_ACTION));
 
         /*
+         * Register a receiver to listen when new entities have been created (WS)
+         */
+        newConversationReceiver = new WebSocketReceiver();
+        registerReceiver(newConversationReceiver, new IntentFilter(WebSocketService.WS_NEW_CONVERSATION_ACTION));
+
+        /*
          * Signal the framework to run your sync adapter. Assume that
          * app initialization has already created the account.
          */
         ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(this), ChatTreeApplication.AUTHORITY, settingsBundle);
 
         Toaster.showCustomToast(this, getString(R.string.login_successful_toast), null);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // WS Service binding
+        Intent wsServiceIntent = new Intent(this, WebSocketService.class);
+        bindService(wsServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     public class SyncReceiver extends BroadcastReceiver {
@@ -199,11 +221,41 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
+    public class WebSocketReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            conversationsListFragment.addConvToView(
+                    intent.getIntExtra(EXTRA_CONV_ID, 0),
+                    intent.getBooleanExtra(EXTRA_FROM_SELF, false)
+            );
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        unbindService(serviceConnection);
+        super.onStop();
+    }
+
     @Override
     protected void onDestroy() {
+        unregisterReceiver(newConversationReceiver);
         unregisterReceiver(dataLoadedReceiver);
         super.onDestroy();
     }
+
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "onServiceConnected: SERVICE IS BOUND");
+            wsService = ((WebSocketService.LocalBinder) service).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            wsService = null;
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -292,5 +344,10 @@ public class HomeActivity extends AppCompatActivity {
                     return null;
             }
         }
+    }
+
+    void attemptToCreateConversation(List<Integer> members, String title) {
+        if (wsService != null)
+            wsService.createConversation(members, title);
     }
 }

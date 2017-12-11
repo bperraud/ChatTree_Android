@@ -39,6 +39,22 @@ public interface ConversationDao {
            "WHERE t_conversation.id > :convOffset")
     List<CustomConversationUser> getCustomConversationUsersByOffset(int convOffset);
 
+    @Query("SELECT " +
+           "t_conversation.id c_id, " +
+           "t_conversation.title c_title, " +
+           "t_conversation.picture c_picture, " +
+           "t_conversation.fk_root_thread c_fk_root_thread, " +
+           "t_user.id u_id, " +
+           "t_user.login u_login, " +
+           "t_user.email u_email, " +
+           "t_user.firstname u_firstname, " +
+           "t_user.lastname u_lastname, " +
+           "t_user.profile_picture u_pp " +
+           "FROM t_conversation " +
+           "INNER JOIN t_conversation_user ON t_conversation.id = t_conversation_user.fk_conversation " +
+           "INNER JOIN t_user ON t_user.id = t_conversation_user.fk_member " +
+           "WHERE t_conversation.id = :convId")
+    List<CustomConversationUser> getCustomConversationUsersByConvId(int convId);
 
     class CustomConversationUser {
         public int    c_id;

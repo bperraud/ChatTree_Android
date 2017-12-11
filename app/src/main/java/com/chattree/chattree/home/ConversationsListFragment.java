@@ -26,6 +26,7 @@ import com.chattree.chattree.db.User;
 import com.chattree.chattree.home.conversation.ConversationActivity;
 import com.chattree.chattree.home.conversation.ConversationItem;
 import com.chattree.chattree.tools.Utils;
+import com.chattree.chattree.websocket.WebSocketCaller;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.chattree.chattree.home.ContactsListCheckFragment.EXTRA_CONTACTS_IDS_LIST;
+import static com.chattree.chattree.home.ContactsListCheckFragment.EXTRA_CONV_TITLE;
 
 public class ConversationsListFragment extends Fragment {
     public static final int REQUEST_CODE_CONTACTS_RETURNED = 1;
@@ -266,12 +268,51 @@ public class ConversationsListFragment extends Fragment {
         if (requestCode == REQUEST_CODE_CONTACTS_RETURNED) {
             if (resultCode == Activity.RESULT_OK) {
                 ArrayList<Integer> contactIds = data.getIntegerArrayListExtra(EXTRA_CONTACTS_IDS_LIST);
-                Log.d("CONV LIST FRAG", "onActivityResult: ok, " + contactIds);
-
-                
+                CharSequence       title      = data.getCharSequenceExtra(EXTRA_CONV_TITLE);
+                ((HomeActivity) getActivity()).attemptToCreateConversation(
+                        contactIds,
+                        title.toString().isEmpty() ? null : title.toString()
+                );
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 Log.d("CONV LIST FRAG", "onActivityResult: canceled");
             }
         }
+    }
+
+    public void addConvToView(final int convId, final boolean fromSelf) {
+        // Check first if we already have displayed the conversation
+        Collection result = CollectionUtils.select(conversationsList, new Predicate() {
+            @Override
+            public boolean evaluate(Object object) {
+                ConversationItem convItem = (ConversationItem) object;
+                return convItem.getId() == convId;
+            }
+        });
+        if (result.size() > 0) return;
+
+        // Retrieve the conversation from db and add it to the list
+        new AsyncTask<Void, Void, List<CustomConversationUser>>() {
+            @Override
+            protected List<CustomConversationUser> doInBackground(Void... params) {
+                ConversationDao conversationDao = AppDatabase.getInstance(getContext()).conversationDao();
+                return conversationDao.getCustomConversationUsersByConvId(convId);
+            }
+
+            @Override
+            protected void onPostExecute(List<CustomConversationUser> conversationUser) {
+                parseCustomConversationUserAndAddToConvList(conversationUser);
+                conversationListAdapter.notifyDataSetChanged();
+
+                // Start the ConversationActivity directly
+                if (fromSelf) {
+                    CustomConversationUser convUser = conversationUser.get(0);
+                    Intent                 intent   = new Intent(getContext(), ConversationActivity.class);
+                    intent.putExtra(EXTRA_CONVERSATION_ID, convUser.c_id);
+                    intent.putExtra(EXTRA_CONVERSATION_TITLE, convUser.c_title);
+                    intent.putExtra(EXTRA_CONVERSATION_ROOT_THREAD_ID, convUser.c_fk_root_thread);
+                    startActivity(intent);
+                }
+            }
+        }.execute();
     }
 }

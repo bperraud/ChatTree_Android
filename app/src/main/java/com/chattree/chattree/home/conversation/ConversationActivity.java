@@ -221,6 +221,7 @@ public class ConversationActivity extends AppCompatActivity implements WebSocket
 
     @Override
     protected void onDestroy() {
+        wsService.forceActiveConvSocketDisconnect();
         unbindService(serviceConnection);
         unregisterReceiver(objectReceivedFromWSReceiver);
         unregisterReceiver(dataLoadedReceiver);

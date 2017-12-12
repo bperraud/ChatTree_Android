@@ -412,6 +412,13 @@ public class WebSocketService extends Service {
         return true;
     }
 
+    // TODO: remove this when we fix the issue with onUnbind not called from ConversationActivity to HomeActivity
+    public void forceActiveConvSocketDisconnect() {
+        if (activeConvSocket != null) {
+            activeConvSocket.disconnect();
+        }
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();

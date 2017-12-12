@@ -50,8 +50,8 @@
         <com.chattree.chattree.tools.split_toolbar.SplitToolbar
                 android:id="@+id/toolbar_bottom"
                 android:layout_width="match_parent"
-                android:layout_height="130dp"
-                android:paddingTop="40dp"
+                android:layout_height="150dp"
+                android:paddingTop="50dp"
                 android:minHeight="?attr/actionBarSize"
                 android:background="@android:color/background_light">
         </com.chattree.chattree.tools.split_toolbar.SplitToolbar>

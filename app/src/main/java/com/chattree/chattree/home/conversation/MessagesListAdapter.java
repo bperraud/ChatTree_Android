@@ -8,9 +8,11 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import com.chattree.chattree.R;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.chattree.chattree.home.conversation.MessageItem.OwnerValues;
 
@@ -25,7 +27,7 @@ public class MessagesListAdapter extends ArrayAdapter<MessageItem> {
 
     MessagesListAdapter(Context context, List<MessageItem> messages) {
         super(context, 0, messages);
-        messageIds = new HashSet<>();
+        messageIds = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
     }
 
     // Return an integer representing the type by fetching the enum type ordinal

@@ -36,6 +36,8 @@ import org.apache.commons.collections4.Predicate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static com.chattree.chattree.home.conversation.ThreadActivity.*;
 
@@ -70,7 +72,7 @@ public class ConversationTreeFragment extends Fragment {
 
     private TreeNode lastSelectedNode;
 
-    private List<Thread> threadList;
+    private Queue<Thread> threadList;
 
     private WebSocketService wsService;
 
@@ -224,7 +226,7 @@ public class ConversationTreeFragment extends Fragment {
     }
 
     private void buildConvTree(List<Thread> threadList) {
-        this.threadList = threadList;
+        this.threadList = new ConcurrentLinkedQueue<>(threadList);
 
         Collection result = CollectionUtils.select(this.threadList, new Predicate() {
             @Override
@@ -353,7 +355,7 @@ public class ConversationTreeFragment extends Fragment {
         viewHolder.cancelTitleEdition();
     }
 
-    public void addThread(final int threadId) {
+    synchronized public void addThread(final int threadId) {
         // Check first if we already have displayed the thread
         Collection result = CollectionUtils.select(threadList, new Predicate() {
             @Override

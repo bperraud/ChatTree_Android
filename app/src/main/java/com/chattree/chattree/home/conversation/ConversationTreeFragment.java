@@ -288,7 +288,6 @@ public class ConversationTreeFragment extends Fragment {
     }
 
     private void refreshTreeNodes(List<Thread> threadList) {
-        this.threadList.addAll(threadList);
         for (final Thread thread : threadList) {
             Collection result = CollectionUtils.select(this.threadList, new Predicate() {
                 @Override
@@ -299,6 +298,7 @@ public class ConversationTreeFragment extends Fragment {
             });
             // Thread not found in list, we need to add it
             if (result.size() == 0) {
+                this.threadList.add(thread);
                 addThreadNode(thread, false);
             }
             // Otherwise, if titles differ, we need to update the thread title in view
@@ -309,6 +309,7 @@ public class ConversationTreeFragment extends Fragment {
                     TreeNode node = findTreeNodeByThreadId(root, threadInList.getId());
                     assert node != null;
                     ((ThreadNodeViewHolder) node.getViewHolder()).refreshTitle(thread.getTitle());
+                    ((ThreadTreeItem) node.getValue()).thread.setTitle(thread.getTitle());
                 }
             }
         }
@@ -405,11 +406,12 @@ public class ConversationTreeFragment extends Fragment {
                 // we should handle this
                 assert node != null;
                 ((ThreadNodeViewHolder) node.getViewHolder()).refreshTitle(thread.getTitle());
+                ((ThreadTreeItem) node.getValue()).thread.setTitle(thread.getTitle());
             }
         }.execute();
     }
 
-    private void addThreadNode(final Thread thread, boolean notifyUser) {
+    synchronized private void addThreadNode(final Thread thread, boolean notifyUser) {
         // Create the new node
         final TreeNode newNode        = new TreeNode(new ThreadTreeItem(R.string.ic_messenger, thread));
         TreeNode       parentNode;
@@ -447,7 +449,9 @@ public class ConversationTreeFragment extends Fragment {
         }
         // Notify with a toast the thread creation
         else if (notifyUser) {
-            treeView.expandNode(parentNode);
+            if (!parentNode.isExpanded()) {
+                treeView.expandNode(parentNode);
+            }
             new AsyncTask<Void, Void, User>() {
                 @Override
                 protected User doInBackground(Void... voids) {

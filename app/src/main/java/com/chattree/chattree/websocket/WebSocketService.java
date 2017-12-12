@@ -12,6 +12,7 @@ import com.chattree.chattree.ChatTreeApplication;
 import com.chattree.chattree.datasync.SyncAdapter;
 import com.chattree.chattree.db.*;
 import com.chattree.chattree.db.Thread;
+import com.chattree.chattree.network.NetworkFragment;
 import io.socket.client.IO;
 import io.socket.client.Manager;
 import io.socket.client.Socket;
@@ -20,8 +21,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.HttpCookie;
-import java.net.URISyntaxException;
+import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,6 +33,7 @@ import java.util.*;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_CONV_ID;
 import static com.chattree.chattree.datasync.SyncAdapter.EXTRA_SYNC_THREAD_ID;
 import static com.chattree.chattree.network.NetworkFragment.BASE_URL;
+import static com.chattree.chattree.network.NetworkFragment.HTTP_METHOD_GET;
 import static io.socket.emitter.Emitter.Listener;
 import static org.json.JSONObject.NULL;
 
@@ -276,12 +280,44 @@ public class WebSocketService extends Service {
                 // TODO: fix the server (it should auto. create the conv nsp without a get request from the client,
                 // for now, it can't because of a circularly dependency between io-server and conversation.io)
                 // Sync the conversation
-                Bundle settingsBundle = new Bundle();
-                settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-                settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-                settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, convId);
-                settingsBundle.putInt("IGNORE_RESULT", 1);
-                ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(getApplicationContext()), ChatTreeApplication.AUTHORITY, settingsBundle);
+//                Bundle settingsBundle = new Bundle();
+//                settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+//                settingsBundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+//                settingsBundle.putInt(SyncAdapter.EXTRA_SYNC_CONV_ID, convId);
+//                settingsBundle.putInt("IGNORE_RESULT", 1);
+//                ContentResolver.requestSync(ChatTreeApplication.getSyncAccount(getApplicationContext()), ChatTreeApplication.AUTHORITY, settingsBundle);
+
+
+                try {
+                    URL                url        = new URL(NetworkFragment.BASE_URL + "api/get-conv/" + convId);
+                    HttpsURLConnection connection = null;
+                    try {
+                        connection = (HttpsURLConnection) url.openConnection();
+                        connection.setReadTimeout(10000);
+                        connection.setConnectTimeout(10000);
+                        connection.setRequestMethod(HTTP_METHOD_GET);
+                        connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                        SharedPreferences pref  = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                        String            token = pref.getString("token", null);
+                        connection.setRequestProperty("x-access-token", token);
+                        connection.setDoOutput(false);
+                        connection.setDoInput(true);
+                        connection.connect();
+                        int responseCode = connection.getResponseCode();
+                        if (responseCode != HttpsURLConnection.HTTP_OK) {
+                            throw new IOException("HTTP error code: " + responseCode);
+                        }
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    } finally {
+                        if (connection != null) {
+                            connection.disconnect();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
 
                 // Save the new conv id in SharedPreferences
                 SharedPreferences        pref    = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());

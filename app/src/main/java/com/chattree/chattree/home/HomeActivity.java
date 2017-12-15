@@ -216,8 +216,6 @@ public class HomeActivity extends AppCompatActivity {
                     }.execute();
                     break;
             }
-
-
         }
     }
 

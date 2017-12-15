@@ -403,17 +403,18 @@ public class WebSocketService extends Service {
         return binder;
     }
 
+    // All clients have unbound with unbindService()
     @Override
     public boolean onUnbind(Intent intent) {
+        // Should not happen , but in case:
         if (activeConvSocket != null) {
             activeConvSocket.disconnect();
         }
         Log.d(TAG, "onUnbind: WS DISCONNECTED");
-        return true;
+        return false;
     }
 
-    // TODO: remove this when we fix the issue with onUnbind not called from ConversationActivity to HomeActivity
-    public void forceActiveConvSocketDisconnect() {
+    public void disconnectActiveConvSocket() {
         if (activeConvSocket != null) {
             activeConvSocket.disconnect();
         }
